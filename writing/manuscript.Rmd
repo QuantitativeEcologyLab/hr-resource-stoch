@@ -1,0 +1,307 @@
+---
+title: "How do resource abundance and stochasticity affect animals' spatial needs?"
+subtitle: "A review with quantitative simulations and empirical modeling"
+author: "Mezzini S. and Noonan M. J."
+date: "`r Sys.Date()`"
+bibliography: 'env-var-review.bib'
+csl: 'the-american-naturalist.csl'
+fontsize: 12pt
+indent: true
+header-includes:
+    - \usepackage{setspace}\doublespacing # double-space text
+    - \usepackage{indentfirst} # indent first line of each paragraph
+    - \usepackage[small]{titlesec} # smaller font for headings
+    - \usepackage{wrapfig} # to wrap text around figures
+    - \usepackage{caption}
+    # smaller caption text, less space above and below caption
+    - \captionsetup[figure]{font=scriptsize, aboveskip=4pt, belowskip=-20pt}
+
+    # - \usepackage{gensymb}
+    # - \usepackage{float}
+    # - \usepackage{afterpage}
+    # - \usepackage{ragged2e}
+subparagraph: yes # needed for \usepackage[small]{titlesec}
+# classoption:
+# - twocolumn
+output:
+  bookdown::pdf_document2:
+    number_sections: true
+    toc: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, out.width = '75%', fig.align = 'center')
+```
+
+```{r wrap-figure-function, include = FALSE}
+# code modified from https://stackoverflow.com/questions/54100806/r-markdown-how-do-i-make-text-float-around-figures
+
+# this chunk is needed to wrap text around or beside figures
+
+defOut <- knitr::knit_hooks$get('plot')  # save the default plot hook
+
+knitr::knit_hooks$set(plot = function(x, options) {  # set the new plot hook ...
+  
+  x <- defOut(x, options)  # first apply the default hook
+  
+  # if wrapfigure options are given, create the new opening string for the wrapfigure
+  # environment using custom figure alignment and text width
+  if(!is.null(options$wrapfigure)) {
+    
+    # options must be numeric, they cannot be characters
+    wf <- sprintf('\\begin{wrapfigure}{%s}{%g\\textwidth}',
+                  options$wrapfigure[[1]], # figure alignment
+                  options$wrapfigure[[2]]) # caption width relative to text width
+    x  <- gsub(pattern = '\\begin{figure}', # and replace the default one with it
+               replacement = wf,
+               x = x,
+               fixed = TRUE) # pattern is a string, so evaluate as is
+    x  <- gsub(pattern = '{figure}', # also replace the environment ending
+               replacement = '{wrapfigure}',
+               x = x,
+               fixed = TRUE)
+  }
+  return(x)
+}
+)
+
+# chuck options used to wrap figures:
+## fig.align = "right":          align figures right
+## out.width = "0.5\\textwidth": output width = 0.5 * the width of the text
+## wrapfigure = list("R", 0.5)   wrap caption to right, caption width = 0.5 text width
+```
+
+<!-- place figures before the paragraph they are referred to so wrapfigure places them beside the paragraph -->
+
+<!-- add section explaining what the paper details and what the objectives are? -->
+
+@ciuti and @berger-tal: human presence in nature for other reasons than hunting
+"When habitats ensuring different functions (Dunning et al., 1992; Camp et al., 2013) are far from each other..."
+habitat productivity hypothesis: Harestad and Bunnel, 1979
+
+Add @mueller_how_2011 for a study that accounted for variance in NDVI for animal movement
+
+The habitat productivity hypothesis proposed by @harestad_home_1979 is supported, but it ignores many other important causes of movement [@seigle-ferrand_systematic_2021].
+
+The ability to move allows animals to respond rapidly and continuously to heterogeneous and changing environments and conditions [@southwood_habitat_1977]. Animals may move for a variety of reasons, including searching for resources (e.g., food, nutrients, water, heat, a new den or nesting spot), a mate, or a new group. Movement also allows animals to escape predation or dangerous competition as well as defend resources and territories [@grant_whether_1993]. @nathan_movement_2008 conceptualized animal movement from location $\vec u_t$ to location $\vec u_{t+1}$ using the model
+
+\begin{equation} \label{nathan-movement}
+\vec u_{t+1} = F(\Omega, \Phi, \vec r_t, \vec w_t, \vec u_t),
+\end{equation}
+
+such that the animal's position as time $t+1$ depends on its motion capacity ($\Omega$), navigation capacity ($\Phi$), internal state ($\vec w_t$) and current location ($\vec u_t$), as well as how each of the parameters may change with the current environmental factors ($\vec r_t$). This model is conceptually useful, as it can form the basis for many models, experiments, and hypotheses, but fitting such a model would be very difficult in practice (if not impossible). The parameters $\Omega, \Phi, \vec r_t,$ and $\vec w_t$ cannot be quantified directly, and although it may be possible to monitor proxies for the parameters, doing so with sufficient frequency and accuracy would not be simple. Rather than measuring changes in the various resources and needs directly, we can quantify animals' spatial needs as a response to average resource abundance and the variability around it, instead. This paper will illustrate how animals' spatial needs depend on average resource abundance and the variance around it. We present this idea through a quantitative theoretical framework and empirical examples where resource abundance is estimated using the Normalized Vegetation Index [NDVI; see @pettorelli_normalized_2011].
+
+# Effects of resource abundance on animals' spatial needs
+
+```{r multipanel-constant-var, fig.cap="Fictitious example of variation in resource abundance in a heterogeneous environment with constant variance (after accounting for changes in mean abundance). (a.) Although resource abundance ($R$, raster fill) varies over time and space, the overall amount of variance (dot color) remains constant. (b.) Arbitrary definition of $R$ as following a Gamma distribution with mean $\\mu$ and variance $\\sigma^2$. (c.) Simulated animal movement at a time of lowest $\\mathbb E(R)$ and average $\\mathbb V(R)$. (d.) Simulated animal movement at a time of peak $\\mathbb E(R)$ and average $\\mathbb V(R)$.", out.width = '0.5\\textwidth', fig.align = 'right', wrapfigure = list('R', 0.5)}
+knitr::include_graphics('../figures/habitat-examples-constant-variance.png')
+```
+
+The favorableness of a patch or habitat often depends on a variety of factors, including resource abundance, competitive pressure, and predation risk. Since many of these factors' affect resource abundance unpredictably, it is useful to visualize it as a random variable^[In statistics, random variables indicate random (i.e., unknown) quantities and are indicated with capital letters (e.g., $R$, $H$). Known values, such as realizations (i.e., known observations) of random variables, are indicated with lower-case letters (e.g., $r$, $h$). Using this notation, we can write the statement "the probability of random variable $R$ taking the value $r$" as $P(R = r)$.]. Let $R$ indicate the amount of *resources* in a particular patch or area. For simplicity, we can assume $R$ can take any value between zero and infinity, and we can let $R$ follow a Gamma distribution with mean $\mu$ and variance $\sigma^2$ (which we can write as $R \sim \Gamma(\mu, \sigma^2)$)^[Although Gamma distributions are more often parameterized using shape and scale ($k, \theta$) or shape and rate ($\alpha, \beta = 1/\theta$), we use $\mu = k \theta$ and $\sigma^2 = k \theta^2$ for simplicity. However, note that $\mu$ and $\sigma^2$ are not independent because the variance depends strongly on the mean since as the mean approaches zero the variance also does: $\mu = 0 \iff k \theta = 0 \iff k \theta^2 = 0 \iff \sigma^2 = 0$.].
+
+Consider the simplistic scenario where $\mu$ changes over time but $\sigma^2$ is constant over time and space (and non-zero, see figure \@ref(fig:multipanel-constant-var)a). We can use the notation $R \sim \Gamma\big(\mu(t), \sigma^2\big)$ to indicate that the resource abundance follows a Gamma distribution with a mean that changes over time (i.e., the expected value is a function of time: $\mathbb E(R) = \mu(t)$) while the variance is constant, i.e., $\mathbb V(R) = \sigma^2$ (figure \@ref(fig:multipanel-constant-var)b). Since $R$ is spatiotemporally random, an animal that moves in the landscape will not find the same $R$ at different time points or throughout the habitat (figures \@ref(fig:multipanel-constant-var)c-d). However, if $\mathbb E(R) = \mu(t)$ changes repetitively and regularly over time (e.g. peaks each spring), an animal may learn to predict times of high or low $R$ [e.g., @falcon-cortes_hierarchical_2021; @geremia_migrating_2019; @abrahms_memory_2019]. However, since $\mathbb E(R)$ does not vary predictably over space, it will not be possible to predict the location of locations with high or low $R$.
+
+This model is somewhat simplistic, but its simplicity makes it easy to fit and conceptualize. Such a model may be appropriate in regions with little to no changes in variability and where unpredictable events occur at a similar frequency over time, or when data availability is too low to produce appreciable measures of variance. Examples of temporally homogeneous habitats include regions which throughout the year remain highly productive but fairly predictable (e.g., equatorial rain forests) or have very low productivity and variability (e.g., deserts without strongly distinct seasons). When productivity is approximately stable over long periods of time, it may be possible to further simplify the model by assuming a constant mean, but this is rarely the case. Most habitats with seasonal changes in climate will require models to account for changes in both $\mathbb E(R)$ and $\mathbb V(R)$, since periods of high productivity will tend to be more variable than times of "dormancy" or lower productivity.
+
+The top row of figure \@ref(fig:5-5-sims) (constant $\mathbb V(R)$) illustrates the simulated spatial requirements of an animal living in habitats where the average resource abundance remains constant or changes over time. Note how the home range size, $H$, decreases nonlinearly as $\mathbb E(R)$ increases linearly (linear $\mathbb E(R)$, constant $\mathbb V(R)$), and how the 95% home range is more sensitive to changes in $\mathbb E(R)$ than the core home range. In regions where the average resource abundance changes over time (cyclical $\mathbb E(R)$, constant $\mathbb V(R)$ ), animals should have sufficient space to fulfill their needs during periods of scarcity, whether the space available is sufficiently large year-round or it changes seasonally with the expected changes in $\mathbb E(R)$. However, estimates of spatial requirements based on estimated changes in $\mathbb E(R)$ should be interpreted carefully, since model error and unpredictable changes in $\mathbb E(R)$ may increase animals' spatial needs unpredictably. Thus, it is best to avoid changing the space available to animals too close to when resources are expected to be low and include a "buffer" area so the available area is larger than the expected spatial needs. This is particularly the case in environments where resource abundance changes unpredictably (drifting $\mathbb E(R)$, constant $\mathbb V(R)$), since accurate long-term estimates of $\mathbb E(R)$ may be hard to produce, if not impossible. In cases where $\mathbb E(R)$ is highly unpredictable, animals should have enough space to collect resources during times of greatest scarcity, particularly if the changes in resource abundance occur rapidly and often. Finally, in ecosystems where $\mathbb E(R)$ changes erratically and suddenly (erratic $\mathbb E(R)$, constant $\mathbb V(R)$), such as regions prone to large fires or sudden floods, as well as regions with high mining or logging activity, the space available to animals should be sufficient to satisfy needs during the periods of greatest scarcity while also allowing animals to adapt their behavior between periods.
+
+# Effects of environmental variance on animals' spatial needs
+
+Although the effect of resource abundance on animals' spatial needs is often recognized and accounted for, the variance in resource abundance is generally ignored or assumed to remain constant over time. However, resource abundance often varies due to multiple causes. Some causes are repetitive, predictable, or even well-known patterns (such as daily or seasonal changes in temperature and precipitation, or the location of different patches), while others are infrequent, unpredictable, or poorly-understood events [such as forest fires, the arrival of new competitors, human activity, fires, floods, droughts, and other consequences of climate change, see @ipcc_global_2018; @noonan_situ_2018]. In this paper, we separate $\mathbb V(R)$ into heterogeneity and stochasticity. We refer to predictable or expected spatiotemporal changes as environmental **heterogeneity**, while we use the term **stochasticity** for unpredictable and unexpected variation. For example, the location of (high-yield) berry bushes in a valley and the time at which they produce fruit may be heterogeneous, but predictable. In contrast, the quantity and quality of berries produced during a given year may be stochastic. Thus, $\mathbb V(R)$ is affected by both sources of variation, and changes in $\mathbb V(R)$ may predictable or not.
+
+The effects of $\mathbb V(R)$ on animals' spatial requirements likely depend on the animals' needs. @lucherini_habitat_1996 found that red foxes (*Vulpes vulpes*) living in areas with more habitats per hectare (i.e., more heterogeneous) required exponentially less space than foxes that lived in more homogeneous regions. @nilsen_can_2005 found that the home ranges of bobcats (*Lynx rufus*) and coyotes (*Canis latrans*) increased with seasonality, while the home ranges of wolverines (*Gulo gulo*) and Canadian lynx (*Lynx canadensis*) decreased. @rizzuto_forage_2021 found that the 50%, 75%, and 90% utilization distributions (UDs) of snowshoe hares (*Lepus americanus*) increased with average C:N in lowbush blueberry as well as the coefficient of variation for C:N, which suggests that the hares expanded their home range in response to both resource scarcity and the variance in resource scarcity. ***ADD MORE EMPIRICAL EXAMPLES?*** However, the effects of environmental variance on animals' spatial needs remains largely undestudied and unaccounted for.
+
+# Empirical examples
+
+```{r tapir-example, fig.cap="Seven-day home range size of a tapir from Medici $et~al.$ (2022) as mean and variance in resource abundance change over the tracking period. (a.) Mean resource abundance esimated as the mean NDVI at the locations visited by the tapir during the period of reference. (b.) Varince in resource abundance esimated as the average variance in NDVI at the locations visited by the tapir during the period of reference. (c.) Estimated home range size of the tapir during each reference period, based on 50% (bold) and 95% (thin) utilization distributions.", out.width = '0.5\\textwidth', fig.align = 'right', wrapfigure = list('R', 0.5)}
+knitr::include_graphics('../figures/tapir-example.png')
+```
+
+Environmental productivity is tightly linked to the amount of space animals need to cover to obtain the resources they needed to survive and reproduce [@lucherini_habitat_1996; @relyea_home_2000]. While animals' needs vary greatly between taxonomic groups, some needs are essential for most species for survival and reproduction, such as energetic needs [e.g., food, water, see @baldwin_nutritional_1984], habitat needs [e.g., dens, trees, tall grass, breeding grounds, protection from predators and competitors, see @refs], and maintaining a thermoregulatory balance. The size of a home range, is hypothesized to be proportional to resource abundance [@burt_territoriality_1943], such that spatial needs increase when resources are low, but the relationship is likely not monotonic nor linear [@nilsen_can_2005], since larger home ranges can result in higher rates of competition and are harder to defend [@grant_whether_1993; @jetz_scaling_2004].
+
+There are many factors which may affect animal's spatial requirements and how they use their HR [*sensu* @nathan_movement_2008]. In particular, resource abundance and environmental productivity are often hypothesized to be inversely proportional to HR size (or some function of it), such that regions with higher abundance correspond to smaller spatial needs, since animals do not have to range over extensive areas to meet the energetic needs [e.g., food, water, see @baldwin_nutritional_1984], habitat needs [e.g., dens, trees, tall grass, breeding grounds, protection from predators and competitors, see @southwood_habitat_1977], and maintaining a thermoregulatory balance. The size of a home range is hypothesized to be proportional to resource abundance [@burt_territoriality_1943], such that spatial needs increase when resources are low, but the relationship is likely not monotonic nor linear, since larger home ranges can result in higher rates of competition and are harder to defend [@grant_whether_1993; @jetz_scaling_2004]. @nilsen_can_2005 found that the home ranges of brown bears (*Ursus arctos*), leopards (*Panthera pardus*) decreased nonlinearly with the fraction of photosinthetically active radiation absorbed by plants in a given region. However, the effect of many other factors on HR size is likely depends on the species, location, and possibly also on the individual animal. For instance, competition may push animals to explore other areas and expand their HR [@jetz_scaling_2004], but strong and consistent competition paired with territorial defense may also prevent them from doing so [e.g., wolves, @rich_anthropogenic_2012; feral cats, @bengsen_feral_2016; capuchin monkeys, @torrez-herrera_monkeys_2020]. Similarly, predation may force animals to move more frequently to escape predators, or it may prevent them from venturing too far from the safety of their core HR too often [@suraci_beyond_2022]. Patch quality, size, fragmentation, and heterogeneity may cause animals to explore more patches if some are of low value, too small, too disconnected, or too variable [@fahrig_is_2019], but high diversity may also decrease HR size if animals require heterogeneous habitats [@fox_niche_1981; @lucherini_habitat_1996]. Similarly, patch connectivity and ease of movement may widen HRs by decreasing the energetic cost of movement and favoring exploration [@dickie_resource_2022], or they may shrink HRs by decreasing the energetic cost of movement while increasing encounter rates with resources [@martinez-garcia_how_2020; @bartumeus_influence_2008; @visser_plankton_2006]. However, not all animals take advantage of linear features or higher predictability in human-altered habitats. @noonan_roads_2021 found that giant anteaters (*Myrmecophaga tridactyla*) in Brazil did not use roads to reduce movement costs or increase movement speed. Instead, roads increased anteater mortality because the animals were attracted to the high-quality foraging found on roadside habitat. Similarly, @medici_movement_2022 found that the movement of tapirs (*Tapirus terrestris*) was unaffected by anthropogenic activity or habitat type.
+
+Other empirical refs to possibly add: @lindstedt_seasonality_1985, @jonzen_rapid_2006, @wolkovich_warming_2012, @falcon-cortes_hierarchical_2021, @nathan_big-data_2022
+
+Simulation refs: @blackwell_heterogeneity_2007, @quaglietta_simulating_2019, @tucker_humaninduced_2021
+
+<!--
+Notes:
+
+notation:
+- $\mu$ mean movement process
+- $\epsilon$ movement noise, exploratory movements
+- $\tau_p$ positional autocorrelation, mean time reversion to the mean (origin), range crossing time
+- $\tau_v$ velocity autocorrelation
+
+protective/defensive adaptations peaks at intermediate levels of competitor density/spatial resource density/spatiotemporal clumping. At low competition, there's no need for defense and the cost (e.g., energetic) and risk (e.g., wounds) outweigh the benefit, while at high values the cost and risk become too high and they outweigh the benefit [@grant_whether_1993].
+
+See *The effects of phenological mismatches on demography*.
+
+@rickbeil_plasticity_2019:
+- Many species use seasonal migration to track emerging resources (Fryxell, Greever, & Sinclair, 1988), reduce predation risk (Hebblewhite & Merrill, 2009), or avoid disease and parasites (Altizer, Bartel, & Han, 2011).
+- Migrations to track resources are often timed to coincide with peak plant and insect emergence (Aikens et al., 2017; Jonzén et al., 2006; Merkle et al., 2016)
+- there is growing evidence that some [bird] populations are adjusting their behavior, suggesting that migration, specifically migration timing, may be more plastic than previously expected (Jonzén, Hedenstrom, & Lundberg, 2007; Jonzén et al., 2006; Lameris et al., 2018) and highlighting a potential measure of resilience in the face of climate change
+- Elk departed earlier from highly-productive areas? This goes against the idea that animals move as a consequence of need. But maybe the elk simply left when they had enough stored energy to face the migration. Maybe elk migration is triggered when they have sufficient energy (if the weather is still not too harsh).
+- Elk left early when exposed to hunting more
+-->
+
+# Simulating spatial needs as a function of $\mathbb E(R)$ and $\mathbb V(R)$
+
+```{r multipanel-changing-var, fig.cap="Fictitious example of variation in resource abundance in a heterogeneous environment with changing variance (even after accounting for changes in mean abundance). (a.) Although resource abundance ($R$, brown-green fill) varies over time and space, variance (dot color) is lowest at the beginning and end of the observational period and highest when $R$ peaks. (b.) Arbitrary definition of $R$ as following a Gamma distribution with mean $\\mu$ and variance $\\sigma^2$. (c.) Simulated animal movement at a time of lowest $\\mathbb E(R)$ and $\\mathbb V(R)$. (d.) Simulated animal movement at a time of peak $\\mathbb E(R)$ and $\\mathbb V(R)$.", out.width = '0.5\\textwidth', fig.align = 'right', wrapfigure = list('R', 0.5)}
+knitr::include_graphics('../figures/habitat-examples-changing-variance.png')
+```
+
+<!-- here! -->
+
+In areas where animals are not guaranteed that the resources they find during one visit will be there the next time (figure \@ref(fig:multipanel-changing-var)a), $\mathbb V(R)$ will have an appreciable effect on the location's favourableness. Patches with low or high $p$ will be most predictable, since successes can be expected to be very rare (if $p \approx 0$) or very common (if $p \approx 1$). In contrast, patches will be most stochastic when the probabilities of success and failure are approximately the same (i.e., $p \approx 1 - p \implies p \approx 0.5$, see figure \@ref(fig:multipanel-changing-var)b). In stochastic habitats, $\mathbb E(U)$ will depend on $\mathbb E(S)$ as well as $\mathbb E(R)$, since $S$ is no longer constant (figure \@ref(fig:multipanel-changing-var)c). Now, expected usable resources become
+
+\begin{equation} \label{mean-u-definition}
+\mathbb E(U) = \mathbb E(R \, S),
+\end{equation}
+
+or
+
+\begin{equation} \label{mean-u-definition-indep}
+\mathbb E(U) = \mathbb E(R) \, \mathbb E(S)
+\end{equation}
+
+if $R$ and $S$ are independent. This model can be applied to all mobile animals, including herbivores, carnivores, and omnivores. In the case of herbivores, $p$ may indicate the chance of finding good forage, which may be absent if regeneration times are long, if competitors have already exhausted the resource, or following a fire. For carnivores, $p$ may indicate the chance of feeding on prey, which may depend on encountering and killing some first [@suraci_beyond_2022]. However, since $R$ is not limited to energetic resources, $p$ may also indicate the chance of finding water or also a suitable location for a den or nest.
+
+While resource availability is often considered in ecology [@burt_territoriality_1943; @southwood_habitat_1977; @relyea_home_2000; @nilsen_can_2005; @williams-guillen_resource_2006; @rickbeil_plasticity_2019], an environment's heterogeneity (i.e., diversity), stochasticity (i.e., unpredictability), and how the two change over time are rarely accounted for. In addition, environmental stochasticity, including extreme events, can reduce a landscape's energetic balance [@chevin_adaptation_2010], which, in turn, decreases animals' fitness. Therefore, I expect animals living in unpredictable environments to require more space than those in stable environments. Although this hypothesis is supported by a few recent studies [@morellet_seasonality_2013; @nandintsetseg_variability_2019; @riotte-lambert_environmental_2020], many of them are limited in their analytical depth and geographic and taxonomic scales, so the extent to which these preliminary findings can be generalized is still very limited. There thus remains a need for developing a more complete understanding of how animals' spatial needs change with environmental stochasticity. These stresses are compounded by climate change, which exposes species to increasingly common stochastic events [@ipcc_global_2018; @noonan_situ_2018]. Furthermore, anthropogenic structures reduce the habitat available to terrestrial species [@wilson_habitat_2016], who struggle to move in fragmented [@fahrig_non-optimal_2007], human-dominated landscapes [@tucker_moving_2018]. As the impacts of habitat loss and climate change will worsen in the future [@ipcc_global_2018; @hansen_high-resolution_2013], it is imperative that we better understand spatial requirements of taxa to protect wildlife existence and biodiversity. Environmental safeguarding is also essential for Reconciliation with Indigenous People in Canada [@truth_and_reconciliation_commission_of_canada_honouring_2015].
+
+# Interaction effects of resource availability and stochasticity
+
+@nilsen_can_2005
+
+In the previous section, we mentioned that a model which does not account for environmental variance may be acceptable when $\sqrt{\mathbb V(R)} / \mathbb E(R)$ is low, as in the case of a habitat with high $R$ and $p \approx 1$. However, since maximum resource abundance is constrained by environmental stochasticity [@chevin_adaptation_2010] and resources can be depleted or rendered inaccessible by other individuals [@grant_whether_1993; @jetz_scaling_2004], $\mathbb E(R)$ does not provide a sufficiently complete picture of resource availability in an environment. Thus, the effect of $\mathbb V(R)$ should be included when possible, even when $p \approx 1$ or $p \approx 0$. <!--Spatiotemporally constant and homogeneous regions will allow animals to have a small and dependable home range, while stochastic regions will force animals to have higher spatial needs and possibly store resources for periods of scarcity. Similarly, heterogeneous environments, such as habitats with a high variety of patches, may force animals to move between patches if they cannot depend on a single one. Conversely, if some patches are sufficient and highly valuable, animals may adopt strong defensive behaviors towards the patch [@grant_whether_1993]. Thus, some measure of $\mathbb V(R)$ is needed to understand how stochasticity may affect spatial requirements.-->
+
+Let $H$ indicate the size of an animal's HR.^[We can consider specific utilization quantiles of the HR, such as the core HR, $H_{50\%}$, or the 95% HR, $H_{95\%}$, but for simplicity I will refer to the entirety of the HR with $H$. Statistically, we can imagine $H$ as having a probability distribution with support over the interval from zero (not included) to infinity (also not included), which we can indicate with the notation $H \in (0, \infty)$.] As explained above, $H$ will be higher in regions with lower $\mathbb E(U)$ or higher $\mathbb V(U)$. Figure \@ref(fig:5-5-sims) presents various scenarios with different trends in $\mathbb E(U)$ and $\mathbb V(U)$. Although some of these scenarios may seem overly simplistic, they can help us understand the complex interaction effects of $\mathbb E(U)$ and $\mathbb V(U)$. In regions where $U$ has constant mean and variance, $H$ remains approximately constant, although small oscillations are possible, since $\mathbb V(U) \ne 0$ and thus the environment is still stochastic. When $\mathbb E(U)$ changes over time but $\mathbb V(U)$ remains constant, it is easy to see that $H$ decreases as $\mathbb E(U)$ increases, with changes in $\mathbb E(U)$ having larger effects when $\mathbb E(U)$ is low and smaller effects when $\mathbb E(U)$ is already large. This is best visualized in the scenario in which $\mathbb E(U)$ is increasing linearly while $\mathbb V(U)$ is constant, since decrease in core HR ($H_{50\%}$) and 95% HR ($H_{95\%}$) is decreases over time. Additionally, as $\mathbb E(U)$ increases, the difference between $H_{50\%}$ and $H_{95\%}$ also decreases. Thus, $H_{95\%}$ is more sensitive to changes in $\mathbb E(U)$ than $H_{50\%}$. $H_{95\%}$ is also more sensitive to changes in $\mathbb V(U)$, since changes in $\mathbb V(U)$ cause greater oscillations in $H_{95\%}$ than in $H_{50\%}$.
+
+```{r 5-5-sims, fig.cap="Simulated spatial requirements for animals living in habitats where the mean and variance in resource availability ($R$) are constant, linearly increasing, cyclical, drifting, or erratic over time. The thicker line indicates the animal's core home range (0.5 quantile), while the thin line indicates the 0.95 utilization quantile. Note how both quantiles decrease nonlinearly as $\\mathbb E(R)$ increases, and they increase linearly as $\\mathbb V(R)$ increases. Additionally, the variance in both quantiles is higher when $\\mathbb V(R)$ is higher, and changes in $\\mathbb V(R)$ have greater impacts when $\\mathbb E(R)$ is low.\nSimulations were run such that animals followed the same 1000 tracks each day starting from the point (0, 0) until they reach satiety, at which point they returned to (0, 0) over the same amount of time. The animal's spatial variance parameter was then calculated using an OUF model via the $ctmm$ package", out.width='100%'}
+knitr::include_graphics('../figures/mean-variance-5-by-5-hr-sims.png')
+```
+
+Not all 25 scenarios depicted in figure \@ref(fig:5-5-sims) may be realistic, but the trends in $\mathbb E(U)$ and $\mathbb V(U)$, and their impacts on animal space use, are useful examples that can be thought of as simplified scenarios. $\mathbb E(U)$ and $\mathbb V(U)$ may be (approximately) constant in highly homogeneous environments, or environments where resources are sufficiently available that changes in $\mathbb E(U)$ and $\mathbb V(U)$ remain undetected. Although it is impossible for $\mathbb E(U)$ and $\mathbb V(U)$ to increase linearly continuously, such increases may be possible for short periods of time (followed by periods of no change or decrease). Additionally, these examples are important because they demonstrate the relationships between $H$, $\mathbb E(U)$, and $\mathbb V(U)$ in a (relatively) simple scenario. Cyclical oscillations in $\mathbb E(U)$ and $\mathbb V(U)$ may occur in urban environments [@peron_periodic_2017] and as temperatures fluctuate daily and seasonally [@geremia_migrating_2019], while $\mathbb E(U)$ and $\mathbb V(U)$ may drift randomly in highly complex environments with an abundance of competitors, threats, and stochasticity, such as a habitat with a high degree of human alteration and activity. Finally, erratic changes in $\mathbb E(U)$ and $\mathbb V(U)$ may occur in environments where changes are very sudden, such as fire-prone or floor-prone areas, or habitats with drastic human alteration (e.g., a forest which is clear-cut for mining purposes with a subsequent artificial re-forestation). However, if highly stochastic or erratic changes occur frequently, animals are most likely to perceive them as a smooth transition rather a series of small, sudden, changes. Estimating the true trend would often require an excessively high cognitive capacity and an equally unlikely abundance of information. Additionally, although changes in $\mathbb E(U)$ are not due to $\mathbb V(U)$, but often distinguishing between the two is not easy [@steixner-kumar_strategies_2020]. <!-- https://doi.org/10.1080/00207549508930162 ?-->
+
+# Empirical examples
+
+## Sliding-window sampling
+
+<!-- create a pdf for supplementary information on how to create the 5x5 panel and run methods w real data, as well as considerations and potential issues about modeling means and variances -->
+
+```{r tapir-hr, fig.cap="Movement of a tapir during a monitoring period of approximately 3 years (1997-07-10 to 2000-06-08) used in the work by Medici $et~al.$ (2022). Different subsamples may result in different estimates of home range size and centroid (a, b; each span 100 days), so neither subsample is necessarily representative of the space the animal used over the entire monitoring period (c).", out.width = '0.4\\textwidth', fig.align = 'right', wrapfigure = list('R', 0.4)}
+knitr::include_graphics('../figures/hr-and-lifespan.png')
+```
+
+In the case of animals whose spatial needs change over the their lifetimes (figure \@ref(fig:tapir-hr)), one may define HR as a function of time (with distinct HRs for each period, e.g., salmon spawning) or as a continuous function of age (so the HR changes smoothly). In either case, the accuracy of the estimate parameters will depend strongly on the length of the observation period as well as the measurement frequency [@noonan_comprehensive_2019]. Data from a portion of an animal's life may be sufficient if it is representative the animal's movement or if inference is limited to the period(s) for which data is available.
+
+spatial needs can change as requirements from the animal change or as $R$ changes.
+
+<!-- see https://doi.org/10.1186/s40462-019-0187-z regarding HR, energetics, and movement along paths -->
+
+* tapirs
+* tapir w sliding window
+
+<!--
+
+# Movement types
+
+## Range residency
+
+
+## Seasonal migration
+
+
+## Nomadism
+
+predation is more stochastic than herbibory; predators need to match more cycles, depend on less individuals -> more variable food
+
+@teitelbaum_beyond_2019:
+- **Nomadic movement**: with irregular timing and/or direction, producing both within-year and between-year variability in location and movement patterns
+- **Nomadic movement** is not the same as **migration**, because migration is predictable and cyclical while nomadism is random in time and space
+- "Data from recent developments in animal tracking technology (e.g., longer-lasting and lighter GPS devices) show that species previously considered migrants or range residents can show irregular, often long-distance, movement patterns (flexible foraging movements of leatherback turtles across the north atlantic ocean, To migrate, stay put, or wander Varied movement strategies in bald eagles, Big data analyses reveal patterns and drivers of the movements of southern elephant seals)"
+
+## Edge dynamics
+
+-->
+
+<!--
+
+# Simulations
+
+Include:
+
+* effects of animal mass,
+* resistance to/ease of movement (e.g., wolves and clear-cut gas lines)
+* "state-space model" with 2 spaces: within a patch (slow-moving) and between patches (faster movement)
+
+See `R` packages for meta-community simulations
+
+-->
+
+# Future work
+
+The work presented here provides a general framework for viewing animal movement as a function of mean and variance in resource abundance. The models used here do not account for animals' traits or behaviors (e.g., energetic needs, food preferences, ability to move, competition) as well as any environmental barriers to movement, such as lakes, rivers, and anthropogenic environments. Future models can account for more stuff, but modeling movement often already accounts for most of this.
+
+How does this impact the field, future papers?
+
+\newpage <!-- place references on a separate page -->
+
+## The temporal scale of stochastic events (DELETE THIS SECTION?)
+
+The timescale over which an event is (un)predictable will also play a key role in determining how species respond, or not, to stochasticity. Adverse events which occur frequently during an organism's generation time or lifespan (e.g., at least twice, on average) may be considered as threats worth preparing for. Stochastic and destructive events which happen frequently can become part of an organism's habitat and life history, so organisms may either adapt to their occurrence and even learn to predict them [@foley_severe_2008], or they may avoid the risk altogether by moving to a new habitat [@southwood_habitat_1977]. If habitats are (or become) unfavorable, animals may move to a new habitat, migrate seasonally [@geremia_migrating_2019], or simply prefer nomadism over range residency [e.g., @nandintsetseg_variability_2019]. It is unclear when animals switch from range residency to nomadism (or vice-versa), but understanding the connection between the two types of movement is important for quantifying the effect of spatiotemporal stochasticity on animal's spatial needs. From a quantitative perspective, the switch is related to an animal's positional autocorrelation over time (also known as home range crossing time, here indicated as $\tau_p$). Animals without a constant home home range (i.e., without a constant centroid) will spend more time away from the overall mean position, so the time required to crossing their entire range time will be large (i.e., on the order of the animal's lifespan).
+
+Adverse events which are too infrequent (e.g., $p \lesssim 0.1$) may not be perceived as a reoccurring threat, so organisms may be unable to adapt appropriately. Instead, highly infrequent events are more likely to perceived as an oddity rather than something worth preparing for. In contrast, highly stochastic events (e.g., $p \approx 0.5$ or if $p$ changes unpredictably) may be perceived as a threat, but organisms may be unable to predict their occurrence, since it would require refined cognitive abilities. For a species or population to adapt to an event, the event must thus occur with sufficient frequency and for a sufficiently long period of time.
+
+```{r stochasticity-timescale-figure, fig.cap="Fictitious changes in resource abundance mean (a) and variance (b) over the course of a year. The true trends are indicated by the black line, while the colored lines indicate the estimates perceived based on different levels of adaptability. The dashed vertical line indicates the hypothetical current date, such that any data to the right of the line is unknown to the animals, so estimates on the right of the dashed line are extrapolations. The data were simulated using Gaussian noise to ensure mean-variance independence and modeled using Generalized Additive Models with an identity link function to allow linear responses.", out.width = '0.5\\textwidth', fig.align = 'right', wrapfigure = list('R', 0.5)}
+knitr::include_graphics('../figures/stochasticity-timescale.png')
+```
+
+What an animal perceives as a stochastic process depends on the stochasticity of the process relative to the animal's size, current age (or average lifespan), and adaptability. Generally, small, short-lived, or young organisms will tend to be more sensitive to small-scale (spatial) or short-term (temporal) changes [@southwood_habitat_1977]. Smaller organisms (e.g., mice) are more likely to be be severely impacted by a stochastic event than larger ones (e.g. elephants), since larger organisms can have bigger energy reserves [@lindstedt_seasonality_1985], can move longer distances over short periods of time [@hirt_general_2017], and tend to have longer lifespans, generation times, and developmental periods [@brown_toward_2004], which allow them to develop or memory about the frequency and severity of such events [@foley_severe_2008; @polansky_elucidating_2015]. However, the short generation time and high fertility of smaller *r-selected* species [@pianka_r-_1970; @brown_toward_2004] can allow them to develop traits that increase the chances of survival following an extreme event. Additionally, the effects of size and lifespan on sensitivity are likely nonlinear and correlated, since smaller animals tend to have shorter lives (and vice-versa), and small animals also tend to have lower metabolic rates, which often limit their movement speed, home ranges, and how the animals interact with their ecosystem [@brown_toward_2004]. Thus, processes will have stronger impacts on smaller animals than on bigger ones: The grazing pattern of a bison (*Bison bison*) drastically alters the habitat of most crawling insects, but other grazing mammals would not pay attention to changes in grass length at the same spatial or temporal resolution. Similarly, the timing and quantity of yearly snowfall would be a somewhat predictable and expected event for most adult moose (*Alces alces*), but it may be a shock for many adult zooplankton or a new-born wolf (*Canis lupus*). What one animal may perceive as a single stochastic event (or cycle) may be considered as a series of short and highly stochastic events by another animal. <!-- add empirical examples -->
+
+Figure \@ref(fig:stochasticity-timescale-figure) illustrates the perceived resource availability mean and variance by animals with four different levels of adaptability and how they may predict the mean and variance to change in the future (after the vertical grey line). In the extreme (and likely fictitious) case where an animal does not adapt to the environment (dark blue), it cannot react to or predict changes in mean resource abundance, and thus the perceived variance is inflated whenever the resource abundance does not match the overall mean. Environments appear highly unpredictable to such animals. Animals which can only perceive simple, linear changes in mean resource abundance (orange) perform better as long as resources continue to change linearly in the same direction (i.e. increasing or decreasing). However, they may be surprised when the trend's direction changes, as indicated by the rapid increase in variance in the top rows of figure \@ref(fig:stochasticity-timescale-figure)b. Animals which are able to adapt smoothly (light blue) can predict changes in mean without a significant bias in estimated variance, as long as the process is not highly stochastic (unsurprisingly, see the bottom rows of figure \@ref(fig:stochasticity-timescale-figure)). Finally, animals which adapt rapidly to changing environments may be most able to take advantage of frequent environmental changes, but they may be unable to produce reasonable predictions based on memory [*sensu* @fagan_spatial_2013; @abrahms_memory_2019]. Instead, they depend on constant information and only predict on the most recent information (as indicated by the deviations from the data when predicting into the future).
+
+<!-- The recent shift to more quantitative statistical methods in environmental biology has pushed scientists to begin thinking more critically about data analysis. However, many still operate using methods and frameworks which were necessary with small datasets, but likely become problematic with an abundance of data. For instance, the widespread frequentist approach of hypothesis testing with a significance level of $\alpha = 0.05$ may often be misleading, because the significance of an effect depends on its standard error, which is a function of its sample size, since larger samples will offer a more precise and accurate measurement of the true mean. Similarly, the question of how much data is needed to detect a significant trend [@gray_how_2018] may seem important to some, but I suggest we pay less attention to whether an event or trend is statistically significant over a period of time based on the dichotomy of significance based on an arbitrary significance level. Since statistical significance does not only depend on effect size but also sample size (including measurement frequency), high-frequency data is likely to produce statistically significant effects, even in the event of a false positive. Instead, we should focus primarily on whether a change has an important impact on the fitness of the animal(s) of interest [@zuur_mixed_2009]. -->
+
+An animal's ability to alter its behavior (including its movement) in response to environmental conditions is essential in stochastic or changing landscapes. Whether the changes be due to highly variable but (potentially) predictable changes such as the seasons and the weather, or whether they be due to more stochastic events [e.g., natural events such as fires or floods, but also anthropogenic events like oil spills, see @matkin_ongoing_2008], an animal's ability to adapt increases its odds of survival. Generally, temporal variation is more likely to promote plasticity over diversity, since adaptability will likely offer better odds of survival than temporally static diversity in a population or species [@bell_spatial_1993]. @rickbeil_plasticity_2019 showed that the yearly migration of elk (*Cervus canadensis*) depends on variable environmental events and cues such as available forage biomass, hunting pressure, snow fall, and snow melt. Birds have also shown to change their their migration as the climate changes, including large-scale, trans-Saharian migrants [@jonzen_rapid_2006]. And while genetic diversity and polymorphisms also increase the odds of survival for a species [@cavedon_genomic_2022], this project will focus strictly on animal behavior.
+
+In an environment that changes over time, organisms which depend on mutable cycles such as changes in temperature, precipitation, and resource availability are more likely to respond to environmental changes than organisms which depend purely on deterministic cycles (e.g., photoperiod). While this thesis focuses on the movement and spatial use of animals, the adaptability (or lack thereof) of non-animal organisms is also crucial. The ability of most animals to rely on visual cues and move accordingly greatly increases their adaptability and plasticity, particularly for those animals that are able to move large distances over short periods of time (e.g., flying birds and large vertebrates). Although this project will focus on vertebrate animals, such changes are important to consider because the ability of a specialist or obligate symbiont to shift its home range or adapt will likely depend strongly on its associate's ability to move or adapt, too.
+
+## The spatial scale of stochastic events (DELETE THIS SECTION?)
+
+To measure the spatial stochasticity of an ecosystem, it is necessary to first define extent of the ecosystem of interest. A lake may seem like a simple and self-contained space to define, but it is often not as simple as deciding the lake's boundaries using a map or satellite pictures. Should one include the shores of the lake? And if so, which region do we consider the lake's shores? Are they the area of land which are currently covered by water, including the sections hit daily by waves, or should we also include the parts of land which are currently not wet but are covered during seasons with more rain? One could base their definition on the species of interest, since coastal areas are not frequented by large fish, but they would likely include them in the ecosystem if they are studying benthic littoral species. Thus, how one measures stochasticity should also depend on which organisms are of most interest.
+
+Since species in a heterogeneous landscape can modify their behavior and move to more favorable locations, spatial variation will favor movement and behavioral adaptations faster than temporal variation will [@bell_spatial_1993].
+
+Transition regions are often have the highest heterogeneity, but, similarly to temporal stochasticity, measures and perceptions of spatial heterogeneity depend on the scale at which they are being considered. The repetitive and cyclical motion of waves may not concern most vertebrates that live along the coast, but it is much more turbulent and chaotic for smaller organisms, such as crustaceans or diatoms. Therefore, the scale at which we consider spatial stochasticity should depend on the size of the organisms of interest as well as the size of their habitat or home range.
+
+Although @bell_spatial_1993 couldn't find a scale at which variance stopped increasing, it seems reasonable to assume that variance cannot increase infinitely. The variance of a finite system (e.g., a lake or a well-defined habitat), should reach a finite maximum somewhere between our smallest scale of interest and the scale of the entire system, even if the maximum is reached when the entire system is considered. This does not imply that a somewhat larger system that contains the first one (e.g. the lake and its coasts) will have the same variance. Variance between lake and coast is high because they are different types of habitats, and the area where they meet (the coast) is potentially even more variable because the mixture of the two creates a third habitat for littoral benthic animals which is subject to high stochasticity due to waves and changing water levels.
+
+The same idea would likely also apply for larger-scale systems, such as continents or a planet. And while stochasticity of a system may also vary over time, it is not reasonable to expect it to increase monotonically through time because that would imply it has been increasing monotonically until the current moment. Still, stochasticity does vary over time, and its estimation depends on the data available, so it may be useful to view it as a random variable with an estimated, conditional posterior distribution through a Bayesian framework [@bolstad_introduction_2017].
+
+<!--
+## Frontiers  Hierarchical, Memory-Based Movement Models for Translocated Elk (Cervus canadensis)  Ecology and Evolution
+
+Refs to check:
+
+* humans, nonhuman primates and other large-brained vertebrates make movement decisions based on spatial representations of their environments (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B50)
+* 2010). These representations may allow animals to move directly to important sites in their environment that lie outside of their perceptual range (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B40, https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B35)
+* Attribute memory, i.e., non-spatial memory, e.g., food type and abundance (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B13)
+* Bison remember valuable information about the location and quality of meadows (spatial and attribute memory) and use this information to revisit profitable locations (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B29)
+* Roe deer an spatial memory for foraging in absence of territorility (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B41)
+* memory in capuchin monkeys (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B8)
+* memory in bison (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B18)
+* memory in sheep (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B18)
+* memory in woodland caribou (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B1)
+* memory in chimpanzees (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B20)
+* memory constitutes an important mechanism for home range emergence (https://www.frontiersin.org/articles/10.3389/fevo.2021.702925/#B6, Börger et al., 2008; Van Moorter et al., 2009)
+-->
+
+<!--
+## Urban landscapes and habitat structure
+
+Human activity often fundamentally alters the structure of environments by spatially homogenizing them and imposing temporally heterogeneous and potentially stochastic cycles (e.g., mining, clear-cutting, road traffic, and weekly work schedules). The perception of spatial heterogeneity and cycles in anthropogenic areas varies between species: scavenger animals such as ravens (*Corvus corax*) and raccoons (*Procyon lotor*) often learn to recognize areas that can provide food, such as restaurants or large disposal bins, but other animals may not be able to distinguish between different urban areas. Certain animals have learned to depend on and take advantage of human activity, such as crows who place nuts strategically so that cars will crack them open for them to eat [@nihei_when_2002].
+-->
+
+\newpage
