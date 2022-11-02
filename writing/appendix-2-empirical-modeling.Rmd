@@ -1,0 +1,426 @@
+---
+title: "Appendix 2: Empirical modeling"
+author:
+  - name: Stefano Mezzini
+    email: stefano.mezzini@ubc.ca
+    institute: ubco
+  - name: Emilia Patrícia Medici
+    institute: [tapir, iucn, escas]
+  - name: Michael J. Noonan
+    email: michael.noonan@ubc.ca
+    institute: ubco
+institute:
+  - ubco: The Irving K. Barber Faculty of Science, The University of British Columbia, Okanagan Campus, Kelowna, Canada.
+  - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960‑000, Brazil.
+  - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
+  - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960‑000, Brazil.
+bibliography: 'env-var-review.bib'
+csl: 'the-american-naturalist.csl'
+fontsize: 12pt
+indent: true
+header-includes:
+    - \usepackage{indentfirst} # for indenting first line of each paragraph
+    - \usepackage[small]{titlesec} # for smaller font for headings
+    - \usepackage{caption} # for more customization of captions
+    # smaller caption text, less space above and below caption
+    - \captionsetup[figure]{font=scriptsize}
+subparagraph: true # needed for \usepackage[small]{titlesec}
+linenumbers: true
+output:
+  bookdown::pdf_document2:
+    pandoc_args:
+      - '--lua-filter=scholarly-metadata.lua'
+      - '--lua-filter=author-info-blocks.lua'
+    toc: false
+---
+
+<!-- set default code chunk options -->
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(eval = FALSE, echo = TRUE, message = FALSE, fig.align = 'center')
+```
+
+<!-- add custom commands for formulae -->
+
+\newcommand{\e}{\mathbb E}
+\newcommand{\var}{\mathbb V}
+\newcommand{\vpos}{\mathbb V(\text{position})}
+
+<!-- have table of contents on pages of its own -->
+
+\newpage
+
+\tableofcontents
+
+# To do {-}
+
+* add scripts to the correct folders and check
+* add "for more info, see the tapir project" at the beginning
+* add refs for each package used
+
+\newpage
+
+This appendix illustrates the steps necessary to reproduce the tapir movement analysis and figures in the main manuscript. For ease of reference, we also include the figure here:
+
+```{r moving-window-examples, fig.cap="Seven-day home range size of a tapir ($Tapirus~terrestris$) in response to changes in mean and variance in resource abundance. (a.) GPS tracking data of the tapir. (b.) Mean resource abundance esimated as the mean NDVI at the locations visited by the tapir. (c.) Varince in resource abundance esimated as the average variance in NDVI at the locations visited by the tapir. (d.) Estimated home range size during each seven-day period, based on 50\\% (bold) and 95\\% (thin) utilization quantiles. (e.) Effect of resource abundance on home range size. (f.) Effect of resource unpredictability on home range size. The effects in panels e and f were estimated using generalized linear models with Gamma conditional distributions. The tapir movement data corresponds to the individual named \"Anna\" from the Cerrado sample of Medici $et~al.$ (2022).", out.width='100%', eval=TRUE, echo=FALSE}
+knitr::include_graphics('../figures/tapir-example.png')
+```
+
+Estimating the effects of resource abundance and unpredictability on the tapir's spatial needs requires us to first estimate the changes in the tapir's spatial needs (section \@ref(movement)) and the changes in resource abundance and variance (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and spatial use to recreate the final figure (section \@ref(final-fig)).
+
+To minimize the computational costs of creating this appendix, we load the necessary objects through hidden `R` chunks rather than running all the code in the final pdf. Still, those interested in replicating the analysis can do so by using the code in the pdf document or the related `R` markdown (`Rmd`) document. Listed below are all the packages and source scripts required to run the analyses in this document:
+
+```{r, eval=TRUE, comment=FALSE}
+# attach all necessary packages
+library('raster')    # to import and save rasters
+library('dplyr')     # for data wrangling
+library('purrr')     # for functional programming
+library('tidyr')     # for data wrangling
+library('ggplot2')   # for fancy plots
+library('cowplot')   # for fancy multi-panel plots
+library('ctmm')      # for movement modeling
+library('mgcv')      # for empirical Bayesian modeling
+library('lubridate') # for smoother date wrangling
+library('sf')        # for spatial features
+library('MODIStsp')  # for downloading NDVI rasters
+
+# resolve conflicts between packages
+select <- dplyr::select
+
+# source all necessary scripts
+source('../analysis/figures/default-figure-styling.R') # NDVI color palette
+source('../earthdata-login-info.R') # personal login info for EarthData
+source('../analysis/figures/default-figure-styling.R') # for color palettes
+source('../functions/window_hr.R') # function to calculate HRs
+```
+
+# Modeling the tapir's movement over time {#movement}
+
+The script `analysis/tapir/tapirs-moving-window.R` estimates the seven-day spatial use of various tapirs from the Brazilian Cerrado. Here, we simplified the code so that it only estimates the spatial use of the tapir in the manuscript, Anna:
+
+```{r}
+# import tapir data from https://github.com/StefanoMezzini/tapirs
+anna <- readRDS('../../tapirs/models/tapirs-final.rds') %>%
+  filter(name.short == 'ANNA')
+anna_tel <- anna$data[[1]] # telemetry data
+
+# projection for the region in the Brazilian Cerrado
+ctmm::projection(anna_tel) <- '+proj=utm +zone=22 +datum=NAD83 +units=m'
+
+# calculate the 7-day home range estimate
+anna_mw <-
+  window_hr(
+    anna_tel,
+    window = 7 %#% 'day', # 1 week of data for sufficient sample size
+    dt = 1 %#% 'day', # move window over by a single day each time
+    fig_path = '../figures',
+    rds_path = '../models'
+  )
+```
+
+```{r, echo=FALSE, eval=TRUE}
+anna <- readRDS('../../tapirs/models/tapirs-final.rds') %>%
+  filter(name.short == 'ANNA')
+anna_tel <- anna$data[[1]] # telemetry data
+
+# projection for the region in the Brazilian Cerrado
+ctmm::projection(anna_tel) <- '+proj=utm +zone=22 +datum=NAD83 +units=m'
+
+anna_mw <- readRDS('../models/CE_31_ANNA-window-7-days-dt-1-days.rds')
+```
+
+The `window_hr()` function estimates the tapir's home range using a sliding window approach with a window size of 7 days that starts with the first seven days of data (2017-06-24 to 2017-07-01) and then repeats the analysis for the second seven-day set (2017-06-25 to 2017-07-02) until it reaches the last set of days (2018-09-23 to 2018-09-30). It then saves an exploratory figure (figure \@ref(fig:mw)) to the `figures` folder and the list of movement models to the `models` folder.
+
+```{r mw, eval=TRUE, echo=FALSE, fig.cap="Exploratory figure created by the $\\tt{window\\_hr()}$ function. Panel $\\mathbf{a.}$ shows the tapir's movement data, while panel $\\mathbf{b.}$ shows the seven-day home range estimates (95\\% and 50\\% utilization quantiles) with 95\\% confidence intervals."}
+knitr::include_graphics('../figures/CE_31_ANNA-window-7-days-dt-1-days.png')
+```
+
+# Modeling $\e(R)$ and $\var(R)$ over time {#ndvi}
+
+To estimate the resources in the tapir's habitat, we used satellite-measured Normalized Difference Vegetation Index [NDVI, see @pettorelli-ref]. We downloaded the data using the `MODIStsp` `R` package with the following code:
+
+```{r}
+anna_ud <- anna$akde[[1]]
+
+bbox <-
+  SpatialPolygonsDataFrame.UD(anna_ud,
+                              level.UD = 0.9995, # utilization quantile
+                              level = 0) %>% # no CIs
+  st_as_sf() %>%
+  st_transform(crs = '+proj=longlat') %>%
+  st_bbox()
+
+# download NDVI rasters (if needed, create all necessary folders first)
+MODIStsp(gui = FALSE, # do not use the browser GUI, only run in R
+         out_folder = '../data/ndvi-rasters/tapir-anna',
+         selprod = 'Vegetation Indexes_16Days_250m (M*D13Q1)',
+         prod_version = '061', # 2022 raster version
+         bandsel = 'NDVI', # NDVI layer only
+         sensor = 'Terra', # only terrestrial values, ignore water
+         user = USERNAME, # Earthdata username for urs.earthdata.nasa.gov
+         password = PASSWORD, # your Earthdata password
+         start_date = format(min(anna_tel$timestamp) - 16, '%Y.%m.%d'),
+         end_date = format(max(anna_tel$timestamp) + 16, '%Y.%m.%d'),
+         spatmeth = 'bbox', # use a bounding box for the extent
+         bbox = bbox, # spatial file for raster extent
+         out_projsel = 'User Defined', # use specified projection
+         output_proj = '+proj=longlat', # download unprojected raster
+         resampling = 'bilinear', # raster resampling method for new proj
+         delete_hdf = TRUE, # delete HDF files after download is complete
+         scale_val = TRUE, # convert from integers to floats within [-1, 1]
+         out_format = 'GTiff', # output format
+         verbose = TRUE) # print processing messages
+
+# save NDVI data as an rds file of a tibble
+anna_ndvi <-
+  list.files(
+    path = '../data/ndvi-rasters/tapir-anna/VI_16Days_250m_v61/NDVI/',
+    pattern = '.tif', full.names = TRUE) %>%
+  stack() %>% # import all rasters as a single stack
+  rasterToPoints() %>% # convert to a matrix of points
+  data.frame() %>% # convert to a data frame
+  pivot_longer(-c(x, y)) %>% # change to long format (x, y, name, value)
+  transmute(long = x, # rename x column
+            lat = y, # rename y column
+            date = substr(name, # change name to a date
+                          start = nchar('MOD13Q1_NDVI_x'),
+                          stop = nchar(name)) %>%
+              as.Date(format = '%Y_%j'), # format is year_julian date
+            ndvi = value, # rename value column
+            dec_date = decimal_date(date))
+```
+
+```{r, echo=FALSE, eval=TRUE}
+# import NDVI data
+anna_ndvi <-
+  readRDS('../data/tapir-anna-ndvi-data.rds') %>%
+  mutate(dec_date = decimal_date(date))
+```
+
+We removed the raster for 2017-12-19 because the values were unusually low for the region. We hypothesize the change in NDVI was drastic, temporary, and widespread because of a sudden flood (which is common for the Cerrado):
+
+<!-- using echo = TRUE and eval = TRUE because this needs to be both visible and evaluated -->
+
+```{r, echo=TRUE, eval=TRUE, fig.height=4, fig.width=5, out.width='100%'}
+anna_ndvi %>%
+  filter(date >= as.Date('2017-08-29'), date <= as.Date('2018-04-07')) %>%
+  ggplot() +
+  facet_wrap(~ date, nrow = 3) + # a raster for each date
+  coord_equal() + # keep the scaling of x and y equal
+  geom_tile(aes(long, lat, fill = ndvi)) +
+  scale_x_continuous(NULL, breaks = NULL, expand = c(0, 0)) +
+  scale_y_continuous(NULL, breaks = NULL, expand = c(0, 0)) +
+  scale_fill_gradientn('NDVI', colours = ndvi_pal, limits = c(-1, 1)) +
+  theme(legend.position = 'top')
+
+anna_ndvi <- filter(anna_ndvi, date != '2017-12-19') # remove bad values
+```
+
+Ideally, one should model NDVI using a family of distributions that accounts for the fact that NDVI cannot be less than -1 or greater than 1. The beta family would be appropriate after applying the linear transformation $$y^* = \frac{y + 1}{2},$$ where $y$ is the original NDVI value (between -1 and 1) while $y^*$ is the NDVI value scaled between 0 and 1. However, the `mgcv` package [@ref] does not allow one to model changes in variance in NDVI using a location-scale model with a beta family. Although the `brms` package allows one to fit beta location-scale models [@ref], the computational costs of using a fully Bayesian approach can be prohibitive for large datasets. Therefore, we decided to use a location-scale Gaussian model via the `mgcv` package (`family = gaulss()` in the code chunk below). Given the large amounts of data, the predictions are sufficiently far from -1 and 1 that any bias appears to be negligible.
+
+```{r}
+m_ndvi <-
+  gam(list(
+    # mean predictor
+    ndvi ~
+      s(long, lat, bs = 'ds', k = 20) + # mean over space (k = 20 * 20)
+      s(dec_date, bs = 'tp', k = 20),   # high k to account for adaptions
+    # precision (1/standard deviation) predictor
+    ~
+      s(long, lat, bs = 'ds', k = 10) + # precision over space
+      s(dec_date, bs = 'tp', k = 10)),  # precision over time
+    family = gaulss(b = 0.0001), # minimum standard deviation of 0.0001
+    data = anna_ndvi,
+    method = 'REML') # performs better than GCV (the default)
+
+# plot smooths (predictions are on the link scales!)
+plot(m_ndvi, pages = 1, scheme = 1, n = 250)
+```
+
+```{r, echo=FALSE, eval=TRUE}
+m_ndvi <- readRDS('../models/CE_31_ANNA-mgcv-ndvi-gulss.rds')
+plot(m_ndvi, pages = 1, scheme = 1, n = 250)
+```
+
+# Modeling the effects of $\e(R)$ and $\var(R)$ on spatial needs {#final-fig}
+
+We start by simulating a movement track that passes near all recorded locations using the movement model estimated from the telemetry data. Note that this step can take hours to run, so we suggest skipping it if one is only interested in replicating the most important portions of the analysis (since the track is only used for panel $\mathbf{a.}$ in the figure).
+
+```{r}
+# simulate the movement track with an interval of 100 seconds
+anna_ouf <- anna$model[[1]]
+track <-
+  predict(anna_ouf, data = anna_tel, dt = 100, complete = TRUE) %>%
+  data.frame() %>%
+  select(timestamp, longitude, latitude) %>%
+  rename(long = longitude, lat = latitude) %>%
+  mutate(dec_date = decimal_date(timestamp))
+```
+
+```{r, eval=TRUE, echo=FALSE}
+track <- readRDS('../models/CE_31_ANNA-track-dt-100.rds')
+```
+
+To create panels $\mathbf{b.}$-$\mathbf{f.}$, we use the NDVI Gaussian location-scale model to estimate the mean and variance in NDVI for each known location of the tapir.
+
+```{r, eval=TRUE}
+# function to make predictions from the NDVI model based on telemetry data
+ndvi_preds <- function(.data) {
+  .data <- .data %>%
+    data.frame() %>% # convert telemetry data to a data.frame
+    mutate(year = year(timestamp),
+           doy = yday(timestamp))
+  
+  predict.gam(m_ndvi, newdata = .data, type = 'response', se.fit = FALSE)%>%
+    data.frame() %>% # from list to data frame
+    tibble() %>% # from data frame to tibble
+    transmute(mu = X1, # rename mean column
+              sigma2 = (1/X2)^2) %>% # convert precision to variance
+    return()
+}
+
+anna_tel <- data.frame(anna_tel) %>%
+  tibble() %>%
+  rename(long = longitude, lat = latitude) %>%
+  mutate(dec_date = decimal_date(timestamp))
+anna_tel <- bind_cols(anna_tel, ndvi_preds(anna_tel))
+```
+
+We also apply the function to the subset of the telemetry data belonging to each of the seven-day periods.
+
+```{r, eval=TRUE}
+anna_mw <-
+  mutate(
+    anna_mw,
+    # estimate mean and variance in NDVI
+    preds = map(dataset, \(.d)
+                filter(anna_tel, timestamp %in% .d$timestamp)),
+    # extract the column of mean NDVI and take the average
+    mu = map_dbl(preds, \(.d) mean(.d$mu)),
+    # extract the column of variance in NDVI and take the average
+    sigma2 = map_dbl(preds, \(.d) mean(.d$sigma2))) %>%
+  # only keep necessary coliumns
+  select(t_center, mu, sigma2, hr_lwr_50, hr_est_50, hr_upr_50, hr_lwr_95,
+         hr_est_95, hr_upr_95) %>%
+  # change to long format (one column for both utilization quantiles)
+  pivot_longer(c(hr_lwr_50, hr_est_50, hr_upr_50, hr_lwr_95, hr_est_95,
+                 hr_upr_95), names_to = c('.value', 'quantile'),
+               names_pattern = '(.+)_(.+)') %>%
+  mutate(t_center = as.POSIXct(t_center, origin = '1970-01-01'),
+         quantile = paste0(quantile, '%'),
+         quantile = factor(quantile))
+anna_mw
+```
+
+We now have all the necessary objects to create the final figure:
+
+```{r}
+# min and max of the tracking dates
+date_labs <- range(anna_tel$timestamp) %>% as.Date()
+
+p_track <-
+  ggplot() +
+  coord_equal() +
+  geom_path(aes(long, lat), track, alpha = 0.3) +
+  geom_point(aes(long, lat, color = dec_date), anna_tel) +
+  scale_color_viridis_c(NULL, breaks = range(anna_tel$dec_date),
+                        labels = date_labs) +
+  labs(x = NULL, y = NULL)
+
+p_mu <-
+  ggplot(anna_mw, aes(t_center, mu)) +
+  geom_line(color = pal[1]) +
+  labs(x = NULL, y = '\U1D707(t)')
+
+p_sigma2 <-
+  ggplot(anna_mw, aes(t_center, sigma2)) +
+  geom_line(color = pal[2]) +
+  labs(x = NULL, y = '\U1D70E\U00B2(t)')
+
+p_hr <-
+  ggplot(anna_mw) +
+  geom_line(aes(t_center, hr_est, group = quantile, size = quantile),
+            color = pal[3], show.legend = FALSE) +
+  geom_ribbon(aes(t_center, ymin = `50%`, ymax = `95%`),
+              anna_mw %>%
+                select(t_center, hr_est, quantile) %>%
+                pivot_wider(values_from = hr_est, names_from = quantile),
+              fill = pal[3], color = 'transparent', alpha = 0.2,
+              inherit.aes = FALSE) +
+  labs(x = NULL, y = expression(Home~range~size~(km^2)~'   ')) +
+  scale_size_manual(values = c(1, 0.5))
+```
+
+To ensure all panels are properly aligned, we convert each plot to a grid object (a "grob") and then align each grob.
+
+```{r}
+# convert to grid graphical objects (grobs)
+grobs <- map(list(p_track, p_mu, p_sigma2, p_hr), as_grob)
+
+# align left margins of all plots
+aligned_widths <- align_margin(map(grobs, function(x) {x$widths}), 'first')
+
+# Setting the dimensions of plots to the aligned dimensions
+for (i in seq_along(grobs)) {
+  grobs[[i]]$widths <- aligned_widths[[i]]
+}
+# Draw aligned plots
+p_left <- plot_grid(plotlist = grobs, ncol = 1,
+                    labels = paste0(letters, '.'))
+```
+
+## there should be a model for anna instead of `geom_smooth()!
+
+```{r}
+reg_mu <-
+  ggplot(anna_mw) +
+  coord_cartesian(ylim = c(0, 13)) +
+  geom_point(aes(mu, hr_est, group = quantile, shape = quantile), alpha = 0.3,
+             color = pal[3]) +
+  geom_smooth(aes(mu, hr_est, group = quantile, size = quantile),
+              color = pal[1], se = FALSE, method = 'gam',
+              formula = y ~ x, method.args = list(family = "Gamma")) +
+  scale_x_continuous('Resource abundance') +
+  scale_y_continuous(expression(Home~range~size~(km^2)), expand = c(0, 0)) +
+  scale_size_manual(values = c(1, 0.5)) +
+  theme(legend.position = 'none')
+
+# variance
+reg_s2 <-
+  ggplot(anna_mw) +
+  coord_cartesian(ylim = c(0, 13)) +
+  geom_point(aes(sigma2, hr_est, group = quantile, shape = quantile),
+             alpha = 0.3, color = pal[3]) +
+  geom_smooth(aes(sigma2, hr_est, group = quantile, size = quantile),
+              color = pal[2], se = FALSE, method = 'gam',
+              formula = y ~ x, method.args = list(family = "Gamma")) +
+  scale_x_continuous('Resource unpredictability') +
+  scale_y_continuous(expression(Home~range~size~(km^2)), expand = c(0, 0)) +
+  scale_size_manual('Quantile', values = c(1, 0.5)) +
+  scale_shape('Quantile') +
+  theme(legend.position = 'none')
+
+leg <-
+  get_legend(
+    ggplot(anna_mw) +
+      geom_smooth(aes(sigma2, hr_est, group = quantile, size = quantile),
+                  se = FALSE, method = 'gam', color = 'black',
+                  formula = y ~ x, method.args = list(family = "Gamma")) +
+      geom_point(aes(sigma2, hr_est, group = quantile, shape = quantile),
+                 color = pal[3]) +
+      scale_size_manual('Utilization quantile', values = c(1, 0.5)) +
+      scale_shape('Utilization quantile') +
+      theme(legend.position = 'top')
+  )
+
+# add a legend on the top 
+p_regs <- plot_grid(leg, reg_mu, reg_s2, ncol = 1,
+                    rel_heights = c(0.1, 1, 1), labels = c('', 'e.', 'f.'))
+
+# group all the plots together
+plot_grid(p_left, p_regs)
+```
+
+```{r, echo=FALSE, eval=TRUE, out.width='100%'}
+knitr::include_graphics('../figures/tapir-example.png')
+```

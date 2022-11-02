@@ -50,3 +50,13 @@ rsconnect/
 
 # manuscript comments
 writing/comments/*
+
+# ndvi rasters and data
+data/ndvi-rasters/*
+data/tapir-anna-ndvi-data.rds
+
+# models
+models/*
+
+# personal earthdata credentials
+earthdata-login-info.R
