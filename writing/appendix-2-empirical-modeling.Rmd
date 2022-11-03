@@ -1,5 +1,6 @@
 ---
-title: "Appendix 2: Empirical modeling"
+title: \large How resource abundance and stochasticity affect animals' spatial needs
+subtitle: "Appendix 2: Empirical modeling"
 author:
   - name: Stefano Mezzini
     email: stefano.mezzini@ubc.ca
@@ -25,7 +26,6 @@ header-includes:
     # smaller caption text, less space above and below caption
     - \captionsetup[figure]{font=scriptsize}
 subparagraph: true # needed for \usepackage[small]{titlesec}
-linenumbers: true
 output:
   bookdown::pdf_document2:
     pandoc_args:
@@ -238,7 +238,7 @@ plot(m_ndvi, pages = 1, scheme = 1, n = 250)
 ```
 
 ```{r, echo=FALSE, eval=TRUE}
-m_ndvi <- readRDS('../models/CE_31_ANNA-mgcv-ndvi-gulss.rds')
+m_ndvi <- readRDS('../models/CE_31_ANNA-mgcv-ndvi-gaulss.rds')
 plot(m_ndvi, pages = 1, scheme = 1, n = 250)
 ```
 
