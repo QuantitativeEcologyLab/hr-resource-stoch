@@ -1,16 +1,28 @@
 ---
-title: "Appendix 1: Simulations"
+title: \large How resource abundance and stochasticity affect animals' spatial needs
+subtitle: "Appendix 1: Simulations"
 author:
   - name: Stefano Mezzini
     email: stefano.mezzini@ubc.ca
     institute: ubco
+  - name: Emilia Patrícia Medici
+    institute: [tapir, iucn, escas]
   - name: Michael J. Noonan
     email: michael.noonan@ubc.ca
     institute: ubco
 institute:
   - ubco: The Irving K. Barber Faculty of Science, The University of British Columbia, Okanagan Campus, Kelowna, Canada.
+  - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960‑000, Brazil.
+  - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
+  - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960‑000, Brazil.
 fontsize: 12pt
-indent: true
+header-includes:
+    - \usepackage{indentfirst} # for indenting first line of each paragraph
+    - \usepackage[small]{titlesec} # for smaller font for headings
+    - \usepackage{caption} # for more customization of captions
+    # smaller caption text, less space above and below caption
+    - \captionsetup[figure]{font=scriptsize}
+subparagraph: true # needed for \usepackage[small]{titlesec}
 output:
   bookdown::pdf_document2:
     pandoc_args:
@@ -22,7 +34,10 @@ output:
 <!-- set default code chunk options -->
 
 ```{r, echo=FALSE}
-knitr::opts_chunk$set(eval = FALSE, echo = TRUE, message = FALSE)
+knitr::opts_chunk$set(eval = FALSE,    # do not run R code
+                      echo = TRUE,     # print R code
+                      message = FALSE, # hide messages
+                      comment = '')    # don't add anything before outputs
 ```
 
 <!-- add custom commands for formulae -->
@@ -40,35 +55,36 @@ knitr::opts_chunk$set(eval = FALSE, echo = TRUE, message = FALSE)
 # To do {-}
 
 * change all references to scripts to the correct file locations
-* give an overview of how the sims work at the beginning of the pdf
+* give an overview of how the sims work at the beginning of the pdf (including defining "encounters" with resources)
 * explain the checks in `delta-t-sensitivity.R`
 * reduce scaling of figure 2
+* fix captions (incomplete, maybe incorrect def of sims, HR not V(pos))
 
 \newpage
 
-# Overview {-}
+# Overview
 
-This appendix illustrates all the steps necessary to produce the simulation figures in the main manuscript. For ease of reference, we also include the figures here:
+This appendix illustrates all the steps necessary to produce the simulation figures in the main manuscript. For ease of reference, we also include the figures here (Figures \@ref(fig:5-5-sims) and \@ref(fig:5-5-reg)). To achieve full transparency while minimizing computational times, the code illustrated in this pdf is not executed during the knitting of the document. Instead, the R Markdown document (`writing/appendix-1-simulations.Rmd`) contains code chunks that import the `RDS` files saved by the scripts used during the analysis via `R` code that is not printed in the pdf file. Although one can replicate the analyses by running the code in this pdf, we suggest only using this document for illustrative purposes and as a general guide. We suggest using the `R` scripts to replicate the simulations, instead.
 
-```{r 5-5-sims, eval=TRUE, echo=FALSE, fig.cap="Simulated spatial requirements for animals living in habitats where the mean and variance in resource availability ($R$) are constant, linearly increasing, cyclical, drifting, or erratic over time. The bottom line indicates the animal's core home range (0.5 quantile), while the top line indicates the 0.95 utilization quantile. Note how both quantiles decrease nonlinearly as $\\mathbb E(R)$ increases, and they increase approximately linearly as $\\mathbb V(R)$ increases. Additionally, the variance in both quantiles is higher when $\\mathbb V(R)$ is higher, and changes in $\\mathbb V(R)$ have greater impacts when $\\mathbb E(R)$ is low.\nSimulations were run such that animals followed the same 1000 tracks at each time point starting from the point $\\langle 0, 0\\rangle$ until they reach satiety, at which point they returned to $\\langle 0, 0\\rangle$ over the same amount of time. The animal's spatial variance parameter was then calculated using an OUF model via the $\\tt{ctmm}$ package", out.width='100%'}
+```{r 5-5-sims, eval=TRUE, echo=FALSE, fig.cap="Simulated spatial requirements for animals living in habitats where the mean and variance in resource availability ($R$) are constant, linearly increasing, cyclical, drifting, or erratic over time. The bottom line indicates the animal's core home range (0.5 quantile), while the top line indicates the 0.95 utilization quantile. Note how both quantiles decrease nonlinearly as $\\e(R)$ increases, and they increase approximately linearly as $\\var(R)$ increases. Additionally, the variance in both quantiles is higher when $\\var(R)$ is higher, and changes in $\\var(R)$ have greater impacts when $\\e(R)$ is low.\nSimulations were run such that animals followed the same 100 tracks at each time point starting from the point $\\langle 0, 0\\rangle$ until they reach satiety, at which point they returned to $\\langle 0, 0\\rangle$ over the same amount of time. The animal's spatial variance parameter was then calculated using an Ornstein-Uhlenbeck Foraging (OUF) model via the $\\tt{ctmm}$ package", out.width='100%'}
 knitr::include_graphics('../figures/mean-variance-5-by-5-hr-sims.png')
 ```
 
-\newpage
-
-```{r 5-5-reg, eval=TRUE, echo=FALSE, fig.cap="Effects of $\\e(R)$ and $\\var(R)$ on simulated spatial requirements. The bottom line indicates the relationships with the animal's core home range (0.5 quantile), while the top line indicates the relationship with the 0.95 utilization quantile. Note the nonlinear decrease in both utilization quantiles as $\\e(R)$ increases and the nonlineear increase in both utilization quantiles as $\\var(R)$ increases.", out.width='100%'}
+```{r 5-5-reg, eval=TRUE, echo=FALSE, fig.cap="Effects of $\\e(R)$ and $\\var(R)$ on simulated spatial requirements. The relationships were estimated using a Generalized Linear Model with a Gamma family. The thicker bottom line indicates the relationships with the animal's core home range (0.5 quantile), while the thinner top line indicates the relationship with the 0.95 utilization quantile. Note the nonlinear decrease in both utilization quantiles as $\\e(R)$ increases and the nonlineear increase in both utilization quantiles as $\\var(R)$ increases.", out.width='100%'}
 knitr::include_graphics('../figures/simulation-regression-plots.png')
 ```
 
-## explain how the sims work
-
-To achieve full transparency while minimizing computational times, the code illustrated in this pdf is not executed during the knitting of the document. Instead, the R Markdown document ($\tt{writing/appendix-1-simulations.Rmd}$) contains code chunks that import the `RDS` files saved by the scripts used during the analysis via `R` code that is not printed in the pdf file. Although one can replicate the analyses by running the code in this pdf, we suggest only using this document for illustrative purposes and as a general guide. To replicate the simulations, we suggest using the `R` scripts, instead.
+\newpage
 
 # Simulating the movement tracks
 
-To reduce sampling variance between simulations, we use the same set of simulated tracks for each time point in each panel. In the $\tt{analysis/simulations/tracks.R}$ script, we generate $2^{10} = 1024$ tracks to check how many tracks are necessary to obtain stable home range estimates in the best- and worst-case scenarios. Most intermediate and diagnostic checks included in the `R` scripts are not included in this document for the sake of brevity and simplicity.
+To reduce sampling variance between simulations, we use the same set of simulated tracks for each time point in each panel (figure \@ref(fig:sims-example)). In the `analysis/simulations/tracks.R` script, we generate $2^{10} = 1024$ tracks to check how many tracks are necessary to obtain stable home range estimates in the best- and worst-case scenarios. Most intermediate and diagnostic checks included in the `R` scripts are not included in this document for the sake of brevity and simplicity.
 
-```{r load-packages, eval=TRUE, comment=FALSE}
+```{r sims-example, echo=FALSE, eval=TRUE, fig.cap="Overview of how animals' spatial needs were simulated. (a.) Animal tracks were simulated using an infinitely diffusive movement model starting from the point $\\langle 0, 0 \\rangle$ (black and yellow square). (b.) Each time the track crossed into a new cell (green dots), the animal collected a random amount of resources that followed a Gamma distribution with common mean $\\mu (t)$ and variance $\\sigma^2 (t)$. (c.) Each time the animal collected more resources, its satiety (purple) increased. Once the animal collected sufficient resources, the animal stopped moving (i.e., the track was truncated). (d.) The process was repeated 100 times (13 tracks pictured in this panel). (e.) The final set of (truncated) tracks was then modeled using Ornstein-Uhlenbeck Foraging models to estimate the 95\\% and 50\\% home range estimates using Autocorrelated Kernel Density Estimates.", out.width='100%', fig.pos='!h'}
+knitr::include_graphics('../figures/simulation-example.png')
+```
+
+```{r simulate-tracks, eval=TRUE}
 # NOTE: change your working directory to be "env-var-review/writing", or
 # modify all file paths as needed
 library('ctmm')   # for generating movement models and movement modeling
@@ -87,10 +103,7 @@ HABITAT <- matrix(data = 1, nrow = 500, ncol = 500) %>%
 
 # infinitely diffusive movement model
 model <- ctmm(tau = c(Inf, 1e3), sigma = 0.1, mu = c(0, 0))
-# summary(model) # FAILS TO KNIT BECAUSE OF TAU CHARACTER # check the parameters of the model
-```
 
-```{r simulate-tracks}
 N_DAYS <- 2^10 # number of "days" (i.e., tracks with different seeds)
 
 # extracts tracks from a ctmm movement model for given sample times
@@ -106,6 +119,7 @@ get_tracks <- function(day, times = SAMPLES) {
 tracks <- tibble(day = 1:N_DAYS, # a simulation for each day
                  tel = map(.x = day, # set a seed for consistent results
                            .f = get_tracks)) # function to generate tracks
+tracks
 
 # find patch visits and calories consumed from the tracks
 tracks <-
@@ -118,25 +132,213 @@ tracks <-
 
 # make a single, large tibble (will need lots of RAM)
 tracks <- tidyr::unnest(tracks, track)
+tracks
 ```
 
-After generating the tracks, we performed the following tests to ensure the tracks were appropriate and results would be stable:
+After generating the tracks, we performed the following tests to ensure the number and length of the tracks were large enough for results to be stable. For the sake of conciseness, the code for each of the checks is not presented in this appendix, but it is available in the `R` scripts referenced in each section.
 
 ## Checking whether adding return trips is necessary
 
-This check was performed with the code in the $\tt{analysis/figures/simulations/return-sensitivity.R}$ script. Adding return trips to $\langle0, 0\rangle$ after an animal reached satiety doubled computational times without appreciable improvements on the home range estimates (including the 95% CIs). 
+Script: `analysis/figures/simulations/return-sensitivity.R`
+
+Adding return trips to $\langle0, 0\rangle$ after an animal reached satiety doubled computational times without appreciable improvements on the home range estimates (including the 95% CIs).
 
 ## Checking whether the sampling interval is sufficiently small
 
-This check was performed with the code in the $\tt{analysis/figures/simulations/delta-t-sensitivity.R}$ script. ***explain what I did***
+Script: `analysis/figures/simulations/delta-t-sensitivity.R`
 
-```{r dt-sensitivity, fig.cap="Diagnostic tests used to decide an appropriate sampling interval. (a.) Histograms of the number of encounters as a function of the interval between envounters, with a binwith of 30 seconds. Although some encounters occur with less than 30 seconds between them, most of them occur at least 60 seconds apart. (b.) Number of encounters with food detected as a function of sampling interval. The colored lines indicate the estimated relationship based on a Generalized Additive Model fit using the $\\tt{geom\\_smooth}$ function from the $\\tt{ggplot2}$ package. Although the number of encounters detected decreases as sampling interval doubles, the loss at 30 seconds is negligible. (c.) Beginning of the track generated with seed \"1\" (purple line) with the location of each sample for different sampling intervals. Red dots indicate samples where the animal remained in the same cell, while the blue squares indicate when an animal was in a new cell, and thus encountered food. While the number of feeding events detected decreases as the sampling interval increases, most of the feeding events lost at $\\Delta t = 30$s occured because the animal remained almost adjacent to the borders between cells. (d.) The three tracks used in these tests over the raster used to determine when the animals encountered food.", out.width='100%', echo=FALSE, eval=TRUE}
+Using three tracks generated using three arbitrary seeds (1, 2, and 3), we explored the effects of sampling interval on the number of encounters with food (i.e., movements to new cells) detected. From each of the four checks, we created an exploratory plot that we present in figure \@ref(fig:dt-sensitivity).
+
+**Exploratory plot \@ref(fig:dt-sensitivity)a.** The amount of time between encounters ranged from 1 second (the minimum sampling interval) to 24 minutes and 10 seconds. Approximately 93% of the encounters (500/536, excluding the first 3 events of each track) occurred with 30 or more seconds between events.
+
+**Exploratory plot \@ref(fig:dt-sensitivity)b.** Halving the sampling interval had little to no effect on the total number of encounters for $\Delta t \lessapprox 60 \,s.$
+
+**Exploratory plot \@ref(fig:dt-sensitivity)c.** A sampling interval of $\Delta t = 30$ seconds was small enough to capture fine-scale movement in the tracks while avoiding excessive amounts of data and an inflated amount of encounters with resources while an animal was near cell boundaries.
+
+**Exploratory plot \@ref(fig:dt-sensitivity)d.** The three tracks used for these exploratory plots are sufficiently different that we considered them to be a representative sample of movement tracks simulated by the OUF model. All three tracks have a reasonable amount of tortuous movement and directed movement. 
+
+```{r dt-sensitivity, fig.cap="Exploratory plots used to decide an appropriate sampling interval. (a.) Histograms of the number of encounters as a function of the interval between encounters, with a binwith of 30 seconds. Although some encounters occur with less than 30 seconds between them, most of them occur at least 60 seconds apart. (b.) Number of encounters with food detected as a function of sampling interval. The colored lines indicate the estimated relationship based on a Generalized Additive Model fit using the $\\tt{geom\\_smooth}$ function from the $\\tt{ggplot2}$ package. Although the number of encounters detected decreases as sampling interval doubles, the loss at 30 seconds is negligible. (c.) Beginning of the track generated with seed \"1\" (purple line) with the location of each sample for different sampling intervals. Red dots indicate samples where the animal remained in the same cell, while the blue squares indicate when an animal was in a new cell, and thus encountered food. While the number of encounters detected decreases as the sampling interval increases, most of the encounters lost at $\\Delta t = 30$s occured because the animal remained almost adjacent to the borders between cells. (d.) The three tracks used in these tests over the raster used to determine when the animals encountered food.", out.width='100%', echo=FALSE, eval=TRUE}
 knitr::include_graphics('../figures/thinning-examples.png')
 ```
 
+\newpage
+
 ## Checking how many tracks were necessary
 
-This check was performed with the code in the $\tt{analysis/simulations/hr-simulation-extreme-scenarios.R}$ script. ***explain, add figures***
+Script: `analysis/hr-simulation-extreme-scenarios.R`
+
+```{r}
+library('ctmm')    # for continuous-time movement modeling
+library('dplyr')   # for data wrangling (e.g., %>%)
+library('tidyr')   # for data wrangling (e.g., nested tibbles)
+library('ggplot2') # for fancy plots
+source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
+source('analysis/figures/mean-variance-trends-panel-data.R') # means & variances
+source('analysis/simulations/movement-model.R') # for consistency across scripts
+source('functions/get_hr.R') # for extracting gaussian home range
+theme_set(theme_bw())
+set.seed(1) # for consistent results
+
+tels <- readRDS('simulations/tracks.rds') # list of telemetry tracks
+tracks <- readRDS('simulations/labelled-tracks.rds') # tibble of tracks
+MAX_T <- max(tracks$t) # maximum amount of exploration time
+
+WORST <- filter(d55, mu == min(mu)) %>% # lowest mean resources
+  filter(sigma2 == max(sigma2)) %>% # with highest variance
+  slice(1) # take the first row only
+BEST <- filter(d55, mu == max(mu)) %>% # highest mean resources
+  filter(sigma2 == min(sigma2)) %>% # with lowest variance
+  slice(1) # take the first row only
+
+days <-
+  # modify WORST and BEST to follow the syntax used in 'offspring-simulations.R'
+  transmute(bind_rows(WORST, BEST),
+            animal,
+            mu,
+            sigma2,
+            d = list(tracks),
+            scenario = c('Worst case', 'Best case')) %>%
+  unnest(d) %>% # unnest the datasets so we have a single, large tibble
+  select(-timestamp) %>%
+  # generate the food for each row from a gamma distribution
+  mutate(food = rgamma2(mu = mu, sigma2 = sigma2, N = n()),
+         # if the animal visits a new cell, it finds food, otherwise it doesn't
+         food = if_else(new_cell, food, 0)) %>%
+  # end the movement once the animal has reached satiety
+  group_by(day, animal, scenario) %>%
+  # calculate the total number of visits, total calories, and if animal is full
+  mutate(satiety = cumsum(food), # use for diagnostics if animals don't get full
+         full = satiety >= REQUIRED) %>% # did the animal reach the its needs?
+  filter(cumsum(full) <= 1) %>% # full only once
+  ungroup()
+
+if(FALSE) {
+  # check if the ends of each day are correct and make sense
+  days_end <-
+    days %>%
+    group_by(scenario, day) %>%
+    filter(full, ! duplicated(full)) %>% # take the 1st row where animal is full
+    rename(t_expl = t) %>% # to avoid duplicated colnames with tracks
+    # remove unneded columns (also avoids duplicated colnames with tracks)
+    dplyr::select(-c(x, y, vx, vy, longitude, latitude, food))
+  
+  # check max fraction of time used (should be < 1)
+  max(days_end$t_expl) / MAX_T
+  
+  # are animals are full only once/day? (should be == 1)
+  sum(days_end$full) / (max(days$day) * 2)
+  
+  # plot of satiety over time by animal
+  ggplot(days, aes(t, satiety, group = day)) +
+    facet_wrap(~ scenario) +
+    geom_line(alpha = 0.05) +
+    geom_point(aes(t_expl), days_end, alpha = 0.1) +
+    geom_hline(yintercept = REQUIRED, color = 'red') +
+    geom_vline(xintercept = MAX_T, color = 'blue')
+  
+  # check distribution of animals
+  ggplot(days_end, aes(scenario, t_expl)) +
+    geom_hline(yintercept = MAX_T, color = 'red') +
+    geom_violin(fill = 'forestgreen', alpha = 0.3) +
+    geom_boxplot(fill = NA) +
+    labs(x = '', y = 'Exploration time')
+  
+  # check home ranges of animals
+  ggplot(days) +
+    facet_grid(. ~ scenario) +
+    coord_equal() +
+    geom_hex(aes(longitude, latitude)) +
+    scale_fill_distiller('Count', type = 'seq', na.value = 'transparent') +
+    theme(legend.position = 'top')
+}
+
+# single estimates that eventually converge to the asymptote ----
+days_summarized <-
+  days %>%
+  # find how long it took to reach satiety
+  group_by(scenario, day) %>%
+  nest(tel_day = -c(scenario, day)) %>%
+  mutate(t_expl = map_dbl(tel_day, \(d) max(d$t))) %>%
+  # add days sequentially
+  group_by(scenario) %>%
+  mutate(t_start = lag(2 * t_expl), # add the return time before next "day"
+         t_start = if_else(is.na(t_start), 0, t_start), # start at 0, not NA
+         t_start = cumsum(t_start), # make start times comsecutive
+         tel_day = map2(day, t_expl,
+                        \(i, te) tels$tel[[i]] %>% # extract tel for the day
+                          data.frame() %>% # for filtering
+                          filter(t <= te))) %>% # end tracks at satiety
+  unnest(tel_day) %>% # make one big dataset
+  mutate(t = t + t_start, # make times consecutive
+         individual.local.identifier = scenario, # ctmm identifier
+         timestamp = as.POSIXct(t, origin = '2000-01-01')) %>% # use new times 
+  ungroup() # remove grouping by scenario
+
+if(FALSE) {
+  # check times are adding up correctly
+  # best case should require less time
+  # blue and red lines should have same length (within the pair)
+  # black lines should be horizontal
+  days_summarized %>%
+    filter(day <= 10) %>%
+    ggplot(aes(day, timestamp)) +
+    facet_wrap(~ scenario, scales = 'free_y') +
+    geom_line() +
+    geom_line(aes(group = day), color = 'blue', lwd = 30) +
+    geom_line(aes(day, timestamp + t_expl, group = day), color = 'red', lwd =30)
+  
+  days_summarized %>%
+    filter(day <= 10) %>%
+    ggplot() +
+    facet_wrap(~ scenario) +
+    coord_equal() +
+    geom_path(aes(x, y, group = day), alpha = 0.5) +
+    geom_point(aes(0, 0)) +
+    geom_point(aes(x, y), filter(days_summarized, day <= 10, t == 0),
+               color = 'red')
+}
+
+# estimate saturation curve of home range size over number of days
+saturation_days <-
+  expand_grid(n_days = (2^seq(1, log2(1e3), by = 0.2)) %>% round() %>% unique(),
+              case = unique(days_summarized$scenario)) %>%
+  mutate(data = map2(n_days, case,
+                     \(.n, .case) filter(days_summarized,
+                                         day <= .n,
+                                         scenario == .case)),
+         tel = map(data, as.telemetry), # convert data to telemetry for modeling
+         theta = map(tel, \(x) ctmm.guess(data = x, interactive = FALSE)),
+         m = map(1:n(), \(i) {
+           cat('Fitting model', i, '\n')
+           ctmm.fit(tel[[i]], theta[[i]])
+           }), # fit movement model
+         sigma = map_dbl(m, \(.m) ctmm:::area.covm(.m$sigma)), # var(position)
+         hr = get_hr(.sigma = sigma, quantile = 0.95)) # Gaussian home range
+
+saveRDS(saturation_days, 'simulations/hr-saturation-days.rds')
+
+saturation_days %>%
+  select(case, n_days, sigma, hr) %>%
+  readr::write_csv('simulations/hr-saturation-days.csv')
+
+p_hr_days <-
+  ggplot(saturation_days, aes(n_days, hr)) +
+  facet_wrap(~ case, nrow = 1) +
+  geom_vline(xintercept = 100, color = 'darkorange') +
+  geom_smooth(method = 'gam', color = 'black',
+              formula = y ~ s(x, bs = 'cs', k = 10),
+              method.args = list(family = Gamma(link = 'log'))) +
+  geom_point(alpha = 0.3) +
+  scale_x_continuous(expression(Number~of~days~sampled~(log[2]~scale)),
+                     trans = 'log2', breaks = c(2, 16, 128, 1024),
+                     limits = c(2, 1100)) +
+  scale_y_log10(expression(Estimated~home~range~(log[10]~scale))); p_hr_days
+```
+
+```{r, eval=TRUE, echo=FALSE, fig.cap="Caption."}
+knitr::include_graphics('../figures/hr-over-days.png')
+```
+
 
 # Main scripts (to be run in the following order)
 
