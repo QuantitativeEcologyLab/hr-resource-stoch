@@ -60,3 +60,7 @@ models/*
 
 # personal earthdata credentials
 earthdata-login-info.R
+
+# Rmd cache and files
+writing/*_cache
+writing/*_files
