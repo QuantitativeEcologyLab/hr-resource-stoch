@@ -18,12 +18,11 @@ institute:
 bibliography: 'env-var-review.bib'
 csl: 'the-american-naturalist.csl'
 fontsize: 12pt
-indent: true
 header-includes:
     - \usepackage{indentfirst} # for indenting first line of each paragraph
     - \usepackage[small]{titlesec} # for smaller font for headings
     - \usepackage{caption} # for more customization of captions
-    # smaller caption text, less space above and below caption
+  # smaller caption text, less space above and below caption
     - \captionsetup[figure]{font=scriptsize}
 subparagraph: true # needed for \usepackage[small]{titlesec}
 output:
@@ -37,7 +36,12 @@ output:
 <!-- set default code chunk options -->
 
 ```{r, echo=FALSE}
-knitr::opts_chunk$set(eval = FALSE, echo = TRUE, message = FALSE, fig.align = 'center')
+knitr::opts_chunk$set(eval = FALSE,         # do not run R code
+                      echo = TRUE,          # print R code
+                      message = FALSE,      # hide messages
+                      comment = '',         # don't add anything before outputs
+                      fig.align = 'center', # change figure alignment
+                      cache = TRUE)         # cache all chunk outputs
 ```
 
 <!-- add custom commands for formulae -->
@@ -55,22 +59,23 @@ knitr::opts_chunk$set(eval = FALSE, echo = TRUE, message = FALSE, fig.align = 'c
 # To do {-}
 
 * add scripts to the correct folders and check
-* add "for more info, see the tapir project" at the beginning
-* add refs for each package used
 
 \newpage
 
-This appendix illustrates the steps necessary to reproduce the tapir movement analysis and figures in the main manuscript. For ease of reference, we also include the figure here:
+This appendix illustrates the steps necessary to reproduce the tapir movement analysis and figures in the main manuscript. The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at https://github.com/StefanoMezzini/tapirs. For ease of reference, we also include the figure below (figure \@ref(fig:mw-examples)).
 
-```{r moving-window-examples, fig.cap="Seven-day home range size of a tapir ($Tapirus~terrestris$) in response to changes in mean and variance in resource abundance. (a.) GPS tracking data of the tapir. (b.) Mean resource abundance esimated as the mean NDVI at the locations visited by the tapir. (c.) Varince in resource abundance esimated as the average variance in NDVI at the locations visited by the tapir. (d.) Estimated home range size during each seven-day period, based on 50\\% (bold) and 95\\% (thin) utilization quantiles. (e.) Effect of resource abundance on home range size. (f.) Effect of resource unpredictability on home range size. The effects in panels e and f were estimated using generalized linear models with Gamma conditional distributions. The tapir movement data corresponds to the individual named \"Anna\" from the Cerrado sample of Medici $et~al.$ (2022).", out.width='100%', eval=TRUE, echo=FALSE}
+```{r mw-example, fig.cap="Seven-day home range size of a tapir ($Tapirus~terrestris$) in response to changes in mean and variance in resource abundance. (a.) GPS tracking data of the tapir. (b.) Mean resource abundance esimated as the mean NDVI at the locations visited by the tapir. (c.) Varince in resource abundance esimated as the average variance in NDVI at the locations visited by the tapir. (d.) Estimated home range size during each seven-day period, based on 50\\% (bold) and 95\\% (thin) utilization quantiles. (e.) Effect of resource abundance on home range size. (f.) Effect of resource unpredictability on home range size. The effects in panels e and f were estimated using generalized linear models with Gamma conditional distributions. The tapir movement data corresponds to the individual named \"Anna\" from the Cerrado sample of Medici $et~al.$ (2022).", out.width='100%', eval=TRUE, echo=FALSE}
 knitr::include_graphics('../figures/tapir-example.png')
 ```
 
 Estimating the effects of resource abundance and unpredictability on the tapir's spatial needs requires us to first estimate the changes in the tapir's spatial needs (section \@ref(movement)) and the changes in resource abundance and variance (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and spatial use to recreate the final figure (section \@ref(final-fig)).
 
-To minimize the computational costs of creating this appendix, we load the necessary objects through hidden `R` chunks rather than running all the code in the final pdf. Still, those interested in replicating the analysis can do so by using the code in the pdf document or the related `R` markdown (`Rmd`) document. Listed below are all the packages and source scripts required to run the analyses in this document:
+To minimize the computational costs of creating this appendix, we load the necessary objects through hidden `R` chunks rather than running all the code in the final pdf. Still, those interested in replicating the analysis can do so by using the code in the pdf document or the related `R` markdown (`Rmd`) document. Listed below are all the packages and source scripts required to run the analyses in this document. For spatial data, we use the `MODIStsp` package [version 2.0.9, @busetto_modistsp_2016] to download the NDVI rasters, the `raster` package [version 3.6-3, @hijmans_raster_2022] to work with the NDVI rasters, and the `sf` package [version 1.0-8, @pebesma_simple_2018]. We use the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling and the `lubridate` package [version 1.8.0, @grolemund_dates_2011] for converting calendar dates to decimal dates. Finally, we used the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] and the `mgcv` package [version 1.8-41, @wood_generalized_2017] for modeling and the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
 
 ```{r, eval=TRUE, comment=FALSE}
+# NOTE: change your working directory to be "env-var-review/writing", or
+# modify all file paths as needed
+
 # attach all necessary packages
 library('raster')    # to import and save rasters
 library('dplyr')     # for data wrangling
@@ -93,6 +98,8 @@ source('../earthdata-login-info.R') # personal login info for EarthData
 source('../analysis/figures/default-figure-styling.R') # for color palettes
 source('../functions/window_hr.R') # function to calculate HRs
 ```
+
+\newpage
 
 # Modeling the tapir's movement over time {#movement}
 
@@ -135,9 +142,11 @@ The `window_hr()` function estimates the tapir's home range using a sliding wind
 knitr::include_graphics('../figures/CE_31_ANNA-window-7-days-dt-1-days.png')
 ```
 
+\newpage
+
 # Modeling $\e(R)$ and $\var(R)$ over time {#ndvi}
 
-To estimate the resources in the tapir's habitat, we used satellite-measured Normalized Difference Vegetation Index [NDVI, see @pettorelli-ref]. We downloaded the data using the `MODIStsp` `R` package with the following code:
+To estimate the resources in the tapir's habitat, we used satellite-measured Normalized Difference Vegetation Index [NDVI, see @pettorelli_using_2005; @pettorelli_normalized_2011]. We downloaded the data using the `MODIStsp` `R` package with the following code:
 
 ```{r}
 anna_ud <- anna$akde[[1]]
@@ -216,7 +225,7 @@ anna_ndvi %>%
 anna_ndvi <- filter(anna_ndvi, date != '2017-12-19') # remove bad values
 ```
 
-Ideally, one should model NDVI using a family of distributions that accounts for the fact that NDVI cannot be less than -1 or greater than 1. The beta family would be appropriate after applying the linear transformation $$y^* = \frac{y + 1}{2},$$ where $y$ is the original NDVI value (between -1 and 1) while $y^*$ is the NDVI value scaled between 0 and 1. However, the `mgcv` package [@ref] does not allow one to model changes in variance in NDVI using a location-scale model with a beta family. Although the `brms` package allows one to fit beta location-scale models [@ref], the computational costs of using a fully Bayesian approach can be prohibitive for large datasets. Therefore, we decided to use a location-scale Gaussian model via the `mgcv` package (`family = gaulss()` in the code chunk below). Given the large amounts of data, the predictions are sufficiently far from -1 and 1 that any bias appears to be negligible.
+Next, we estimate the mean and variance in NDVI using a Generalized Additive Model for location and scale (GAMLS) [@wood_generalized_2017; @simpson_modelling_2018; @stasinopoulos_generalized_2007]. Ideally, we would model NDVI using a family of distributions that accounts for the fact that NDVI cannot be less than -1 or greater than 1. The beta family would be appropriate after applying the linear transformation $$y^* = \frac{y + 1}{2},$$ where $y$ is the original NDVI value (between -1 and 1) while $y^*$ is the NDVI value scaled between 0 and 1. However, the `mgcv` package [@wood_generalized_2017] does not allow one to model changes in variance in NDVI using a location-scale model with a beta family. Although the `brms` package allows one to fit beta location-scale models [@burkner_brms_2017; @burkner_advanced_2018], the computational costs of using a fully Bayesian approach can be prohibitive for large datasets. Therefore, we decided to use a location-scale Gaussian model via the `mgcv` package (`family = gaulss()` in the code chunk below). Given the large amounts of data, the predictions are sufficiently far from -1 and 1 that any bias appears to be negligible.
 
 ```{r}
 m_ndvi <-
@@ -233,14 +242,86 @@ m_ndvi <-
     data = anna_ndvi,
     method = 'REML') # performs better than GCV (the default)
 
-# plot smooths (predictions are on the link scales!)
-plot(m_ndvi, pages = 1, scheme = 1, n = 250)
+# plot smooths (note: predictions are on the link scales!)
+plot(m_ndvi, pages = 1, scheme = 3, n = 250, scale = 0)
 ```
 
 ```{r, echo=FALSE, eval=TRUE}
 m_ndvi <- readRDS('../models/CE_31_ANNA-mgcv-ndvi-gaulss.rds')
-plot(m_ndvi, pages = 1, scheme = 1, n = 250)
+plot(m_ndvi, pages = 1, scheme = 3, n = 250, scale = 0)
 ```
+
+Note that when fitting location-scale GAMs, one should pay particular attention to the number of knots used for each smooth term. While using a penalized maximum likelihood method such as REML (`method = 'REML'`) helps avoid over-fitting the model, finding the right balance between each of the `k` values is crucial. Excessively smooth terms for the mean can inflate the variance (figure \@ref(fig:undersmooth)), while excessively wiggly smooth terms for the mean can cause the variance to be under-estimated (figure \@ref(fig:oversmooth)). Ultimately, each of the `k` values should be decided while in such a way as to mimic the animal's responsiveness, adaptability, motility, and memory (or ability to predict cycles or events). If one is unsure where to start from, keeping the `k` for the scale smooth terms below half the `k` for the mean smooth terms is a good starting point. Additionally, note that computation time depends strongly on the complexity of the two-dimensional spatial terms, since changes in `k` alter the size of the term quadratically (since the total size is $\tt k \times \tt k = \tt k^2$).
+
+```{r}
+gam(list(
+  # mean predictor
+  ndvi ~
+    s(long, lat, bs = 'ds', k = 10) + # default k (too small)
+    s(dec_date, bs = 'tp', k = 10),
+  # precision (1/standard deviation) predictor
+  ~
+    s(long, lat, bs = 'ds', k = 20) + # excessively high k
+    s(dec_date, bs = 'tp', k = 20)),
+  family = gaulss(b = 0.0001),
+  data = anna_ndvi,
+  method = 'REML') %>%
+  plot(pages = 1, scheme = 3, n = 250, scale = 0)
+```
+
+```{r}
+gam(list(
+  # mean predictor
+  ndvi ~
+    s(long, lat, bs = 'ds', k = 50) + # k too large
+    s(dec_date, bs = 'tp', k = 29), # k too large
+  # precision (1/standard deviation) predictor
+  ~
+    s(long, lat, bs = 'ds', k = 5) + # k too low
+    s(dec_date, bs = 'tp', k = 5)),  # k too low
+  family = gaulss(b = 0.0001),
+  data = anna_ndvi,
+  method = 'REML') %>% # performs better than GCV (the default)
+  plot(pages = 1, scheme = 3, n = 250, scale = 0)
+```
+
+<!-- chunks to create the plots -->
+
+```{r undersmooth, fig.cap="Estimated mean and variance in NDVI with excessively small basis size $\\tt{k}$ for the mean smooth terms and excessively large for the variance smooth terms.", echo=FALSE, eval=TRUE}
+gam(list(
+  # mean predictor
+  ndvi ~
+    s(long, lat, bs = 'ds', k = 10) + # default k (too small)
+    s(dec_date, bs = 'tp', k = 10),
+  # precision (1/standard deviation) predictor
+  ~
+    s(long, lat, bs = 'ds', k = 20) + # excessively high k
+    s(dec_date, bs = 'tp', k = 20)),
+  family = gaulss(b = 0.0001), # minimum standard deviation of 0.0001
+  data = anna_ndvi,
+  method = 'REML',
+  control = gam.control(nthreads = 4)) %>%
+  plot(pages = 1, scheme = 3, n = 250, scale = 0)
+```
+
+```{r oversmooth, fig.cap="Estimated mean and variance in NDVI with excessively large basis size $\\tt{k}$ for the smooth term of time ($\tt{dec\\_date}$) for the mean in NDVI and excessively low for the variance temporal smooth term.", echo=FALSE, eval=TRUE}
+gam(list(
+  # mean predictor
+  ndvi ~
+    s(long, lat, bs = 'ds', k = 50) +
+    s(dec_date, bs = 'tp', k = n_distinct(anna_ndvi$dec_date)), # k too large
+  # precision (1/standard deviation) predictor
+  ~
+    s(long, lat, bs = 'ds', k = 5) + # k too low
+    s(dec_date, bs = 'tp', k = 5)),  # k too low
+  family = gaulss(b = 0.0001),
+  data = anna_ndvi,
+  method = 'REML',
+  control = gam.control(nthreads = 4)) %>%
+  plot(pages = 1, scheme = 3, n = 250, scale = 0)
+```
+
+\newpage
 
 # Modeling the effects of $\e(R)$ and $\var(R)$ on spatial needs {#final-fig}
 
@@ -339,7 +420,7 @@ p_sigma2 <-
 
 p_hr <-
   ggplot(anna_mw) +
-  geom_line(aes(t_center, hr_est, group = quantile, size = quantile),
+  geom_line(aes(t_center, hr_est, group = quantile, lwd = quantile),
             color = pal[3], show.legend = FALSE) +
   geom_ribbon(aes(t_center, ymin = `50%`, ymax = `95%`),
               anna_mw %>%
@@ -364,20 +445,27 @@ aligned_widths <- align_margin(map(grobs, function(x) {x$widths}), 'first')
 for (i in seq_along(grobs)) {
   grobs[[i]]$widths <- aligned_widths[[i]]
 }
-# Draw aligned plots
+# create a panel of the plots
 p_left <- plot_grid(plotlist = grobs, ncol = 1,
                     labels = paste0(letters, '.'))
 ```
 
-## there should be a model for anna instead of `geom_smooth()!
+Finally, we estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space use using the `geom_smooth()` function from the `ggplot2` package. Although one would ideally model the relationships with a formal model, we use `geom_smooth()` because the sampling of the estiamted means and variance are both *auto*correlated (figure \@ref(fig:)) and correlated, so the risk for biased estimates is high (figure \@ref(fig:mu-s2-rel)).
+
+```{r mu-s2-rel, eval=TRUE, echo=FALSE, fig.cap="Scatterplot of estimated mean NDVI and variance in NDVI. Both variables are higly temporally autocorrelated, and there is also strong correlation between the two variables."}
+knitr::include_graphics('H:/GitHub/env-var-review/figures/mean-variance-relationship.png',
+                        rel_path = TRUE)
+```
+
 
 ```{r}
+# mean
 reg_mu <-
   ggplot(anna_mw) +
   coord_cartesian(ylim = c(0, 13)) +
   geom_point(aes(mu, hr_est, group = quantile, shape = quantile), alpha = 0.3,
              color = pal[3]) +
-  geom_smooth(aes(mu, hr_est, group = quantile, size = quantile),
+  geom_smooth(aes(mu, hr_est, group = quantile, lwd = quantile),
               color = pal[1], se = FALSE, method = 'gam',
               formula = y ~ x, method.args = list(family = "Gamma")) +
   scale_x_continuous('Resource abundance') +
@@ -391,7 +479,7 @@ reg_s2 <-
   coord_cartesian(ylim = c(0, 13)) +
   geom_point(aes(sigma2, hr_est, group = quantile, shape = quantile),
              alpha = 0.3, color = pal[3]) +
-  geom_smooth(aes(sigma2, hr_est, group = quantile, size = quantile),
+  geom_smooth(aes(sigma2, hr_est, group = quantile, lwd = quantile),
               color = pal[2], se = FALSE, method = 'gam',
               formula = y ~ x, method.args = list(family = "Gamma")) +
   scale_x_continuous('Resource unpredictability') +
@@ -403,7 +491,7 @@ reg_s2 <-
 leg <-
   get_legend(
     ggplot(anna_mw) +
-      geom_smooth(aes(sigma2, hr_est, group = quantile, size = quantile),
+      geom_smooth(aes(sigma2, hr_est, group = quantile, lwd = quantile),
                   se = FALSE, method = 'gam', color = 'black',
                   formula = y ~ x, method.args = list(family = "Gamma")) +
       geom_point(aes(sigma2, hr_est, group = quantile, shape = quantile),
@@ -424,3 +512,7 @@ plot_grid(p_left, p_regs)
 ```{r, echo=FALSE, eval=TRUE, out.width='100%'}
 knitr::include_graphics('../figures/tapir-example.png')
 ```
+
+\clearpage
+
+# References {-}
