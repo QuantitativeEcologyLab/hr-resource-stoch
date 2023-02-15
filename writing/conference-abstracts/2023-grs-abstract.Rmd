@@ -1,0 +1,29 @@
+---
+title: "How resource abundance and stochasticity affect animals’ spatial needs"
+date: "`r Sys.Date()`"
+author:
+  - name: Stefano Mezzini
+    email: stefano.mezzini@ubc.ca
+    institute: ubco
+  - name: Emília Patrícia Medici
+    institute: [tapir, iucn, escas]
+  - name: Michael J. Noonan
+    email: michael.noonan@ubc.ca
+    institute: ubco
+institute:
+  - ubco: The Irving K. Barber Faculty of Science, The University of British Columbia, Okanagan Campus, Kelowna, Canada.
+  - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
+  - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
+  - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
+output:
+  bookdown::pdf_document2:
+    pandoc_args:
+      - '--lua-filter=scholarly-metadata.lua'
+      - '--lua-filter=author-info-blocks.lua'
+    toc: false
+    number_sections: false
+---
+
+# Abstract
+
+Animals’ spatial needs are thought to be tightly linked to resource abundance within their habitats, such that animals living in productive habitats generally require less space than those in resource-poor habitats. Although this hypothesis has widespread empirical support, existing studies have focused primarily on animals’ responses to the mean amount of resources, while responses to the variance around the mean are still largely unknown. This is not a trivial oversight. Animals adjust to variable environmental conditions, so failing to consider the effect of resource unpredictability can result in a limited understanding of animals’ spatial needs. In this study, we leverage the currently available information to provide a unifying framework and hypotheses for the effects of mean and variance in resources on animals’ space use. Next, we use simulated movement data to demonstrate how the combined effects of mean and variance in resource abundance interact to shape predictable patterns in animal space use. Finally, we use real-world GPS tracking data to show how this framework can be applied to better understand the movement ecology of free-ranging animals. We present our results with a fully transparent approach that allows researchers to apply this framework to their own data and support area-based conservation efforts.
