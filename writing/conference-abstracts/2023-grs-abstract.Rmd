@@ -5,21 +5,26 @@ author:
   - name: Stefano Mezzini
     email: stefano.mezzini@ubc.ca
     institute: ubco
-  - name: Emília Patrícia Medici
+  - name: Adam T. Ford
+    institute: ubco
+  - name: Jacob R. Goheen
+    institute: wyom
+  - name: E. Patrícia Medici
     institute: [tapir, iucn, escas]
   - name: Michael J. Noonan
     email: michael.noonan@ubc.ca
     institute: ubco
 institute:
   - ubco: The Irving K. Barber Faculty of Science, The University of British Columbia, Okanagan Campus, Kelowna, Canada.
+  - wyom: Department of Zoology and Physiology, University of Wyoming, Laramie, Wyoming, United States of America
   - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
   - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
 output:
   bookdown::pdf_document2:
     pandoc_args:
-      - '--lua-filter=scholarly-metadata.lua'
-      - '--lua-filter=author-info-blocks.lua'
+      - '--lua-filter=../scholarly-metadata.lua'
+      - '--lua-filter=../author-info-blocks.lua'
     toc: false
     number_sections: false
 ---
