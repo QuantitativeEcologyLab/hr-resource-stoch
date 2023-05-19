@@ -7,8 +7,14 @@ library('ctmm')  # for continuous movement modeling
 library('dplyr') # for data wrangling
 library('purrr') # for functional programming
 
-window_hr <- function(tel, window, dt, projection, fig_path = NULL,
-                      rds_path = NULL, cores = 1) {
+window_hr <- function(tel, window, dt, projection, movement_model = NULL,
+                      fig_path = NULL, rds_path = NULL, cores = 1) {
+  
+  if(! is.null(movement_model)) {
+    HR_0 <- summary(movement_model, units = FALSE)$CI['area (square meters)', 'est'] / 1e6
+  } else {
+    HR_0 <- NA_real_
+  }
   
   # moving window created at beginning of t; slides forward as far as possible:
   # |---|.... --> .|---|... --> ..|---|.. --> ...|---|. --> ....|---|
@@ -70,6 +76,7 @@ window_hr <- function(tel, window, dt, projection, fig_path = NULL,
                } # close else
              })) %>% # close function for imap()
     unnest(models) %>%
+    # mutate(ess = map_dbl(model, \(.m) summary(.m)$DOF['area'])) %>%
     mutate(t_center = (t_start + t_end) / 2,
            posixct = as.POSIXct(t_center, origin = '1970-01-01',
                                 tz = tel@info$timezone),
@@ -98,17 +105,20 @@ window_hr <- function(tel, window, dt, projection, fig_path = NULL,
   plt_b <-
     ggplot(out) +
     
-    # 95% CIs for home ranges
-    geom_ribbon(aes(date, ymin = hr_lwr_50, ymax = hr_upr_50), alpha = 0.3) +
-    geom_ribbon(aes(date, ymin = hr_lwr_95, ymax = hr_upr_95), alpha = 0.3) +
+    # # 95% CIs for home ranges
+    # geom_ribbon(aes(date, ymin = hr_lwr_50, ymax = hr_upr_50), alpha = 0.3) +
+    # geom_ribbon(aes(date, ymin = hr_lwr_95, ymax = hr_upr_95), alpha = 0.3) +
     
-    # core home range
-    geom_line(aes(date, hr_est_50), size = 1.25) +
-    geom_line(aes(date, hr_est_50, color = posixct)) +
+    # # core home range
+    # geom_line(aes(date, hr_est_50), linewidth = 1.25) +
+    # geom_line(aes(date, hr_est_50, color = posixct)) +
     
     # 95% home range
-    geom_line(aes(date, hr_est_95), size = 1.25) +
+    geom_line(aes(date, hr_est_95), linewidth = 1.25) +
     geom_line(aes(date, hr_est_95, color = posixct)) +
+    
+    # home range from model fit to full dataset
+    geom_hline(yintercept = HR_0, color = 'darkorange') +
     
     scale_x_date(NULL, date_labels = '%b %Y') +
     scale_color_viridis_c() +

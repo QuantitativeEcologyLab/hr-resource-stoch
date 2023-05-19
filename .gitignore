@@ -1,3 +1,6 @@
+# Windows thumbnail files
+*.db
+
 # History files
 .Rhistory
 .Rapp.history
@@ -64,3 +67,24 @@ earthdata-login-info.R
 # Rmd cache and files
 writing/*_cache
 writing/*_files
+
+# scripts for parallel jobs
+analysis/alces-alces/parallel-scripts
+
+# private telemetry data
+data/equus-hemionus-hemionus
+
+# diagnostic moving window figures
+figures/alces_alces
+figures/aepyceros-melampus
+figures/tapirs
+
+# khulan example
+analysis/equus-hemonius-hemonius-4
+
+# presentations (except for pdf format)
+*.pptx
+
+# files that are too large
+*.rds
+*.log

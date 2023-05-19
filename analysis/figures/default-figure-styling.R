@@ -2,7 +2,9 @@ library('ggplot2') # for fancy figures
 library('stringi') # for working with strings
 
 # set default ggplot theme
-theme_set(theme_bw() + theme(text = element_text(face = 'bold')))
+# cannot bold text because unicode characters fail
+theme_set(theme_bw() + theme(legend.position = 'none',
+                             text = element_text(size = 22)))
 
 # custom color-blind palette
 pal <- c('#ff8c00', '#4477AA', '#009900', '#66CCEE',
