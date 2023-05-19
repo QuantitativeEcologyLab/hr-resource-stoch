@@ -54,6 +54,9 @@ rsconnect/
 # manuscript comments
 writing/comments/*
 
+# Rmd log files
+*.log
+
 # ndvi rasters and data
 data/ndvi-rasters/*
 data/tapir-anna-ndvi-data.rds
@@ -87,4 +90,3 @@ analysis/equus-hemonius-hemonius-4
 
 # files that are too large
 *.rds
-*.log
