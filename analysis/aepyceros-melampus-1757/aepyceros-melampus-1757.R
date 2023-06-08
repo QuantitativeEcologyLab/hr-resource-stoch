@@ -59,6 +59,7 @@ if(file.exists('models/aepyceros-melampus/1757-ndvi-gaulss.rds')) {
   m_ndvi <-
     gam(list(
       # mean predictor
+      # adding an interaction of long, lat, dec_date doesn't improve much
       ndvi ~
         s(long, lat, bs = 'ds', k = 20) + # mean over space
         s(dec_date, bs = 'tp', k = 20), # need high k to account for animal adapting
