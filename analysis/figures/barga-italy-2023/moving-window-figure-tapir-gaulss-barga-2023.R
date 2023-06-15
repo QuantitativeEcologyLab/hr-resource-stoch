@@ -14,7 +14,7 @@ theme_set(theme_get() +
             theme(panel.grid = element_blank()))
 
 # import location-scale model for predictions of mean and variance in NDVI
-m_ndvi <- readRDS('models/CE_31_ANNA-mgcv-ndvi-gaulss.rds')
+m_ndvi <- readRDS('models/tapirs/CE_31_ANNA-mgcv-ndvi-gaulss.rds')
 
 # function to make predictions from the model
 ndvi_preds <- function(.data) {
@@ -36,27 +36,13 @@ tapir <- readRDS('../tapirs/models/tapirs-final.rds') %>%
   filter(name.short == 'ANNA')
 tel <- tapir$data[[1]]
 
-if(FALSE) {
-  m_ouf <- tapir$model[[1]]
-  track <-
-    predict(m_ouf, data = tel, dt = 100, complete = TRUE) %>%
-    data.frame() %>%
-    select(timestamp, longitude, latitude) %>%
-    rename(long = longitude, lat = latitude) %>%
-    mutate(dec_date = decimal_date(timestamp))
-  
-  saveRDS(track, 'models/CE_31_ANNA-track-dt-100.rds')
-} else {
-  track <- readRDS('models/CE_31_ANNA-track-dt-100.rds')
-}
-
 tel <- data.frame(tel) %>%
   rename(long = longitude, lat = latitude) %>%
   mutate(dec_date = decimal_date(timestamp))
 tel <- bind_cols(tel, ndvi_preds(tel))
 
 tapir <-
-  readRDS('models/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
+  readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
   # mutate(ess = map_dbl(model, \(.m) summary(.m)$DOF['area']),
   #        weight = ess / mean(ess)) %>%
   mutate(preds = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
@@ -103,7 +89,7 @@ for (i in seq_along(grobs)) {
 
 # Draw aligned plots
 p_1 <- plot_grid(plotlist = grobs, ncol = 1, labels = c('a.', 'b.', 'c.'),
-                   label_size = 22)
+                 label_size = 22)
 
 # regression plots ----
 # cannot use a GLM or GAM because mu and sigma2 are correlated
@@ -126,7 +112,7 @@ p_2 <-
                      expand = c(0, 0)) +
   scale_color_manual(values = pal) +
   theme(strip.placement = 'outside', strip.background = element_blank(),
-        strip.text = element_text(size = 22)); p_2
+        strip.text = element_text(size = 22))
 
 p <- plot_grid(p_1, p_2, ncol = 2, labels = c('', 'd.'))
 
