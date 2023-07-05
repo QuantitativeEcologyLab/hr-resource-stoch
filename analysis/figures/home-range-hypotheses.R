@@ -9,7 +9,7 @@ source('analysis/figures/default-figure-styling.R') # for common theme and color
 theme_set(theme_get() + theme(legend.position = 'none',
                               text = element_text(size = 22)))
 
-hr_lab <- 'Positional variance' # label for y axis
+hr_lab <- 'Spatial needs' # label for y axis
 
 # hypothesis for change in H over E(R) ----
 d <-

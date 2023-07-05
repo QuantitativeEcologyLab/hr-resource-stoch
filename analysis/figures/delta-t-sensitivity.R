@@ -191,5 +191,5 @@ panels <-
                       labels = c('a.', 'b.', 'c.', 'd.'), ncol = 2),
             ncol = 1, rel_heights = c(1, 10))
 
-ggsave('figures/simulations/thinning-examples.png', plot = panels,
+ggsave('figures/thinning-examples.png', plot = panels,
        width = 7, height = 5, scale = 1.2, bg = 'white')

@@ -3,7 +3,7 @@ library('dplyr')   # for data wrangling (e.g., %>%)
 library('tidyr')   # for data wrangling (e.g., nested tibbles)
 library('ggplot2') # for fancy plots
 source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
-source('analysis/figures/mean-variance-trends-panel-data.R') # means & variances
+source('analysis/mean-variance-trends-panel-data.R') # means & variances
 source('analysis/simulations/movement-model.R') # for consistency across scripts
 source('functions/get_hr.R') # for extracting gaussian home range
 theme_set(theme_bw())
@@ -164,5 +164,5 @@ p_hr_days <-
                      limits = c(2, 1100)) +
   scale_y_log10(expression(Estimated~home~range~(log[10]~scale))); p_hr_days
 
-ggsave('figures/simulations/hr-over-days.png', plot = p_hr_days,
+ggsave('figures/hr-over-days.png', plot = p_hr_days,
        width = 6, height = 3, dpi = 'print')
