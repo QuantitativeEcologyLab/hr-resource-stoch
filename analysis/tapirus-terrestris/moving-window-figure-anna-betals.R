@@ -151,11 +151,13 @@ preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
                              type = 'response'))
 
 p_d <- ggplot() +
+  # geom_point(aes(mu, hr_est), tapir, color = pal[3], alpha = 0.5) +
   geom_line(aes(mu, hr_mu), preds, color = pal[1], linewidth = 2) +
   xlab(e_r) +
   scale_y_continuous(hr_lab)
 
 p_e <- ggplot() +
+  # geom_point(aes(sigma2, hr_est), tapir, color = pal[3], alpha = 0.5) +
   geom_line(aes(sigma2, hr_sigma2), preds, color = pal[2], linewidth = 2) +
   xlab(v_r) +
   scale_y_continuous(hr_lab)
@@ -180,5 +182,5 @@ p_right <- plot_grid(plotlist = r_grobs, ncol = 1, labels = c('d.', 'e.', 'f.'),
 # add space to avoid cutting off x axis for (e.)
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
 
-ggsave('figures/tapir-example.png', plot = p, height = 11, width = 14,
-       units = 'in', dpi = 600, bg = 'white')
+ggsave('figures/tapir-example-without-data.png', plot = p, height = 11,
+       width = 14, units = 'in', dpi = 600, bg = 'white')
