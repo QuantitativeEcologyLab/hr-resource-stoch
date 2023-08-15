@@ -57,9 +57,11 @@ writing/comments/*
 # Rmd log files
 *.log
 
-# ndvi rasters and data
-data/ndvi-rasters/*
-data/tapir-anna-ndvi-data.rds
+# ndvi rasters and data of animals not used in the manuscript
+data/ndvi-rasters/Aepyceros_melampus
+data/ndvi-rasters/alces-alces-nw
+data/ndvi-rasters/equus-hemionus-hemionus
+data/ndvi-rasters/tapir-arno
 
 # models
 models/*
@@ -89,4 +91,4 @@ analysis/equus-hemonius-hemonius-4
 *.pptx
 
 # files that are too large
-*.rds
+simulations/*.rds
