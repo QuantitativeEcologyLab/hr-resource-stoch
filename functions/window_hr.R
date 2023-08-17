@@ -7,11 +7,11 @@ library('ctmm')  # for continuous movement modeling
 library('dplyr') # for data wrangling
 library('purrr') # for functional programming
 
-window_hr <- function(tel, window, dt, projection, movement_model = NULL,
+window_hr <- function(tel, window, dt, projection, full_ud = NULL,
                       fig_path = NULL, rds_path = NULL, cores = 1) {
   
-  if(! is.null(movement_model)) {
-    HR_0 <- summary(movement_model, units = FALSE)$CI['area (square meters)', 'est'] / 1e6
+  if(! is.null(full_akde) & class(full_akde) == 'UD') {
+    HR_0 <- summary(full_akde, units = FALSE)$CI['area (square meters)', 'est'] / 1e6
   } else {
     HR_0 <- NA_real_
   }
