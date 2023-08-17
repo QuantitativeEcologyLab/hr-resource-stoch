@@ -145,20 +145,34 @@ plot(m, pages = 1, scheme = 2, trans = exp, ylim = c(log(0), log(4)))
 # removing data from d and splitting into two panels
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
                 sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
-  mutate(hr_mu = predict(m, newdata = ., terms = 's(mu)',
-                         type = 'response'),
-         hr_sigma2 = predict(m, newdata = ., terms = 's(sigma2)',
-                             type = 'response'))
+  bind_cols(predict(m, newdata = ., terms = 's(mu)',
+                    type = 'link', se.fit = TRUE) %>%
+              as.data.frame() %>%
+              transmute(hr_mu_est = exp(fit),
+                        hr_mu_lwr = exp(fit - 1.96 * se.fit),
+                        hr_mu_upr = exp(fit + 1.96 * se.fit)),
+            predict(m, newdata = ., terms = 's(sigma2)',
+                    type = 'link', se.fit = TRUE) %>%
+              as.data.frame() %>%
+              transmute(hr_sigma2_est = exp(fit),
+                        hr_sigma2_lwr = exp(fit - 1.96 * se.fit),
+                        hr_sigma2_upr = exp(fit + 1.96 * se.fit)))
 
 p_d <- ggplot() +
-  # geom_point(aes(mu, hr_est), tapir, color = pal[3], alpha = 0.5) +
-  geom_line(aes(mu, hr_mu), preds, color = pal[1], linewidth = 2) +
+  coord_cartesian(ylim = c(0, 12.5)) +
+  geom_point(aes(mu, hr_est), tapir, color = pal[3], alpha = 0.5) +
+  geom_ribbon(aes(mu, ymin = hr_mu_lwr, ymax = hr_mu_upr), preds,
+              fill = pal[1], alpha = 0.3) +
+  geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
   xlab(e_r) +
   scale_y_continuous(hr_lab)
 
 p_e <- ggplot() +
-  # geom_point(aes(sigma2, hr_est), tapir, color = pal[3], alpha = 0.5) +
-  geom_line(aes(sigma2, hr_sigma2), preds, color = pal[2], linewidth = 2) +
+  coord_cartesian(ylim = c(0, 12.5)) +
+  geom_point(aes(sigma2, hr_est), tapir, color = pal[3], alpha = 0.5) +
+  geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr), preds,
+              fill = pal[2], alpha = 0.3) +
+  geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2], linewidth = 2) +
   xlab(v_r) +
   scale_y_continuous(hr_lab)
 
@@ -182,5 +196,5 @@ p_right <- plot_grid(plotlist = r_grobs, ncol = 1, labels = c('d.', 'e.', 'f.'),
 # add space to avoid cutting off x axis for (e.)
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
 
-ggsave('figures/tapir-example-without-data.png', plot = p, height = 11,
+ggsave('figures/tapir-example-with-data.png', plot = p, height = 11,
        width = 14, units = 'in', dpi = 600, bg = 'white')
