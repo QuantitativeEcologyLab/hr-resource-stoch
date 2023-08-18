@@ -8,7 +8,8 @@ library('dplyr') # for data wrangling
 library('purrr') # for functional programming
 
 window_hr <- function(tel, window, dt, projection, full_ud = NULL,
-                      fig_path = NULL, rds_path = NULL, cores = 1) {
+                      fig_path = NULL, rds_path = NULL, cores = 1,
+                      weights = FALSE) {
   
   if(! is.null(full_ud) & class(full_ud) == 'UD') {
     HR_0 <- summary(full_ud, units = FALSE)$CI['area (square meters)',
@@ -51,7 +52,7 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
                                        cores = cores) %>%
                      list(),
                    # estimate autocorrelated kernel density estimate
-                   akde = akde(data = d, CTMM = model[[1]]) %>% list(),
+                   akde = akde(data = d, CTMM = model[[1]], weights = weights) %>% list(),
                    # find home range estimate
                    hr_est_50 = extract_hr(a = akde[[1]], par='est', l.ud=0.50),
                    hr_lwr_50 = extract_hr(a = akde[[1]], par='low', l.ud=0.50),
