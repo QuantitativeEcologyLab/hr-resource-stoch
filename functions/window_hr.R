@@ -10,8 +10,9 @@ library('purrr') # for functional programming
 window_hr <- function(tel, window, dt, projection, full_ud = NULL,
                       fig_path = NULL, rds_path = NULL, cores = 1) {
   
-  if(! is.null(full_akde) & class(full_akde) == 'UD') {
-    HR_0 <- summary(full_akde, units = FALSE)$CI['area (square meters)', 'est'] / 1e6
+  if(! is.null(full_ud) & class(full_ud) == 'UD') {
+    HR_0 <- summary(full_ud, units = FALSE)$CI['area (square meters)',
+                                                 'est'] / 1e6
   } else {
     HR_0 <- NA_real_
   }
@@ -32,10 +33,10 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
     tibble(
       # add start and end times
       t_start = times, # left bound
-      t_end = t_start + window, # left bound
-      # subset times within window (t to t + win; can't use filter() bc telmtry)
+      t_end = t_start + window, # right bound
+      # subset times within window (t to t + win; can't use filter() on telem.)
       dataset = map2(t_start, t_end,
-                     \(t_1, t_2) tel[tel$t >= t_1 & tel$t <= t_2, ]),
+                     function(t_1, t_2) tel[tel$t >= t_1 & tel$t <= t_2, ]),
       models =
         imap(dataset,
              \(d, i) {
@@ -63,9 +64,9 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
                    # find initial guesses for models
                    guess = list('Insufficient data.'),
                    # select best model based on subset of tel
-                   model =list('Insufficient data.'),
+                   model = list('Insufficient data.'),
                    # estimate autocorrelated kernel density estimate
-                   akde =list('Insufficient data.'),
+                   akde = list('Insufficient data.'),
                    # find home range estimate
                    hr_est_50 = NA_real_,
                    hr_lwr_50 = NA_real_,
@@ -75,7 +76,7 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
                    hr_upr_95 = NA_real_)
                } # close else
              })) %>% # close function for imap()
-    unnest(models) %>%
+    tidyr::unnest(models) %>%
     # mutate(ess = map_dbl(model, \(.m) summary(.m)$DOF['area'])) %>%
     mutate(t_center = (t_start + t_end) / 2,
            posixct = as.POSIXct(t_center, origin = '1970-01-01',
@@ -106,8 +107,8 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
     ggplot(out) +
     
     # # 95% CIs for home ranges
-    # geom_ribbon(aes(date, ymin = hr_lwr_50, ymax = hr_upr_50), alpha = 0.3) +
-    # geom_ribbon(aes(date, ymin = hr_lwr_95, ymax = hr_upr_95), alpha = 0.3) +
+    geom_ribbon(aes(date, ymin = hr_lwr_50, ymax = hr_upr_50), alpha = 0.3) +
+    geom_ribbon(aes(date, ymin = hr_lwr_95, ymax = hr_upr_95), alpha = 0.3) +
     
     # # core home range
     # geom_line(aes(date, hr_est_50), linewidth = 1.25) +
