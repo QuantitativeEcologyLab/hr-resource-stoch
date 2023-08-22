@@ -35,14 +35,14 @@ m_ndvi <-
     ndvi ~ # not scaling because range is in (0, 1)
       s(long, lat, bs = 'ds', k = 20) + # mean over space
       s(dec_date, bs = 'tp', k = 20), # need high k to account for animal adapting
-    # precision (1/standard deviation) predictor
+    # scale predictor (sigma2 = mu * (1 - mu) * scale)
     ~
       s(long, lat, bs = 'ds', k = 10) +
       s(dec_date, bs = 'tp', k = 10)),
     family = betals(),
     data = d,
     method = 'REML',
-    control = gam.control(nthreads = 8, trace = TRUE))
+    control = gam.control(trace = TRUE))
 
 saveRDS(m_ndvi, file = 'models/tapirs/CE_31_ANNA-mgcv-ndvi-betals.rds')
 
