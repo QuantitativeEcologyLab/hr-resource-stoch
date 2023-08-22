@@ -9,7 +9,7 @@ library('purrr') # for functional programming
 
 window_hr <- function(tel, window, dt, projection, full_ud = NULL,
                       fig_path = NULL, rds_path = NULL, cores = 1,
-                      weights = FALSE) {
+                      weights = FALSE, plot_50_q = FALSE) {
   
   if(! is.null(full_ud) & class(full_ud) == 'UD') {
     HR_0 <- summary(full_ud, units = FALSE)$CI['area (square meters)',
@@ -35,7 +35,7 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
       # add start and end times
       t_start = times, # left bound
       t_end = t_start + window, # right bound
-      # subset times within window (t to t + win; can't use filter() on telem.)
+      # subset times within window (t to t + win; can't use filter() on tel)
       dataset = map2(t_start, t_end,
                      function(t_1, t_2) tel[tel$t >= t_1 & tel$t <= t_2, ]),
       models =
@@ -46,7 +46,8 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
                  cat('Analyzing dataset ', i, ' of ', N, '.\n', sep = '')
                  tibble(
                    # find initial guesses for models
-                   guess = ctmm.guess(data = d, interactive = FALSE) %>% list(),
+                   guess = ctmm.guess(data = d, interactive = FALSE) %>%
+                     list(),
                    # select best model based on subset of tel
                    model = ctmm.select(data = d, CTMM = guess[[1]],
                                        cores = cores) %>%
@@ -107,24 +108,28 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
   plt_b <-
     ggplot(out) +
     
-    # # 95% CIs for home ranges
-    geom_ribbon(aes(date, ymin = hr_lwr_50, ymax = hr_upr_50), alpha = 0.3) +
+    # 95% CIs for 95% home range estimates
     geom_ribbon(aes(date, ymin = hr_lwr_95, ymax = hr_upr_95), alpha = 0.3) +
     
-    # # core home range
-    # geom_line(aes(date, hr_est_50), linewidth = 1.25) +
-    # geom_line(aes(date, hr_est_50, color = posixct)) +
-    
-    # 95% home range
+    # 95% home range estimates
     geom_line(aes(date, hr_est_95), linewidth = 1.25) +
     geom_line(aes(date, hr_est_95, color = posixct)) +
     
     # home range from model fit to full dataset
-    geom_hline(yintercept = HR_0, color = 'darkorange') +
+    geom_hline(yintercept = HR_0, color = 'darkorange', na.rm = TRUE) +
     
     scale_x_date(NULL, date_labels = '%b %Y') +
     scale_color_viridis_c() +
     labs(y = expression(Home~range~(km^2)))
+  
+  if(plot_50_q) {
+    plt_b <- plt_b +
+      # core home range 95% CIs
+      geom_ribbon(aes(date, ymin = hr_lwr_50, ymax = hr_upr_50), alpha = 0.3) +
+      # core home range estimates
+      geom_line(aes(date, hr_est_50), linewidth = 1.25) +
+      geom_line(aes(date, hr_est_50, color = posixct))
+  }
   
   plt <- cowplot::plot_grid(plt_a, plt_b, labels = c('a.', 'b.'), nrow = 1,
                             align = 'hv')
