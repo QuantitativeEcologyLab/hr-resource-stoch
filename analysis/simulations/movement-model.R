@@ -1,6 +1,6 @@
 library('ctmm') # for movement modeling
 DELTA_T <- 60
-SAMPLES <- seq(0, 60 * 60 * 12, by = DELTA_T) # sample 48 hours every DELTA_T seconds
+SAMPLES <- seq(0, 60 * 60 * 12, by = DELTA_T) # sample 12 hours every DELTA_T seconds
 
 # projected raster of resources
 PROJECTION <- '+proj=aeqd +lon_0=0 +lat_0=0 +datum=WGS84'
