@@ -5,9 +5,9 @@
 library('dplyr')    # for data wrangling
 library('sf')       # for spatial features
 library('MODIStsp') # for downloading NDVI rasters
-library('purrr')  # for functional programming
-library('tidyr')  # for data wrangling
-library('raster') # to import and save rasters
+library('purrr')    # for functional programming
+library('tidyr')    # for data wrangling
+library('terra')    # to import and save rasters
 source('earthdata-login-info.R') # import personal login credentials for EarthData
 
 # use a bounding box from tracking data ----
@@ -53,7 +53,7 @@ ud_poly <- SpatialPolygonsDataFrame.UD(ud, level.UD = 0.9995, level = 0) %>%
 rasters <-
   list.files(path = 'data/ndvi-rasters/tapir-anna/VI_16Days_250m_v61/NDVI/',
              pattern = '.tif', full.names = TRUE) %>%
-  stack()
+  rast()
 
 if(FALSE) {
   rasters %>%
@@ -65,12 +65,13 @@ if(FALSE) {
 # save NDVI data as an rds file of a tibble
 #' `rasterToPoints()` on a `stack()` of the rasters fails because there's too much data
 rasters %>%
-  rasterToPoints() %>%
-  data.frame() %>%
+  as.data.frame(xy = TRUE) %>%
   pivot_longer(-c(x, y)) %>%
   transmute(long = x,
             lat = y,
-            date = substr(name, start = nchar('MOD13Q1_NDVI_x'), stop = nchar(name)) %>%
+            date = substr(name,
+                          start = nchar('MOD13Q1_NDVI_x'),
+                          stop = nchar(name)) %>%
               as.Date(format = '%Y_%j'),
             ndvi = value) %>%
   saveRDS('data/ndvi-rasters/tapir-anna/tapir-anna-data.rds')

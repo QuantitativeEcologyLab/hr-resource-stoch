@@ -7,7 +7,7 @@ library('sf')       # for spatial features
 library('MODIStsp') # for downloading NDVI rasters
 library('purrr')  # for functional programming
 library('tidyr')  # for data wrangling
-library('raster') # to import and save rasters
+library('terra') # to import and save rasters
 source('earthdata-login-info.R') # import personal login credentials for EarthData
 
 # use a bounding box from tracking data ----
@@ -18,7 +18,7 @@ tel <- Aepyceros_melampus %>%
   as.telemetry()
 
 # import movement model and fit UD
-load('C:/Users/mezzinis/Dropbox/Empirical_Results/Aepyceros_melampus/Fits/Fits_1757.rda')
+load('H:/Empirical_Results/Aepyceros_melampus/Fits/Fits_1757.rda')
 ud <- akde(data = tel, CTMM = FIT, weights = FALSE)
 plot(ud, level.UD = 0.995)
 plot(tel, add = TRUE, cex = 1, error = FALSE) # UD is fairly wide
@@ -60,7 +60,7 @@ ud_poly <- SpatialPolygonsDataFrame.UD(ud, level.UD = 0.9995, level = 0) %>%
 rasters <-
   list.files(path = 'data/ndvi-rasters/Aepyceros_melampus/1757/VI_16Days_250m_v61/NDVI',
              pattern = '.tif', full.names = TRUE) %>%
-  stack()
+  rast()
 
 names(rasters) <-
   list.files(path = 'data/ndvi-rasters/Aepyceros_melampus/1757/VI_16Days_250m_v61/NDVI/',
@@ -84,13 +84,11 @@ if(FALSE) {
 }
 
 # save NDVI data as an rds file of a tibble
-#' `rasterToPoints()` on a `stack()` of the rasters fails because there's too much data
 rasters %>%
   as.data.frame(xy = TRUE) %>%
   pivot_longer(-c(x, y)) %>%
   transmute(long = x,
             lat = y,
-            date = substr(name, start = 2, stop = nchar(name)) %>%
-              as.Date(format = '%Y.%m.%d'),
+            date = as.Date(name),
             ndvi = value) %>%
   saveRDS('data/ndvi-rasters/Aepyceros_melampus/1757/Aepyceros_melampus-1757-ndvi.rds')

@@ -1,4 +1,4 @@
-library('raster')  # for working with rasters
+library('terra')   # for working with rasters
 library('ctmm')    # for generating movement models
 library('dplyr')   # for data wrangling (%>%, mutate(), slice(), filter(), etc.)
 library('tidyr')   # for data wrangling (unnest, etc.)
@@ -140,8 +140,7 @@ p_thinning <-
                                            .(levels(tracks$group)[group]), s)),
                                      nrow = 2) +
   coord_equal(xlim = c(-0.1, 0.4), ylim = c(-0.5, 0.1)) +
-  geom_tile(data = rasterToPoints(HABITAT) %>%
-              data.frame() %>%
+  geom_tile(data = as.data.frame(HABITAT, xy = TRUE) %>%
               filter(abs(x) < 5, abs(y) < 5), fill = 'transparent', color = 'black') +
   geom_path(color = '#440154', lwd = 1) +
   geom_point(aes(color = new_cell, size = new_cell, shape = new_cell)) +
@@ -165,8 +164,7 @@ full_tracks <- mutate(full_tracks,
 p_tracks <-
   ggplot(full_tracks, aes(x, y)) +
   coord_equal(xlim = range(full_tracks$x), ylim = range(full_tracks$y)) +
-  geom_tile(data = rasterToPoints(HABITAT) %>%
-              data.frame() %>%
+  geom_tile(data = as.data.frame(HABITAT, xy = TRUE) %>%
               filter(x >= min(full_tracks$x) - 20, x <= max(full_tracks$x) + 20,
                      y >= min(full_tracks$y) - 20, y <= max(full_tracks$y) + 20),
             fill = 'transparent', color = '#00000020') + # black with some alpha

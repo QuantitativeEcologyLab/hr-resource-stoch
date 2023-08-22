@@ -7,21 +7,44 @@ library('sf')       # for spatial features
 library('MODIStsp') # for downloading NDVI rasters
 library('purrr')  # for functional programming
 library('tidyr')  # for data wrangling
-library('raster') # to import and save rasters
+library('terra') # to import and save rasters
 source('earthdata-login-info.R') # import personal login credentials for EarthData
 
 # use a bounding box from tracking data ----
 library('ctmm') # for movement data and models
-load('C:/Users/mezzinis/Dropbox/Uni/Alces_alces.Rda')
+load('C:/Users/mezzinis/Dropbox/Uni/tels/Alces_alces.Rda')
 
-# filter to north-western individuals
+# filter to north-western individuals to avoid having a spatial model with a
+# large spatial gap
 Alces_alces %>%
   group_by(individual.local.identifier) %>%
   summarize(location.lat = mean(location.lat),
             location.long = mean(location.long)) %>%
   plot(location.lat ~ location.long, ., col = 'red', pch = 19)
 
+nw <- Alces_alces %>%
+  group_by(individual.local.identifier) %>%
+  summarize(nw = all(location.long < -109)) %>%
+  pull(nw) %>%
+  which()
+
 Alces_alces <- filter(Alces_alces, location.long < -109)
+
+fits <- lapply(files, \(x) {
+  load(x)
+  return(FIT)
+})
+
+hrs <- map_dbl(fits, \(x) summary(x, units = FALSE)$CI['area (square meters)', 'est'])
+tp <- map_dbl(fits, \(x) summary(x, units = FALSE)$CI['τ[position] (seconds)', 'est'])
+
+# more migratory individuals in the NW clusters
+layout(matrix(1:4, ncol = 2))
+hist(hrs / (1 %#% 'km^2'), xlim = c(0, 7000))
+hist(hrs[nw] / (1 %#% 'km^2'), xlim = c(0, 7000))
+hist(tp / (1 %#% 'months'), breaks = 20, xlim = c(0, 15))
+hist(tp[nw] / (1 %#% 'months'), breaks = 20, xlim = c(0, 15))
+layout(1)
 
 Alces_alces %>%
   group_by(individual.local.identifier) %>%
@@ -52,8 +75,8 @@ MODIStsp(gui = FALSE, # do not use the browser GUI, only run in R
          prod_version = '061', # 2022 raster version
          bandsel = 'NDVI', # Normalized Difference Vegetation Index layer only
          sensor = 'Terra', # only terrestrial values, ignore main bodies of water
-         user = USERNAME, # your Earthdata username (for urs.earthdata.nasa.gov/home)
-         password = PASSWORD, # your Earthdata password
+         user = .USERNAME, # your Earthdata username (for urs.earthdata.nasa.gov/home)
+         password = .PASSWORD, # your Earthdata password
          start_date = format(min(Alces_alces$timestamp) - 16, '%Y.%m.%d'), # 1 raster before min
          end_date = format(max(Alces_alces$timestamp) + 16, '%Y.%m.%d'), # 1 raster after end
          spatmeth = 'bbox', # use a bounding box for the extent
@@ -72,7 +95,7 @@ MODIStsp(gui = FALSE, # do not use the browser GUI, only run in R
 rasters <-
   list.files(path = 'data/ndvi-rasters/alces-alces-nw/VI_16Days_1Km_v61/NDVI/',
              pattern = '.tif', full.names = TRUE) %>%
-  stack()
+  rast()
 
 names(rasters) <-
   list.files(path = 'data/ndvi-rasters/alces-alces-nw/VI_16Days_1Km_v61/NDVI/',
@@ -81,12 +104,12 @@ names(rasters) <-
   as.Date(format = '%Y_%j')
 
 if(FALSE) {
-  raster::plot(rasters[[1]])
+  terra::plot(rasters[[1]])
   plot(Alces_alces_sp, add = TRUE)
-  raster::plot(rasters)
+  terra::plot(rasters)
   
   for(i in seq(1, length(names(rasters)), by = 16)) {
-    raster::plot(rasters[[i:(i + 15)]])
+    terra::plot(rasters[[i:(i + 15)]])
     readline(prompt = 'Press <Enter> to view next set of plots')
   }
 }
@@ -97,7 +120,6 @@ rasters %>%
   pivot_longer(-c(x, y)) %>%
   transmute(long = x,
             lat = y,
-            date = substr(name, start = 2, stop = nchar(name)) %>%
-              as.Date(format = '%Y.%m.%d'),
-            ndvi = value) %>%
+            date = as.Date(name),
+            ndvi = value) #%>%
   saveRDS('data/ndvi-rasters/alces-alces-nw/alces-alces-ndvi.rds')
