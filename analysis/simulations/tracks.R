@@ -1,6 +1,6 @@
 # does not require large amounts of RAM, takes < 1 minute
 library('ctmm')   # for generating movement models
-library('raster') # for working with raster data
+library('terra') # for working with raster data
 library('dplyr')  # for data wrangling
 library('purrr')  # for functional programming
 source('functions/label_visits.R') # function for when animal moves to a new cell & eats
@@ -51,14 +51,16 @@ if(FALSE) {
   track <- test$tel[[2]] %>%
     data.frame() %>%
     mutate(cell_id = cellFromXY(object = HABITAT,
-                                xy = SpatialPoints.telemetry(test$tel[[2]])),
+                                xy = SpatialPoints.telemetry(test$tel[[2]]) %>%
+                                  as.data.frame() %>%
+                                  select(x, y)),
            new_cell = c(1, diff(cell_id)) != 0)
   mean(track$new_cell) # fraction of observations that are feeding events
   
   track_short <- filter(track, t < 1e4)
   
   # convert the raster to a data.frame to ensure tracks don't go too far
-  test_habitat <- rasterToPoints(HABITAT, spatial = TRUE) %>% data.frame()
+  test_habitat <- as.data.frame(HABITAT, xy = TRUE)
   test_habitat_small <- filter(test_habitat,
                                x >= min(track$x), x <= max(track$x),
                                y >= min(track$y), y <= max(track$y))
@@ -89,7 +91,9 @@ if(FALSE) {
     tidyr::unnest(tel) %>%
     group_by(day) %>%
     mutate(new_cell = cellFromXY(object = HABITAT,
-                                 xy = SpatialPoints.telemetry(tibble(x, y))) %>%
+                                 xy = SpatialPoints.telemetry(tibble(x, y)) %>%
+                                   as.data.frame() %>%
+                                   select(x, y)) %>%
              suppressWarnings(),
            new_cell = c(0, diff(new_cell)) != 0)
   

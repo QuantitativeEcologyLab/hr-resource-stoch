@@ -1,4 +1,4 @@
-library('raster')  # for working with rasters
+library('terra')  # for working with rasters
 library('ctmm')    # for generating movement models
 library('dplyr')   # for data wrangling (%>%, mutate(), slice(), filter(), etc.)
 library('tidyr')   # for data wrangling (unnest, etc.)
@@ -29,7 +29,9 @@ intervals <-
               .tel %>%
                 data.frame() %>%
                 mutate(cell_id = cellFromXY(object = HABITAT,
-                                            xy = SpatialPoints.telemetry(.tel)),
+                                            xy = SpatialPoints.telemetry(.tel) %>%
+                                              as.data.frame() %>%
+                                              select(x, y)),
                        new_cell = c(1, diff(cell_id)) != 0) %>%
                 filter(new_cell) %>%
                 mutate(interval = c(NA, diff(t)))
@@ -58,7 +60,9 @@ d <- expand_grid(delta_t = seq(1, 300),
     filtered %>%
       data.frame() %>%
       mutate(cell_id = cellFromXY(object = HABITAT,
-                                  xy = SpatialPoints.telemetry(filtered)),
+                                  xy = SpatialPoints.telemetry(filtered) %>%
+                                    as.data.frame() %>%
+                                    select(x, y)),
              new_cell = c(1, diff(cell_id)) != 0)
   }),
   seed = factor(seed, levels = 1:3),
@@ -113,7 +117,10 @@ tel_short <- tel[tel$t <= max(consecutive_encounters$t) + 500, ]
 
 track <- tel_short %>%
   data.frame() %>%
-  mutate(cell_id = cellFromXY(HABITAT, SpatialPoints.telemetry(tel_short)),
+  mutate(cell_id = cellFromXY(HABITAT,
+                              SpatialPoints.telemetry(tel_short) %>%
+                                as.data.frame() %>%
+                                select(x, y)),
          new_cell = c(1, diff(cell_id)) != 0)
 
 thin <- function(dt) {
@@ -122,7 +129,9 @@ thin <- function(dt) {
     filter(t %% dt == 0) %>%
     mutate(cell_id = cellFromXY(HABITAT,
                                 tel_short[tel_short$t %% dt == 0, ] %>%
-                                  SpatialPoints.telemetry()) %>%
+                                  SpatialPoints.telemetry() %>%
+                                  as.data.frame() %>%
+                                  select(x, y)) %>%
              suppressWarnings(),
            new_cell = c(1, diff(cell_id)) != 0)
 }
@@ -138,10 +147,9 @@ p_thinning <-
   facet_wrap(~ group,
              labeller = label_bquote(paste(Delta, 't = ',
                                            .(levels(tracks$group)[group]), s)),
-                                     nrow = 2) +
+             nrow = 2) +
   coord_equal(xlim = c(-0.1, 0.4), ylim = c(-0.5, 0.1)) +
-  geom_tile(data = rasterToPoints(HABITAT) %>%
-              data.frame() %>%
+  geom_tile(data = as.data.frame(HABITAT, xy = TRUE) %>%
               filter(abs(x) < 5, abs(y) < 5), fill = 'transparent', color = 'black') +
   geom_path(color = '#440154', lwd = 1) +
   geom_point(aes(color = new_cell, size = new_cell, shape = new_cell)) +
@@ -160,13 +168,14 @@ full_tracks <- tels %>%
   unnest(tel)
 full_tracks <- mutate(full_tracks,
                       cell_id = cellFromXY(object = HABITAT,
-                                           xy = SpatialPoints.telemetry(tels$tel)),
+                                           xy = SpatialPoints.telemetry(tels$tel) %>%
+                                             as.data.frame() %>%
+                                             select(x, y)),
                       new_cell = c(1, diff(cell_id)) != 0)
 p_tracks <-
   ggplot(full_tracks, aes(x, y)) +
   coord_equal(xlim = range(full_tracks$x), ylim = range(full_tracks$y)) +
-  geom_tile(data = rasterToPoints(HABITAT) %>%
-              data.frame() %>%
+  geom_tile(data = as.data.frame(HABITAT, xy = TRUE) %>%
               filter(x >= min(full_tracks$x) - 20, x <= max(full_tracks$x) + 20,
                      y >= min(full_tracks$y) - 20, y <= max(full_tracks$y) + 20),
             fill = 'transparent', color = '#00000020') + # black with some alpha
