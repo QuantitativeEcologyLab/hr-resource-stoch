@@ -2,6 +2,7 @@ library('ctmm')    # for movement modeling
 library('dplyr')   # for data wrangling (%>%, mutate())
 library('purrr')   # for functional programming (e.g., map*())
 library('tidyr')   # for data wrangling (e.g., unnest())
+library('terra')   # for working with raster data
 library('ggplot2') # for plotting
 library('cowplot') # for plots in grids
 source('functions/label_visits.R') # label food encounters based on a raster
@@ -16,8 +17,9 @@ DELTA_T <- 0.1 # time between measurements
 SAMPLES <- seq(0, 30, by = DELTA_T) # sampling times
 DIM <- 15 # dimensions of raster (number of cells per side)
 HABITAT <- matrix(data = 1, nrow = DIM, ncol = DIM) %>% # raster of patches
-  raster(xmx = 20, xmn = -20, ymx = 20, ymn = -20)
-HABITAT_tbl <- rasterToPoints(HABITAT) %>% as_tibble() # raster in tibble format
+  rast(extent = c(-20, 20, -20, 20))
+HABITAT_tbl <- as.data.frame(HABITAT, xy = TRUE) %>%
+  as_tibble() # raster in tibble format
 
 # resource abundance palette
 LOW <- 'white'
@@ -104,7 +106,7 @@ akde_95 <-
 
 # create the figure ----
 HABITAT_tbl <-
-  rasterToPoints(HABITAT) %>% # convert raster to a data.frame
+  as.data.frame(HABITAT, xy = TRUE) %>% # convert raster to a data.frame
   as_tibble() %>% # convert to a tibble for ease of use
   filter(x >= min(akde_95$long) - 1, x <= max(akde_95$long),
          y >= min(akde_95$lat) - 1, y <= max(akde_95$lat) + 1)

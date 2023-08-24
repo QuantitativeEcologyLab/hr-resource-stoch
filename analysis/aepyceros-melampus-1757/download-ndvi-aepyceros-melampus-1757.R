@@ -69,7 +69,7 @@ names(rasters) <-
   as.Date(format = '%Y_%j')
 
 if(FALSE) {
-  raster::plot(rasters[[1]])
+  terra::plot(rasters[[1]])
   plot(ud_poly, add = TRUE, color = 'transparent')
   tel %>%
     SpatialPoints.telemetry() %>%
@@ -80,7 +80,7 @@ if(FALSE) {
   rasters %>%
     mask(ud_poly) %>%
     crop(ud_poly) %>%
-    raster::plot()
+    terra::plot()
 }
 
 # save NDVI data as an rds file of a tibble

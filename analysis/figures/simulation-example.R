@@ -8,15 +8,15 @@ source('functions/label_visits.R') # label food encounters based on a raster
 source('functions/pull_parameter.R') # to extract parameters from ctmm and akde objects
 source('analysis/figures/default-figure-styling.R') # defaults for figures (theme, size)
 theme_set(theme_map() + theme(legend.position = 'none'))
-select <- dplyr::select # don't use raster::select as a default
 
 REQUIRED <- 8 # amount of food required for satiety
 DELTA_T <- 0.1 # time between measurements
 SAMPLES <- seq(0, 30, by = DELTA_T) # sampling times
 DIM <- 15 # dimensions of raster (number of cells per side)
 HABITAT <- matrix(data = 1, nrow = DIM, ncol = DIM) %>% # raster of patches
-  raster(xmx = 20, xmn = -20, ymx = 20, ymn = -20)
-HABITAT_tbl <- rasterToPoints(HABITAT) %>% as_tibble() # raster in tibble format
+  rast(extent = c(-20, 20, -20, 20))
+HABITAT_tbl <- as.data.frame(HABITAT, xy = TRUE) %>%
+  as_tibble() # raster in tibble format
 
 # resource abundance palette
 LOW <- 'white'
@@ -103,7 +103,7 @@ akde_95 <-
 
 # create the figure ----
 HABITAT_tbl <-
-  rasterToPoints(HABITAT) %>% # convert raster to a data.frame
+  as.data.frame(HABITAT, xy = TRUE) %>% # convert raster to a data.frame
   as_tibble() %>% # convert to a tibble for ease of use
   filter(x >= min(akde_95$long) - 1, x <= max(akde_95$long),
          y >= min(akde_95$lat) - 1, y <= max(akde_95$lat) + 1)
