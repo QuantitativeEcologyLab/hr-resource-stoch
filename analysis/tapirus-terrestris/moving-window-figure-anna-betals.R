@@ -18,14 +18,11 @@ hr_lab <- expression('7-day'~home~range~size~(km^2)~'   ')
 # import location-scale model for predictions of mean and variance in NDVI
 m_ndvi <- readRDS('models/tapirs/CE_31_ANNA-mgcv-ndvi-betals.rds')
 
-# function to make predictions from the model
+# function to make predictions from the model for each telemetry
 ndvi_preds <- function(.data) {
-  .data <- .data %>%
-    data.frame() %>% # convert telemetry data to a data.frame
-    mutate(year = year(timestamp),
-           doy = yday(timestamp))
+  .data <- data.frame(.data) # convert telemetry data to a data.frame
   
-  predict.gam(m_ndvi, newdata = .data, type = 'response', se.fit = FALSE) %>%
+  predict(m_ndvi, newdata = .data, type = 'response', se.fit = FALSE) %>%
     data.frame() %>%
     tibble() %>%
     transmute(mu = X1,
@@ -33,29 +30,28 @@ ndvi_preds <- function(.data) {
     return()
 }
 
-# import tapir data (https://doi.org/10.1186/s40462-022-00313-w)
+# import tapir data (from https://doi.org/10.1186/s40462-022-00313-w)
 tapir <- readRDS('../tapirs/models/tapirs-final.rds') %>%
   filter(name.short == 'ANNA')
-tel <- tapir$data[[1]]
 
-tel <- data.frame(tel) %>%
+tel <- data.frame(tapir$data[[1]]) %>%
   rename(long = longitude, lat = latitude) %>%
-  mutate(dec_date = decimal_date(timestamp))
-tel <- bind_cols(tel, ndvi_preds(tel))
+  mutate(dec_date = decimal_date(timestamp)) %>%
+  bind_cols(., ndvi_preds(.)) %>% 
+  as_tibble()
 
 tapir <-
   readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
   # mutate(ess = map_dbl(model, \(.m) summary(.m)$DOF['area']),
   #        weight = ess / mean(ess)) %>%
-  mutate(preds = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
-         mu = map_dbl(preds, \(.d) mean(.d$mu)),
-         sigma2 = map_dbl(preds, \(.d) mean(.d$sigma2))) %>%
+  mutate(est = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
+         mu = map_dbl(est, \(.d) mean(.d$mu)),
+         sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
   select(t_center, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
   pivot_longer(c(hr_lwr_95, hr_est_95, hr_upr_95), names_to = c('.value', 'quantile'),
                names_pattern = '(.+)_(.+)') %>%
-  mutate(t_center = as.POSIXct(t_center, origin = origin),
-         quantile = paste0(quantile, '%'),
-         quantile = factor(quantile))
+  mutate(t_center = as.POSIXct(t_center),
+         quantile = paste0(quantile, '%'))
 
 # create the figure
 date_labs <- range(tel$timestamp) %>% as.Date()
