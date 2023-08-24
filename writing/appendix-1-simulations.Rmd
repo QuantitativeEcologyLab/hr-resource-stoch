@@ -25,11 +25,11 @@ csl: 'the-american-naturalist.csl'
 fontsize: 12pt
 header-includes:
     - \usepackage{setspace}\doublespacing # for double-spaced text
-    - \usepackage{indentfirst} # for indenting first line of each paragraph
     - \usepackage[small]{titlesec} # for smaller font for headings
     - \usepackage{caption} # for more customization of captions
     # smaller caption text, less space above and below caption
     - \captionsetup[figure]{font=scriptsize}
+    - \usepackage{hanging} # for hanging indents in references
 subparagraph: true # needed for \usepackage[small]{titlesec}
 output:
   bookdown::pdf_document2:
@@ -72,10 +72,6 @@ knitr::opts_chunk$set(eval = FALSE,         # do not run R code
 \newpage
 
 \tableofcontents
-
-# To do {-}
-
-* fix captions (incomplete); take captions from manuscript
 
 \newpage
 
@@ -379,3 +375,5 @@ knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/hr-over-days.png',
 \clearpage
 
 # References {-}
+
+\hangparas{1em}{1} <!-- indent all lines but the first -->
