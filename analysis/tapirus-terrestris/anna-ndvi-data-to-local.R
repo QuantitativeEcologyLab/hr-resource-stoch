@@ -63,7 +63,6 @@ if(FALSE) {
 }
 
 # save NDVI data as an rds file of a tibble
-#' `rasterToPoints()` on a `stack()` of the rasters fails because there's too much data
 rasters %>%
   as.data.frame(xy = TRUE) %>%
   pivot_longer(-c(x, y)) %>%
