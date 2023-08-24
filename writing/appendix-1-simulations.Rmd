@@ -4,26 +4,27 @@ subtitle: "Appendix 1: Simulations"
 author:
   - name: Stefano Mezzini
     email: stefano.mezzini@ubc.ca
-    institute: ubco
-  - name: Adam T. Ford
-    institute: ubco
-  - name: Jacob R. Goheen
-    institute: wyom
+    institute: [biol, braes]
+  - name: Simon Wood
+    institute: uofe
   - name: E. Patrícia Medici
     institute: [tapir, iucn, escas]
   - name: Michael J. Noonan
     email: michael.noonan@ubc.ca
-    institute: ubco
+    institute: [biol, braes, cmps]
 institute:
-  - ubco: The Irving K. Barber Faculty of Science, The University of British Columbia, Okanagan Campus, Kelowna, Canada.
-  - wyom: Department of Zoology and Physiology, University of Wyoming, Laramie, Wyoming, United States of America
+  - biol: Department of Biology, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+  - braes: Okanagan Institute for Biodiversity, Resilience, and Ecosystem Services, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+  - uofe: School of Mathematics, James Clerk Maxwell Building, University of Edinburgh, Edinburgh, Unted Kingdom.
   - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
   - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
-bibliography: 'env-var-review.bib'
+  - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+bibliography: 'hr-resource-stoch.bib'
 csl: 'the-american-naturalist.csl'
 fontsize: 12pt
 header-includes:
+    - \usepackage{setspace}\doublespacing # for double-spaced text
     - \usepackage{indentfirst} # for indenting first line of each paragraph
     - \usepackage[small]{titlesec} # for smaller font for headings
     - \usepackage{caption} # for more customization of captions
@@ -41,19 +42,30 @@ output:
 <!-- set default code chunk options -->
 
 ```{r, echo=FALSE}
-knitr::opts_chunk$set(eval = FALSE,    # do not run R code
-                      echo = TRUE,     # print R code
-                      message = FALSE, # hide messages
-                      comment = '',    # don't add anything before outputs
-                      cache = TRUE)    # cache all chunk outputs
-knitr::opts_knit$set(root.dir = '..')
+hook_chunk <- knitr::knit_hooks$get('chunk')
+
+knitr::knit_hooks$set(chunk = function(x, options) {
+  regular_output = hook_chunk(x, options)
+  # add latex commands if chunk option singlespacing is TRUE
+  if (isTRUE(options$singlespacing)) 
+    sprintf("\\singlespacing\n %s \n\\doublespacing", regular_output)
+  else
+    regular_output
+})
+
+knitr::opts_chunk$set(eval = FALSE,         # do not run R code
+                      echo = TRUE,          # print R code
+                      message = FALSE,      # hide messages
+                      comment = '',         # don't add anything before outputs
+                      fig.align = 'center', # change figure alignment
+                      cache = TRUE,         # cache all chunk outputs
+                      singlespacing = TRUE) # use single spacing for code chunks
 ```
 
 <!-- add custom commands for formulae -->
 
 \newcommand{\e}{\mathbb E}
 \newcommand{\var}{\mathbb V}
-\newcommand{\vpos}{\mathbb V(\text{position})}
 
 <!-- have table of contents on pages of its own -->
 
@@ -63,7 +75,7 @@ knitr::opts_knit$set(root.dir = '..')
 
 # To do {-}
 
-* fix captions (incomplete, HR not V(pos)); take captions from manuscript
+* fix captions (incomplete); take captions from manuscript
 
 \newpage
 
@@ -71,12 +83,12 @@ knitr::opts_knit$set(root.dir = '..')
 
 This appendix illustrates all the steps necessary to produce the simulation figures in the main manuscript. For ease of reference, we also include the figures here (figures \@ref(fig:5-5-sims) and \@ref(fig:5-5-reg)). To achieve full transparency while minimizing computational times, the code illustrated in this pdf is not executed during the knitting of the document. Instead, the R Markdown document (`writing/appendix-1-simulations.Rmd`) contains code chunks that import the `RDS` files saved by the scripts used during the analysis via `R` code that is not printed in the pdf file. Although one can replicate the analyses by running the code in this pdf, we suggest only using this document for illustrative purposes and as a general guide. We suggest using the `R` scripts to replicate the simulations, instead.
 
-```{r 5-5-sims, eval=TRUE, echo=FALSE, fig.cap="Simulated spatial requirements for animals living in habitats where the mean and variance in resource abundance ($R$) are constant, linearly increasing, cyclical, drifting, or erratic over time. The lower green line indicates the animal's core home range (50\\% quantile), while the top line indicates the 0.95 utilization quantile. Note how both quantiles decrease nonlinearly as $\\e(R)$ increases, and they increase nonlinearly as $\\var(R)$ increases. Additionally, the variance in both quantiles is higher when $\\var(R)$ is higher, and changes in $\\var(R)$ have greater impacts when $\\e(R)$ is low.\nSimulations were run such that animals followed the same 1000 tracks at each time point starting from the location $\\langle 0, 0\\rangle$ until they reach satiety, after which they returned to $\\langle 0, 0\\rangle$ over the same amount of time required to reach satiety. The animal's home range was then estimated using an Ornstein-Uhlenbeck Foraging (OUF) model via the $\\tt{ctmm}$ package (Fleming and Calabrese 2021). ", out.width='100%'}
+```{r 5-5-sims, eval=TRUE, echo=FALSE, fig.cap="Simulated home range sizes, $H$, of an animal living in habitats where the mean and variance in resources are constant, linearly increasing, cyclical, drifting, or erratic over time. Note how $H$ decreases nonlinearly as $\\mu(t)$ increases and increases nonlinearly as $\\sigma^2(t)$ increases. Additionally, the variance in $H$ is higher when $\\mu(t)$ is lower or $\\sigma^2(t)$ is higher, and changes in $\\sigma^2(t)$ have greater impacts when $\\mu(t)$ is low.\\newline{}Simulations were run such that animals followed the same $2^{10}=1024$ tracks at each time point starting from the location $\\langle 0, 0\\rangle$ until they reach satiety, after which they were allowed to return to $\\langle 0, 0\\rangle$ over the same amount of time required to reach satiety. The animal's movement and utilization distribution were then estimated using an Ornstein-Uhlenbeck Foraging (OUF) model and Autocorrelated Kernel Density Estimation (AKDE), respectively, via the $\\tt{ctmm}$ package (Fleming and Calabrese 2021) for $\\tt{R}$ (R Core Team 2022). $H$ was estimated using the UD's 0.95 quantile, but the effect is true for all quantiles since the UD was estimated via AKDE.", out.width='100%'}
 knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/mean-variance-5-by-5-hr-sims.png',
                         rel_path = FALSE)
 ```
 
-```{r 5-5-reg, eval=TRUE, echo=FALSE, fig.cap="Effects of $\\e(R)$ and $\\var(R)$ on simulated spatial requirements. The relationships were estimated using a Generalized Linear Model with a Gamma family of distributions that accounted for the effects of both $\\e(R)$ and $\\var(R)$ as well as differences between the two quantiles. The bottom line indicates the relationships with the animal's core home range (0.5 quantile), while the top line indicates the relationship with the 0.95 utilization quantile. Note the nonlinear decrease in both utilization quantiles as $\\e(R)$ increases and the nonlinear increase in both utilization quantiles as $\\var(R)$ increases.", out.width='100%'}
+```{r 5-5-reg, eval=TRUE, echo=FALSE, fig.cap="Effects of $\\e(R)$ and $\\var(R)$ on simulated spatial requirements. The relationships were estimated using a Generalized Additive Model for Location and Scale (GAMLS; Rigby and Stasinopoulos 2005; Stasinopoulos and Rigby 2007) with a Gamma location-scale family of distributions ($\\tt{mgcv\\!::\\!gammals})$. The model accounted for the effects of $\\e(R)$ and $\\var(R)$ and the interaction effects between the two on both the location (i.e., mean) of $H$ and its scale parameter. Note the nonlinear decrease in $H$ as $\\e(R)$ increases and the increase in $H$ as $\\var(R)$ increases. Additionally, note how the variance in spatial needs strongly increases with mean spatial needs.", out.width='100%'}
 knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/simulation-regression-plots.png',
                         rel_path = FALSE)
 ```
@@ -85,28 +97,31 @@ knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/simulation-regressi
 
 # Simulating the movement tracks
 
-To reduce sampling variance between simulations, we use the same set of simulated tracks for each time point in each panel (figure \@ref(fig:sims-example)). In the `analysis/simulations/tracks.R` script, we generate $2^{10} = 1024$ tracks to check how many tracks are necessary to obtain stable home range estimates in the best- and worst-case scenarios. Most intermediate and diagnostic checks included in the `R` scripts are not included in this document for the sake of brevity and simplicity. In this script, we use the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] for movement modeling, the `raster` package [version 3.6-3, @hijmans_raster_2022] to work with the simulated resource rasters, the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling, and the the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
+To reduce sampling variance between simulations at each time point in each panel of figure \@ref(fig:5-5-sims)), we used the same set of $2^{10} = 1024$ simulated tracks, which we generate in the `analysis/simulations/tracks.R` script. Most intermediate and diagnostic checks are not included in this document for the sake of brevity and simplicity, but their outputs and conclusions are listed in this section. In this script, we use the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] for movement modeling; the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the simulated resource rasters; the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling; and the the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
 
-```{r sims-example, echo=FALSE, eval=TRUE, fig.cap="Overview of how animals' spatial needs were simulated. (a.) Animal tracks were simulated using an Integrated Ornstein-Uhlenbeck model (IOU; model, an infinitely diffusive and continous-velocity movement mode), starting from the point $\\langle 0, 0 \\rangle$ (black and yellow square). (b.) Each time the track crossed into a new cell (green dots), the animal collected a random amount of resources that followed a Gamma distribution with common mean $\\mu (t)$ and variance $\\sigma^2 (t)$. (c.) Each time the animal collected more resources, its satiety (purple) increased. Once the animal collected sufficient resources, the animal stopped moving (i.e., the track was truncated). (d.) The process was repeated $2^{10}=1024$ times (13 tracks pictured in this panel). (e.) The final set of (truncated) tracks was then modeled using Ornstein-Uhlenbeck Foraging models to estimate the 95\\% and 50\\% home range estimates using Autocorrelated Kernel Density Estimates.", out.width='100%', fig.pos='!h'}
+```{r sims-example, echo=FALSE, eval=TRUE, fig.cap="Overview of how animals' spatial needs were simulated. (a.) Animal tracks were simulated using an Integrated Ornstein-Uhlenbeck model (IOU; model, an infinitely diffusive and continous-velocity movement mode), starting from the point $\\langle 0, 0 \\rangle$ (black and yellow square). (b.) Each time the track crossed into a new cell (green dots), the animal collected a random amount of resources that followed a Gamma distribution with common mean $\\mu (t)$ and variance $\\sigma^2 (t)$. (c.) Each time the animal collected more resources, its satiety (purple) increased. Once the animal collected sufficient resources, the animal stopped moving (i.e., the track was truncated). (d.) The process was repeated $2^{10}=1024$ times (13 tracks pictured in this panel). (e.) The final set of (truncated) tracks was then modeled using Ornstein-Uhlenbeck Foraging models to estimate the 95\\% home range estimates using Autocorrelated Kernel Density Estimates.", out.width='100%', fig.pos='!h'}
 knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/simulation-example.png',
                         rel_path = FALSE)
 ```
 
+\newpage
+
 ```{r simulate-tracks, eval=TRUE, warning=FALSE}
-# NOTE: change working directory to "hr-resource-stoch" or modify file paths
+# NOTE: change working directory to "hr-resource-stoch" or modify paths
 setwd('H:/GitHub/hr-resource-stoch')
 
 # attach all necessary packages
-library('ctmm')   # for generating movement models and movement modeling
-library('raster') # for working with raster data
-library('dplyr')  # for data wrangling
-library('purrr')  # for functional programming
+library('ctmm')    # for generating movement models and movement modeling
+library('terra')   # for working with raster data
+library('dplyr')   # for data wrangling
+library('purrr')   # for functional programming
 library('tidyr')   # for data wrangling (e.g., nested tibbles)
 library('ggplot2') # for fancy plots
 
+# source custom functions
 source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
-source('analysis/figures/mean-variance-trends-panel-data.R') # mu and sigma2
-source('analysis/movement-model.R') # for consistency across scripts
+source('analysis/mean-variance-trends-panel-data.R') # mu and sigma2
+source('analysis/simulations/movement-model.R') # for consistency
 source('functions/get_hr.R') # for extracting gaussian home range
 source('functions/label_visits.R') # decides when animal encounters food
 
@@ -156,25 +171,25 @@ After generating the tracks, we performed the following tests to ensure the numb
 
 ## Checking whether adding return trips is necessary
 
-Script: `analysis/figures/simulations/return-sensitivity.R`
+Script: `analysis/figures/return-sensitivity.R`
 
-Adding return trips to $\langle0, 0\rangle$ after an animal reached satiety doubled computational times without appreciable improvements on the home range estimates (including the 95% CIs).
+Adding return trips to $\langle0, 0\rangle$ after an animal reached satiety doubled computational times without appreciable improvements on the home range estimates (including the 95% confidence intervals of the estimates).
 
 ## Checking whether the sampling interval is sufficiently small
 
-Script: `analysis/figures/simulations/delta-t-sensitivity.R`
+Script: `analysis/figures/delta-t-sensitivity.R`
 
-Using three tracks generated using three arbitrary seeds (1, 2, and 3), we explored the effects of sampling interval on the number of encounters with food (i.e., movements to new cells) detected. From each of the four checks, we created an exploratory plot that we present in figure \@ref(fig:dt-sensitivity).
+Using three tracks generated with three arbitrary seeds (1, 2, and 3), we explored the effects of sampling interval ($\Delta t$) on the number of encounters with food (i.e., movements to new cells) detected. From each of the four checks, we created an exploratory plot that we present in figure \@ref(fig:dt-sensitivity).
 
 **Exploratory plot \@ref(fig:dt-sensitivity)a.** The amount of time between encounters ranged from 1 second (the minimum sampling interval) to 24 minutes and 10 seconds. Approximately 93% of the encounters (500/536, excluding the first 3 events of each track) occurred with 30 or more seconds between events.
 
 **Exploratory plot \@ref(fig:dt-sensitivity)b.** Halving the sampling interval had little to no effect on the total number of encounters for $\Delta t \lessapprox 60 \,s.$
 
-**Exploratory plot \@ref(fig:dt-sensitivity)c.** A sampling interval of $\Delta t = 30$ seconds was small enough to capture fine-scale movement in the tracks while avoiding excessive amounts of data and an inflated amount of encounters with resources while an animal was near cell boundaries.
+**Exploratory plot \@ref(fig:dt-sensitivity)c.** A sampling interval of $\Delta t = 30$ seconds was small enough to capture fine-scale movement in the tracks but large enough to avoid excessive amounts of data and an inflated amount of encounters when an animal was near cell boundaries.
 
-**Exploratory plot \@ref(fig:dt-sensitivity)d.** The three tracks used for these exploratory plots are sufficiently different that we considered them to be a representative sample of movement tracks simulated by the OUF model. All three tracks have a reasonable amount of tortuous movement and directed movement. 
+**Exploratory plot \@ref(fig:dt-sensitivity)d.** The three tracks used for these exploratory plots are sufficiently different that we considered them to be a representative sample of movement tracks simulated by the OUF model. All three tracks have a reasonable amount of both tortuous and directed movement.
 
-```{r dt-sensitivity, fig.cap="Exploratory plots used to decide an appropriate sampling interval. (a.) Histograms of the number of encounters as a function of the interval between encounters, with a binwith of 30 seconds. Although some encounters occur with less than 30 seconds between them, most of them occur at least 60 seconds apart. (b.) Number of encounters with food detected as a function of sampling interval. The colored lines indicate the estimated relationship based on a Generalized Additive Model fit using the $\\tt{geom\\_smooth}$ function from the $\\tt{ggplot2}$ package. Although the number of encounters detected decreases as sampling interval doubles, the loss at 30 seconds is negligible. (c.) Beginning of the track generated with seed \"1\" (purple line) with the location of each sample for different sampling intervals. Red dots indicate samples where the animal remained in the same cell, while the blue squares indicate when an animal was in a new cell, and thus encountered food. While the number of encounters detected decreases as the sampling interval increases, most of the encounters lost at $\\Delta t = 30$s occured because the animal remained almost adjacent to the borders between cells. (d.) The three tracks used in these tests over the raster used to determine when the animals encountered food.", out.width='100%', echo=FALSE, eval=TRUE}
+```{r dt-sensitivity, fig.cap="Exploratory plots used to decide an appropriate sampling interval. (a.) Histograms of the number of encounters as a function of the interval between encounters, with a binwith of 30 seconds. Although some encounters occur with less than 30 seconds between them, approximately 93\\% of them occur at least 30 seconds apart. (b.) Number of detected encounters as a function of sampling interval. The colored lines indicate the estimated relationship based on a Generalized Additive Model fit using the $\\tt{geom\\_smooth}$ function from the $\\tt{ggplot2}$ package. Although the number of encounters detected decreases as sampling interval doubles, the loss at $\\Delta = 30$s is negligible. (c.) Beginning of the track generated with seed \"1\" (purple line) for different sampling intervals. Red dots indicate locations where the animal remained in the same cell, while the blue squares indicate when an animal was in a new cell and thus encountered food. While the number of encounters detected decreases as the sampling interval increases, most of the encounters lost at $\\Delta t = 30$s occured because the animal remained almost adjacent to the borders between cells. Additionally, the track at $\\Delta t = 30$s is still sufficiently tortuous to represent realistic animal movement. (d.) The three tracks used in these tests over the raster used for determining when the animals encountered food.", out.width='100%', echo=FALSE, eval=TRUE}
 knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/thinning-examples.png',
                         rel_path = FALSE)
 ```
@@ -185,11 +200,10 @@ knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/thinning-examples.p
 
 Script: `analysis/hr-simulation-extreme-scenarios.R`
 
-In this script, we check how many tracks are necessary to produce stable and accurate estimates of the spatial needs. We do so by estimating the home ranges of animals in the best-case scenario (highest $\e(R)$ and lowest $\var(R)$) and worst-case scenario (lowest $\e(R)$ and highest $\var(R)$).
+In this script, we check how many tracks are necessary to produce stable and accurate estimates of the spatial needs. We do so by estimating the home ranges of animals for varying numbers of track in the best-case scenario (highest $\e(R)$ and lowest $\var(R)$) and worst-case scenario (lowest $\e(R)$ and highest $\var(R)$).
 
 ```{r}
 set.seed(1) # for consistent results
-
 tels <- readRDS('simulations/tracks.rds') # list of telemetry tracks
 tracks <- readRDS('simulations/labelled-tracks.rds') # tibble of tracks
 MAX_T <- max(tracks$t) # maximum amount of exploration time
@@ -202,7 +216,6 @@ BEST <- filter(d55, mu == max(mu)) %>% # highest mean resources
   slice(1) # take the first row only
 
 days <-
-  # modify WORST and BEST to follow the syntax in 'offspring-simulations.R'
   transmute(bind_rows(WORST, BEST),
             animal,
             mu,
@@ -218,7 +231,7 @@ days <-
   # end the movement once the animal has reached satiety
   group_by(day, animal, scenario) %>%
   # calculate the total visits, total calories, and if animal is full
-  mutate(satiety = cumsum(food), # for diagnostics if animals don't get full
+  mutate(satiety = cumsum(food), # for diagnostics if animals aren't full
          full = satiety >= REQUIRED) %>% # did the animal reach its needs?
   filter(cumsum(full) <= 1) %>% # full only once
   ungroup()
@@ -228,7 +241,7 @@ if(FALSE) {
   days_end <-
     days %>%
     group_by(scenario, day) %>%
-    filter(full, ! duplicated(full)) %>% # take 1st row where animal is full
+    filter(full, ! duplicated(full)) %>% # take 1st row where full
     rename(t_expl = t) %>% # to avoid duplicated colnames with tracks
     # remove unneded columns (also avoids duplicated colnames with tracks)
     dplyr::select(-c(x, y, vx, vy, longitude, latitude, food))
@@ -273,16 +286,16 @@ days_summarized <-
   # add days sequentially
   group_by(scenario) %>%
   mutate(t_start = lag(2 * t_expl), # add the return time before next "day"
-         t_start = if_else(is.na(t_start), 0, t_start), # start at 0, not NA
+         t_start = if_else(is.na(t_start), 0, t_start), # start at 0
          t_start = cumsum(t_start), # make start times comsecutive
          tel_day = map2(day, t_expl,
-                        \(i, te) tels$tel[[i]] %>% # extract tel for the day
+                        \(i, te) tels$tel[[i]] %>% # extract day's tel
                           data.frame() %>% # for filtering
                           filter(t <= te))) %>% # end tracks at satiety
   unnest(tel_day) %>% # make one big dataset
   mutate(t = t + t_start, # make times consecutive
          individual.local.identifier = scenario, # ctmm identifier
-         timestamp = as.POSIXct(t, origin = '2000-01-01')) %>% # use new times 
+         timestamp = as.POSIXct(t, origin = '2000-01-01')) %>% # new times 
   ungroup() # remove grouping by scenario
 
 if(FALSE) {
@@ -327,7 +340,7 @@ saturation_days <-
            ctmm.fit(tel[[i]], theta[[i]])
            }), # fit movement model
          sigma = map_dbl(m, \(.m) ctmm:::area.covm(.m$sigma)), # var(pos)
-         hr = get_hr(.sigma = sigma, quantile = 0.95)) # Gaussian home range
+         hr = get_hr(.sigma = sigma, quantile = 0.95)) # Gaussian HR
 
 saveRDS(saturation_days, 'simulations/hr-saturation-days.rds')
 
@@ -353,6 +366,7 @@ knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/hr-over-days.png',
                         rel_path = FALSE)
 ```
 
+\newpage
 
 # Main scripts (to be run in the following order)
 
