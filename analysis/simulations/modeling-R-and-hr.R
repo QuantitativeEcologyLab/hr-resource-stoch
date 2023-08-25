@@ -51,18 +51,21 @@ plot(m, all.terms = TRUE, pages = 1, scheme = 3, scale = 0)
 
 # estimate predictions ----
 # effect of mu
-newd_mu <- expand_grid(mu = seq(min(sims$mu), max(sims$mu),
-                                length.out = 400),
-                       sigma2 = mean(sims$sigma2),
-                       quantile = unique(sims$quantile))
+newd_mu <-
+  expand_grid(mu = seq(min(sims$mu), max(sims$mu), length.out = 400),
+              sigma2 = mean(sims$sigma2),
+              quantile = unique(sims$quantile))
 
 preds_mu <-
-  bind_cols(
+  bind_cols( # bind new data and predictions
     newd_mu,
-    predict(m, newdata = newd_mu, type = 'response', se.fit = TRUE) %>%
-      data.frame() %>%
-      transmute(hr = fit.1,
-                var_hr = fit.1 * exp(fit.2)))
+    predict(m, newdata = newd_mu, type = 'link', se.fit = TRUE) %>%
+      data.frame() %>% # convert list to data frame
+      # 95% CIs assuming Gaussian credible intervals on the link scale
+      transmute(hr = exp(fit.1),
+                hr_lwr = exp(fit.1 - se.fit.1 * 1.96),
+                hr_upr = exp(fit.1 + se.fit.1 * 1.96)))
+
 
 # effect of sigma2
 newd_sigma2 <-
@@ -74,10 +77,11 @@ newd_sigma2 <-
 preds_sigma2 <-
   bind_cols(
     newd_sigma2,
-    predict(m, newdata = newd_sigma2, type = 'response', se.fit = TRUE) %>%
+    predict(m, newdata = newd_sigma2, type = 'link', se.fit = TRUE) %>%
       data.frame() %>%
-      transmute(hr = fit.1,
-                var_hr = fit.1 * exp(fit.2)))
+      transmute(hr = exp(fit.1),
+                hr_lwr = exp(fit.1 - se.fit.1 * 1.96),
+                hr_upr = exp(fit.1 + se.fit.1 * 1.96)))
 
 # final figure
 preds <- bind_rows(mutate(preds_mu, x = e_r) %>%
@@ -93,21 +97,24 @@ sims_l <- sims %>%
   mutate(x = if_else(name == 'mu', e_r, v_r))
 
 ggplot() +
-  facet_grid(. ~ x, scales = 'free', switch = 'x') +
+  facet_grid(. ~ x, scales = 'free', switch = 'x') + # label below x axis
   geom_point(aes(value, hr), filter(sims_l, quantile == 'hr_95'),
              alpha = 0.1, color = pal[3]) +
-  geom_line(aes(value, hr, group = quantile, color = x),
-            filter(preds, quantile == 'hr_95'), linewidth = 1) +
+  geom_ribbon(aes(value, ymin = hr_lwr, ymax = hr_upr, fill = x),
+              filter(preds, quantile == 'hr_95'), alpha = 0.5) +
+  geom_line(aes(value, hr, color = x),
+            filter(preds, quantile == 'hr_95')) +
   scale_color_manual(values = pal) +
   scale_x_continuous(NULL, breaks = NULL) + 
   scale_y_continuous('Home range size, \U1D43B', breaks = NULL) +
-  theme(strip.background = element_blank(),
+  # to make facet strip look like the x axis
+  theme(legend.position = 'none',
+        strip.background = element_blank(),
         strip.text = element_text(size = 12))
-
 ggsave('figures/simulation-regression-plots.png',
        width = 6, height = 3, dpi = 'print', bg = 'white', scale = 1.5)
 
-# add SD panel?
+# effect of sqrt(sigma2) is nonlinear since it is on the same scale as mu
 sd_r <- "Standard deviation in \U1D445, \U221A\U1D54D(\U1D445)"
 
 preds_sd <- bind_rows(preds,
