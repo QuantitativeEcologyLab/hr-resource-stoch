@@ -1,0 +1,109 @@
+---
+title: \large How resource abundance and stochasticity affect animals' spatial needs
+subtitle: "Appendix 1: Concepts and definitions"
+author:
+  - name: Stefano Mezzini
+    email: stefano.mezzini@ubc.ca
+    institute: [braes, biol]
+  - name: Simon Wood
+    institute: uofe
+  - name: Chris H. Fleming
+    institute: [ucf, smith]
+  - name: E. Patrícia Medici
+    institute: [tapir, iucn, escas]
+  - name: Michael J. Noonan
+    email: michael.noonan@ubc.ca
+    institute: [braes, biol, cmps]
+institute:
+  - braes: Okanagan Institute for Biodiversity, Resilience, and Ecosystem Services, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+  - biol: Department of Biology, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+  - uofe: School of Mathematics, James Clerk Maxwell Building, University of Edinburgh, Edinburgh, Unted Kingdom.
+  - ucf: Department of Biology, University of Central Florida, Orlando, Florida 32816, United States.
+  - smith: Smithsonian Conservation Biology Institute, National Zoological Park, 1500 Remount Rd., Front Royal, VA 22630, United States.
+  - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
+  - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
+  - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
+  - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+bibliography: 'hr-resource-stoch.bib'
+csl: 'the-american-naturalist.csl'
+fontsize: 12pt
+indent: true
+header-includes:
+    - \usepackage{setspace}\doublespacing # for double-spaced text
+    - \usepackage[small]{titlesec} # for smaller font for headings
+    - \usepackage{caption} # for more customization of captions
+    - \captionsetup[figure]{font=scriptsize} # smaller caption text
+    - \usepackage{hanging} # for hanging indents in references
+subparagraph: true # needed for \usepackage[small]{titlesec}
+output:
+  bookdown::pdf_document2:
+    number_sections: false
+    toc: false
+    pandoc_args:
+      - '--lua-filter=scholarly-metadata.lua' # for author affiliations
+      - '--lua-filter=author-info-blocks.lua' # for author affiliations
+---
+
+\newcommand*\e{\text{E}} <!-- expectation; non-italic E -->
+\newcommand*\var{\text{Var}} <!-- variance; non-italic Var -->
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\noindent In this appendix, we presents the foundational concepts and terms used in the main manuscript. We introduce each concept without assuming a statistical or quantitative background to maximize accessibility and minimize misunderstandings and misinterpretations.
+
+# Resources as a random variable
+
+\noindent In statistics, **random variables** indicate random (i.e., unknown) quantities and are indicated with capital letters (e.g., $R$). Known values, such as realizations of random variables (i.e., known observations or instances), are indicated with lower-case letters (e.g., $r$). Using this notation, we can write the statement "the probability of random variable $R$ taking the value $r$" as $P(R = r)$. Resources are often unpredictable (and difficult to quantify), since they depend on various factors which cannot be accounted for easily, including climate [@lindstedt_seasonality_1985; @schmidt_interplay_2020; @morellet_seasonality_2013], weather [@fjelldal_nightly_2021; @morellet_seasonality_2013], competitive pressure [@torrez-herrera_monkeys_2020; @rich_anthropogenic_2012], and differences in energetics at the individual [@schmidt_interplay_2020] and species level [@jetz_scaling_2004]. Thus, we can let the random variable $R$ indicate the amount of resources at a given point in space and time. Quantifying resources as a numerical random variable, as opposed to using *ad hoc* qualitative descriptions, provides us with the capacity to leverage techniques from probability theory and statistics.
+
+## Probability distributions
+
+\noindent Random variables are defined by specifying the **distribution** the variable is assumed to follow (e.g., Gaussian, Gamma, Poisson, Bernoulli). Since the variable is random, it can take multiple possible values, each with different probabilities. The set or range of values which have non-zero probabilities in a distribution is referred to as the distribution's **support**.
+
+There are many distributions we can assign to $R$ depending on how we quantify it. For instance, if we measure $R$ using the Normalized Difference Vegetation Index [**NDVI**, see @pettorelli_normalized_2011], we should use a distribution with support over the interval $[-1, 1]$, since NDVI can only take on values between -1 and 1 (extremes included). However, there is no commonly used distribution with that support, so the best option is to rescale NDVI to (0, 1) and use a beta distribution (see the section below on applying this framework). Alternatively, if $R$ is the number of calories an animal is able to access from food in a given location, we can let $R$ follow a distribution with support positive real numbers, such as a Gamma or log-normal distribution. If $R$ is a discrete integer variable, such as the number of prey in a location during a period of time, we can use a Poisson or negative binomial distribution.
+
+## Expected resources, $\e(R)$
+
+\noindent Since the exact value of $R$ at a given time and location is unknown, comparing the magnitude in $R$ between two locations or time periods requires a quantitative measure of what value we believe $R$ will take, on average. The **expectation** of a random variable is the value one can *expect* the random variable to take, on average, in the long term. Here we use $\e(R)$ to indicate the expectation of the random variable $R$. When the mean changes over time, such as in strongly seasonal regions, we explicitly indicate that $\e(R)$ changes over time by writing $\e(R)$ as a function of time, $t$: $\e(R|t) = \mu(t)$. We indicate the *estimated* average amount of resources over time by adding a caret on the symbol: $\hat \mu(t)$. Note, however, that the estimate of $\mu(t)$ and what values it can take depend on what distribution we assume $R$ follows. For a Gamma distribution, $\mu(t)$ can take any positive value, but if we use NDVI as a proxy for $R$, then $\mu(t)$ is necessarily within the interval $(-1, 1)$. See the section on modeling $R$ in the main manuscript for more information on how to choose probability distributions.
+
+## Variance in resources, $\var(R)$
+
+\noindent In viewing resources as a random variable, we not only obtain a formal framework for describing $\e(R)$, but also the spread around $\e(R)$. A random variable's **variance** is a measure of its unpredictability (i.e., variability). We use the notation $\var(R)$ to indicate the variance in $R$ after accounting for changes in $\mu(t)$, and we use $\sigma^2(t)$ to indicate its function over time (with estimate $\widehat{\sigma^2}(t)$). <!-- Consequently, while $R$ may vary within years, we define $\var(R)$ as the variation in $R$ after accounting for the fact that $R$ is (predictably) lower during some seasons and higher in others due to changes in $\sigma^2(t)$. Additionally, we distinguish between two different sources of variation. We refer to known or expected spatiotemporal differences or changes as **heterogeneity**, which we consider as a change in $\mu(t)$. In contrast, we use the term **stochasticity** for unpredictable variation (i.e., due to $\sigma^2(t)$).--> For example, the time at which berry bushes produce fruit may seem highly stochastic (i.e., unpredictable) to a young bear, but it becomes predictable as it learns to understand and predict how the mean amount of berry changes with the seasons. Still, whether next year will be a good or bad year for berries remains stochastic because it depends on factors the bear cannot predict (e.g., droughts, fires), but the bear can still expect $\sigma^2(t)$ to be lower in the winter since it does not expect to find berries (i.e., $\mu(t) \approx 0$). Also note that, like with $\mu(t)$, the estimate of $\sigma^2(t)$ and what values it can take depend on what distribution we assume $R$ follows.
+
+Below are four examples of Gamma probability distributions with different means and variances:
+
+```{r, eval=TRUE, echo=FALSE, fig.height=5}
+# to help visualize the consequences of different E(R) and V(R) if R ~ Gamma
+dgamma2 <- function(x, mu, sigma2, lower.tail = FALSE) {
+  # mean = k * theta
+  # sigma^2 = k * theta^2
+  dgamma(x = x,
+         shape = mu^2 / sigma2, # (k * theta)^2 / (k * theta^2)
+         scale = sigma2 / mu)   # (k * theta^2) / (k * theta)
+}
+x <- seq(0, 10, length.out = 250)
+layout(matrix(1:4, ncol = 2, byrow = TRUE))
+plot(x, dgamma2(x, mu = 1, sigma2 = 0.5), type = 'l', ylim = c(0, 0.8),
+     xlab = 'r', ylab = 'Density',
+     main = '\U03BC = 1, \U03C3\U00B2 = 0.5')
+plot(x, dgamma2(x, mu = 5, sigma2 = 0.5), type = 'l', ylim = c(0, 0.8),
+     xlab = 'r', ylab = 'Density',
+     main = '\U03BC = 5, \U03C3\U00B2 = 0.5')
+plot(x, dgamma2(x, mu = 1, sigma2 = 5), type = 'l', ylim = c(0, 0.8),
+     xlab = 'r', ylab = 'Density',
+     main = '\U03BC = 1, \U03C3\U00B2 = 5')
+plot(x, dgamma2(x, mu = 5, sigma2 = 5), type = 'l', ylim = c(0, 0.8),
+     xlab = 'r', ylab = 'Density',
+     main = '\U03BC = 5, \U03C3\U00B2 = 5')
+layout(1)
+```
+
+
+\newpage <!-- place references on a separate page -->
+
+# References
+
+\hangparas{1em}{1} <!-- indent all lines but the first -->
