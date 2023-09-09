@@ -7,7 +7,7 @@ source('analysis/figures/mean-variance-trends-panel-data.R') # trends in E(U) an
 source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
 
 tracks <- readRDS('simulations/labelled-tracks.rds') %>% # movement tracks
-  filter(day <= 100) # 100 are sufficient for stable estimates
+  filter(day <= 200) # 100 are sufficient for stable estimates
 types <- c('constant', 'linear', 'cyclical', 'drifting', 'erratic') # trend types
 
 # using for loops to reduce computation costs
