@@ -1,4 +1,5 @@
 library('ctmm') # for movement modeling
+library('terra') # for rasters
 DELTA_T <- 60
 SAMPLES <- seq(0, 60 * 60 * 12, by = DELTA_T) # sample 12 hours every DELTA_T seconds
 
