@@ -14,10 +14,11 @@ library('ragg')      # needed for custom alpha with coord_cartesian
 source('functions/rgamma2.R') # function to generate rgamma() from mean and variance
 source('functions/qgamma2.R') # function to generate qgamma() from mean and variance
 source('analysis/figures/default-figure-styling.R')
-theme_set(theme_get() + theme(legend.position = 'top', panel.grid = element_blank()))
-
-e_r <- '\U1D53C(\U1D445)'
-var_r <- '\U1D54D(\U1D445)'
+# remove bold because it doesn't work with unicode characters
+theme_set(theme_get() + 
+            theme(legend.position = 'top',
+                  panel.grid = element_blank(),
+                  text = element_text(size = 15, face = 'plain')))
 
 # resource abundance palette
 LOW <- '#744700'
@@ -115,8 +116,8 @@ p_var <-
 p_1b <-
   plot_grid(
     plot_expr('\U1D445 \U007E \U0393(\U1D707(t), \U1D70E\U00B2)'), r_pdf,
-    plot_expr('\U1D53C(\U1D445) = \U1D707(t)'), p_mean,
-    plot_expr('\U1D54D(\U1D445) = \U1D70E\U00B2'), p_var,
+    plot_expr('E(\U1D445) = \U1D707(t)'), p_mean,
+    plot_expr('Var(\U1D445) = \U1D70E\U00B2'), p_var,
     ncol = 2); p_1b
 
 p_1 <- plot_grid(p_1a,
@@ -179,8 +180,8 @@ p_var <-
 p_2b <-
   plot_grid(
     plot_expr('\U1D445 \U007E \U0393(\U1D707(t), \U1D70E\U000B2(t))'), r_pdf,
-    plot_expr('\U1D53C(\U1D445) = \U1D707(t)'), p_mean,
-    plot_expr('\U1D54D(\U1D445) = \U1D70E\U000B2(t)'), p_var,
+    plot_expr('E(\U1D445) = \U1D707(t)'), p_mean,
+    plot_expr('Var(\U1D445) = \U1D70E\U000B2(t)'), p_var,
     ncol = 2)
 
 p_2 <-
