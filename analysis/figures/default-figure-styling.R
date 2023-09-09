@@ -5,7 +5,7 @@ library('stringi') # for working with strings
 # cannot bold text because unicode characters fail
 theme_set(theme_bw() +
             theme(legend.position = 'none',
-                  text = element_text(size = 15, face = 'bold')))
+                  text = element_text(size = 15)))
 
 # custom color-blind palette
 pal <- c('#ff8c00', '#4477AA', '#009900', '#66CCEE',

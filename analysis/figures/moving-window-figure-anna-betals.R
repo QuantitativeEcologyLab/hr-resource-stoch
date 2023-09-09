@@ -42,8 +42,6 @@ tel <- data.frame(tapir$data[[1]]) %>%
 
 tapir <-
   readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
-  # mutate(ess = map_dbl(model, \(.m) summary(.m)$DOF['area']),
-  #        weight = ess / mean(ess)) %>%
   mutate(est = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
          mu = map_dbl(est, \(.d) mean(.d$mu)),
          sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
@@ -95,48 +93,6 @@ m <- scam(hr_est ~ s(mu, bs = 'mpd', k = 4) + s(sigma2, bs = 'mpi', k = 4),
           family = Gamma('log'),
           data = tapir)
 plot(m, pages = 1, scheme = 2, trans = exp, ylim = c(log(0), log(4)))
-
-# p_d <-
-#   tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
-#          sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
-#   mutate(hr_mu = predict(m, newdata = ., terms = 's(mu)',
-#                          type = 'response'),
-#          hr_sigma2 = predict(m, newdata = ., terms = 's(sigma2)',
-#                              type = 'response')) %>%
-#   pivot_longer(c(hr_mu, hr_sigma2), names_to = 'pred',
-#                names_pattern = 'hr_(.+)', values_to = 'hr') %>%
-#   pivot_longer(c(mu, sigma2), names_to = 'pred2', values_to = 'x') %>%
-#   filter(pred == pred2) %>%
-#   mutate(param = if_else(pred == 'mu', e_r, v_r)) %>%
-#   ggplot() +
-#   facet_wrap(~ param, scales = 'free', strip.position = 'bottom',
-#              ncol = 1) +
-#   coord_cartesian(ylim = c(0, 12.5)) +
-#   geom_point(aes(value, hr_est),
-#              tapir %>%
-#                pivot_longer(c(mu, sigma2), names_to = 'param',
-#                             values_to = 'value') %>%
-#                mutate(param = if_else(param == 'mu', e_r, v_r)),
-#              alpha = 0.5, color = pal[3]) +
-#   geom_line(aes(x, hr, color = param), linewidth = 2,
-#             show.legend = FALSE) +
-#   xlab(NULL) +
-#   scale_y_continuous(expression('7-day'~home~range~size~(km^2))) +
-#   scale_color_manual(values = pal) +
-#   theme(strip.placement = 'outside', strip.background = element_blank(),
-#         strip.text = element_text(size = 15))
-# 
-# p_e <- ggplot(tapir) +
-#   geom_point(aes(mu, sigma2), alpha = 0.5) +
-#   labs(x = e_r, y = v_r)
-# 
-# p_right <- plot_grid(p_d, p_e, rel_heights = c(2, 1), labels = c('d.', 'e.'),
-#                      ncol = 1)
-# 
-# p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
-# 
-# ggsave('figures/tapir-example.png', plot = p, height = 11, width = 13,
-#        units = 'in', dpi = 600, bg = 'white')
 
 # removing data from d and splitting into two panels
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),

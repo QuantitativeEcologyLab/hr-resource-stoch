@@ -14,11 +14,9 @@ library('ragg')      # needed for custom alpha with coord_cartesian
 source('functions/rgamma2.R') # function to generate rgamma() from mean and variance
 source('functions/qgamma2.R') # function to generate qgamma() from mean and variance
 source('analysis/figures/default-figure-styling.R')
-# remove bold because it doesn't work with unicode characters
 theme_set(theme_get() + 
             theme(legend.position = 'top',
-                  panel.grid = element_blank(),
-                  text = element_text(size = 15, face = 'plain')))
+                  panel.grid = element_blank()))
 
 # resource abundance palette
 LOW <- '#744700'

@@ -1,5 +1,5 @@
 ---
-title: \large How resource abundance and stochasticity affect animals' spatial needs
+title: \large How resource abundance and stochasticity affect animals' space-use requirements
 subtitle: "Appendix 3: Empirical modeling"
 author:
   - name: Stefano Mezzini
@@ -75,9 +75,9 @@ knitr::opts_knit$set(root.dir = '..')
 
 \newpage
 
-This appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript. The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). For ease of reference, we also include the figure below (figure \@ref(fig:tapir-mw)). Estimating the effects of resource abundance and unpredictability on the tapir's spatial needs requires us to first estimate the changes in the tapir's spatial needs (section \@ref(movement), figure \@ref(fig:tapir-mw)c) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi), figures \@ref(fig:tapir-mw)a-b) before we can estimate the relationship between resource dynamics and spatial use (section \@ref(final-fig), figures \@ref(fig:tapir-mw)d-f).
+This appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript. The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). For ease of reference, we also include the figure below (figure \@ref(fig:tapir-mw)). Estimating the effects of resource abundance and unpredictability on the tapir's space-use requirements requires us to first estimate the changes in the tapir's space-use requirements (section \@ref(movement), figure \@ref(fig:tapir-mw)c) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi), figures \@ref(fig:tapir-mw)a-b) before we can estimate the relationship between resource dynamics and spatial use (section \@ref(final-fig), figures \@ref(fig:tapir-mw)d-f).
 
-```{r tapir-mw, fig.cap="Seven-day home-range size of a lowland tapir (\\emph{Tapirus terrestris}) in response to changes in mean and variance in resource abundance. (a.) Mean resource abundance, $\\mu(t)$, esimated as the mean NDVI at the locations visited by the tapir. (b.) Varince in resource abundance, $\\sigma^2(t)$, esimated as the average variance in NDVI at the locations visited by the tapir. (c.) Estimated seven-day home range based on the 95\\% utilization quantiles. (d., e.) estimated marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on home-range size. The model accounted for the marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ and their interaction on mean spatial needs and the variance around them. (f.) The effect of $\\mu(t)$ does not follow the data closely because $\\e(R)$ and $\\var(R)$ are highly correlated. Consequently, while estimating the effects of $\\e(R)$ and $\\var(R)$ via separate models would allow result in a closer fit, the estimated effects would be inappropriate because they do not disentangle the effects of $\\e(R)$ and $\\var(R)$. See Appendix 3 for additional information. The tapir movement data corresponds to the individual named ``Anna\" from the Cerrado sample of Medici $et~al.$ (2022).", out.width='100%', eval=TRUE, echo=FALSE}
+```{r tapir-mw, fig.cap="Seven-day home-range size of a lowland tapir (\\emph{Tapirus terrestris}) in response to changes in mean and variance in resource abundance. (a.) Mean resource abundance, $\\mu(t)$, esimated as the mean NDVI at the locations visited by the tapir. (b.) Varince in resource abundance, $\\sigma^2(t)$, esimated as the average variance in NDVI at the locations visited by the tapir. (c.) Estimated seven-day home range based on the 95\\% utilization quantiles. (d., e.) estimated marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on home-range size. The model accounted for the marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ and their interaction on mean space-use requirements and the variance around them. (f.) The effect of $\\mu(t)$ does not follow the data closely because $\\e(R)$ and $\\var(R)$ are highly correlated. Consequently, while estimating the effects of $\\e(R)$ and $\\var(R)$ via separate models would allow result in a closer fit, the estimated effects would be inappropriate because they do not disentangle the effects of $\\e(R)$ and $\\var(R)$. See Appendix 3 for additional information. The tapir movement data corresponds to the individual named ``Anna\" from the Cerrado sample of Medici $et~al.$ (2022).", out.width='100%', eval=TRUE, echo=FALSE}
 knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/tapir-example-with-data.png',
                         rel_path = FALSE)
 ```
@@ -333,7 +333,7 @@ gam(list(
 
 \newpage
 
-# Modeling the effects of $\e(R)$ and $\var(R)$ on spatial needs {#final-fig}
+# Modeling the effects of $\e(R)$ and $\var(R)$ on space-use requirements {#final-fig}
 
 We start by predicting the mean and variance in NDVI experienced by the tapir in the known positions using the beta GAMLS.
 
@@ -413,9 +413,9 @@ for (i in seq_along(l_grobs)) {
 plot_grid(plotlist = l_grobs, nrow = 1, labels = c('a.', 'b.', 'c.'))
 ```
 
-To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's spatial needs. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors. However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see figure \@ref(fig:hr-gam)).
+To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space-use requirements. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors. However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see figure \@ref(fig:hr-gam)).
 
-```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's spatial needs (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Dashed lines inticate the 95\\% credible intervals for the temporal terms."}
+```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space-use requirements (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Dashed lines inticate the 95\\% credible intervals for the temporal terms."}
 gam(hr_est ~ s(mu,  k = 3) + s(sigma2, k = 3), family = Gamma('log'),
     data = tapir) %>%
   plot(pages = 1, scheme = 3)
@@ -425,7 +425,7 @@ gam(hr_est ~ s(mu,  k = 3) + s(sigma2, k = 3), family = Gamma('log'),
 
 Thus, we use shape-constrained splines to inform the model about the shape we expect the terms to have while also imposing monotonicity.
 
-```{r hr-scam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's spatial needs (on the log link scale) using a shape-constrained GAM. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Dashed lines inticate the 95\\% credible intervals for the temporal terms."}
+```{r hr-scam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space-use requirements (on the log link scale) using a shape-constrained GAM. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Dashed lines inticate the 95\\% credible intervals for the temporal terms."}
 m <- scam(hr_est ~
             s(mu, bs = 'mpd', k = 4) + # monotone decreasing p-spline
             s(sigma2, bs = 'mpi', k = 4), # monotone increasing p-spline

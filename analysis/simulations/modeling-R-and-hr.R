@@ -6,8 +6,8 @@ library('cowplot') # for fancy multi-panel plots
 source('analysis/figures/default-figure-styling.R') # for color palette
 theme_set(theme_bw() + theme(legend.position = 'none'))
 
-e_r <- 'Resource abundance, \U1D53C(\U1D445)'
-v_r <- 'Resource stochasticity, \U1D54D(\U1D445)'
+e_r <- 'Resource abundance, E(\U1D445)'
+v_r <- 'Resource stochasticity, Var(\U1D445)'
 
 sims <- readRDS('simulations/days-hrs.rds') %>%
   tibble() %>%
@@ -106,16 +106,17 @@ ggplot() +
             filter(preds, quantile == 'hr_95')) +
   scale_color_manual(values = pal) +
   scale_x_continuous(NULL, breaks = NULL) + 
-  scale_y_continuous('Home range size, \U1D43B', breaks = NULL) +
+  scale_y_continuous('Space-use requirements, \U1D43B', breaks = NULL) +
   # to make facet strip look like the x axis
   theme(legend.position = 'none',
         strip.background = element_blank(),
         strip.text = element_text(size = 12))
+
 ggsave('figures/simulation-regression-plots.png',
        width = 6, height = 3, dpi = 'print', bg = 'white', scale = 1.5)
 
 # effect of sqrt(sigma2) is nonlinear since it is on the same scale as mu
-sd_r <- "Standard deviation in \U1D445, \U221A\U1D54D(\U1D445)"
+sd_r <- "Standard deviation in \U1D445, \U221A Var(\U1D445)"
 
 preds_sd <- bind_rows(preds,
                       filter(preds, x == v_r) %>%

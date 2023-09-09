@@ -1,5 +1,5 @@
 ---
-title: \large How resource abundance and stochasticity affect animals' spatial needs
+title: \large How resource abundance and stochasticity affect animals' space-use requirements
 subtitle: "Appendix 1: Concepts and definitions"
 author:
   - name: Stefano Mezzini
