@@ -91,3 +91,4 @@ analysis/equus-hemonius-hemonius-4
 
 # files that are too large
 simulations/*.rds
+simulations/days-5-by-5/*.rds

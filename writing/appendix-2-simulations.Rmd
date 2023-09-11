@@ -92,11 +92,10 @@ knitr::include_graphics('../figures/simulation-regression-plots.png',
 
 # Simulating the movement tracks
 
-To reduce sampling variance between simulations at each time point in each panel of figure \@ref(fig:5-5-sims)), we used the same set of $2^{10} = 1024$ simulated tracks, which we generate in the `analysis/simulations/tracks.R` script. Most intermediate and diagnostic checks are not included in this document for the sake of brevity and simplicity, but their outputs and conclusions are listed in this section. In this script, we use the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] for movement modeling; the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the simulated resource rasters; the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling; and the the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
+To reduce sampling variance between simulations at each time point in each panel of figure \@ref(fig:5-5-sims)), we used the same set of 200 simulated tracks, which we generate in the `analysis/simulations/tracks.R` script. Most intermediate and diagnostic checks are not included in this document for the sake of brevity and simplicity, but their outputs and conclusions are listed in this section. In this script, we use the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] for movement modeling; the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the simulated resource rasters; the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling; and the the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
 
-```{r sims-example, echo=FALSE, eval=TRUE, fig.cap="Overview of how animals' space-use requirements were simulated. (a.) Tracks were simulated using an Integrated Ornstein-Uhlenbeck model (IOU model, an infinitely diffusive and continous-velocity movement model), starting from the point $\\langle 0, 0 \\rangle$ (black and yellow square). (b.) Each time the track crossed into a new cell (green dots), the animal collected a random amount of resources that followed a Gamma distribution with common mean $\\mu (t)$ and variance $\\sigma^2 (t)$. (c.) Each time the animal collected more resources, its satiety (purple) increased. Once the animal collected sufficient resources, the animal stopped moving (i.e., the track was truncated). (d.) The process was repeated $2^{10}=1024$ times (13 tracks pictured in this panel). (e.) The final set of (truncated) tracks was then modeled using Ornstein-Uhlenbeck Foraging models to estimate the 95\\% home range estimates using Autocorrelated Kernel Density Estimates.", out.width='100%', fig.pos='!h', cache=FALSE}
-knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/simulation-example.png',
-                        rel_path = FALSE)
+```{r sims-example, echo=FALSE, eval=TRUE, fig.cap="Overview of how animals' space-use requirements were simulated. (a.) Tracks were simulated using an Integrated Ornstein-Uhlenbeck model (IOU model, an infinitely diffusive and continous-velocity movement model), starting from the point $\\langle 0, 0 \\rangle$ (black and yellow square). (b.) Each time the track crossed into a new cell (green dots), the animal collected a random amount of resources that followed a Gamma distribution with common mean $\\mu (t)$ and variance $\\sigma^2 (t)$. (c.) Each time the animal collected more resources, its satiety (purple) increased. Once the animal collected sufficient resources, the animal stopped moving (i.e., the track was truncated). (d.) The process was repeated 200 times (13 tracks pictured in this panel). (e.) The final set of (truncated) tracks was then modeled using Ornstein-Uhlenbeck Foraging models to estimate the 95\\% home range estimates using Autocorrelated Kernel Density Estimates.", out.width='100%', fig.pos='!h', cache=FALSE}
+knitr::include_graphics('../figures/simulation-example.png', rel_path = FALSE)
 ```
 
 \newpage
@@ -172,7 +171,7 @@ theme_set(theme_bw()) # change default theme
 # source('functions/label_visits.R') # decides when animal encounters food
 source('../analysis/figures/default-figure-styling.R') # for color palette
 
-readRDS('H:/GitHub/hr-resource-stoch//simulations/tracks.rds')
+readRDS('H:/GitHub/hr-resource-stoch/simulations/tracks.rds')
 ```
 
 ```{r warning=FALSE}
@@ -188,7 +187,7 @@ tracks
 ```
 
 ```{r, eval=TRUE, echo=FALSE}
-readRDS('H:/GitHub/hr-resource-stoch//simulations/labelled-tracks.rds')
+readRDS('H:/GitHub/hr-resource-stoch/simulations/labelled-tracks.rds')
 ```
 
 After generating the tracks, we performed the following tests to ensure the number and length of the tracks were large enough for results to be stable. For the sake of conciseness, the code for each of the checks is not presented in this appendix, but it is available in the `R` scripts referenced in each section.
@@ -214,13 +213,74 @@ Using three tracks generated with three arbitrary seeds (1, 2, and 3), we explor
 **Exploratory plot \@ref(fig:dt-sensitivity)d.** The three tracks used for these exploratory plots are sufficiently different that we considered them to be a representative sample of movement tracks simulated by the OUF model. All three tracks have a reasonable amount of both tortuous and directed movement.
 
 ```{r dt-sensitivity, fig.cap="Exploratory plots used to decide an appropriate sampling interval. (a.) Histograms of the number of encounters as a function of the interval between encounters, with a binwith of 30 seconds. Although some encounters occur with less than 30 seconds between them, approximately 93\\% of them occur at least 30 seconds apart. (b.) Number of detected encounters as a function of sampling interval. The colored lines indicate the estimated relationship based on a Generalized Additive Model fit using the $\\tt{geom\\_smooth}$ function from the $\\tt{ggplot2}$ package. Although the number of encounters detected decreases as sampling interval doubles, the loss at $\\Delta = 30$s is negligible. (c.) Beginning of the track generated with seed \"1\" (purple line) for different sampling intervals. Red dots indicate locations where the animal remained in the same cell, while the blue squares indicate when an animal was in a new cell and thus encountered food. While the number of encounters detected decreases as the sampling interval increases, most of the encounters lost at $\\Delta t = 30$s occured because the animal remained almost adjacent to the borders between cells. Additionally, the track at $\\Delta t = 30$s is still sufficiently tortuous to represent realistic animal movement. (d.) The three tracks used in these tests over the raster used for determining when the animals encountered food.", out.width='100%', echo=FALSE, eval=TRUE, cache=FALSE}
-knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/thinning-examples.png',
-                        rel_path = FALSE)
+knitr::include_graphics('../figures/thinning-examples.png', rel_path = FALSE)
 ```
 
 \newpage
 
 ## Checking how many tracks were necessary
+
+Script: `analysis/simulations/2-hr-mean-variance-simulations-days.R`
+
+The end of this script generates figures that show the mean time spent searching for resources before reaching satiety. This appendix includes the two figures that show the absolute and relative differences in time required to reach satiety as a function of the number of tracks. The estimated times for each number of replicates can be found in the `figures/5-by-5-sensitivity-analysis/` folder.
+
+```{r}
+all <-
+  tibble(d = map_dfr(
+    list.files('simulations', pattern = '*-replicates.rds',
+               full.names = TRUE),
+    function(fn) {
+      readRDS(fn) %>%
+        mutate(mean = paste(mean, 'mean'),
+               variance = paste(variance, 'var'),
+               replicates = max(day)) %>%
+        group_by(mean, variance, animal, replicates) %>%
+        summarize(est = mean(t_expl),
+                  .groups = 'drop')
+    })) %>%
+  unnest(d) %>%
+  mutate(est = est / (1 %#% 'hours')) %>%
+  pivot_wider(names_from = replicates, values_from = est) %>%
+  pivot_longer(cols = as.character(2^(4:9)), values_to = 'est',
+               names_to = 'replicates') %>%
+  mutate(diff_est = est - `1024`,
+         rel_est = est / `1024`,
+         replicates = factor(replicates, levels = 2^(4:9)))
+
+ggplot(all) +
+  facet_wrap(~ replicates) +
+  geom_line(aes(animal, diff_est, group = paste(mean, variance)),
+            alpha = 0.1) +
+  geom_hline(yintercept = 0, color = 'darkorange') +
+  labs(x = 'Time',
+       y = 'Difference in average daily exploration time (hours)')
+```
+
+```{r, echo=FALSE, eval=TRUE, fig.cap="Difference in average time required to reach satiety for each scenario in figure 1 (indicated by each line) and different amounts of tracks (indicated at the top of each facet). The differences are relative to simulations with $2^{10}=1024$ tracks for each time point on the x axis (and each scenario in figure 1). The amount of time stabilizes for $\\gtrapprox 100$ tracks, which suggests that the home range estimates should also be stable with more than 100 tracks.", fig.pos='!h'}
+knitr::include_graphics('../figures/5-by-5-sensitivity-analysis/time-to-satiety-difference.png',
+                        rel_path = FALSE)
+```
+
+```{r}
+ggplot(all) +
+  facet_wrap(~ replicates) +
+  geom_line(aes(animal, rel_est, group = paste(mean, variance)),
+            alpha = 0.1) +
+  geom_hline(yintercept = 1, color = 'darkorange') +
+  scale_y_continuous(
+    trans = 'log2', breaks = 2^seq(-1, 1, by = 0.5),
+    labels = parse(text = paste0('2^', seq(-1, 1, by = 0.5))))+
+  labs(x = 'Time',
+       y = expression(paste('Relative difference from estimates with',
+                            '1024 replicates'~(log[2]~scale))))
+```
+
+\clearpage
+
+```{r, echo=FALSE, eval=TRUE, fig.cap="Ratios of average time required to reach satiety for each scenario in figure 1 (indicated by each line) and different amounts of tracks (indicated at the top of each facet). The ratios are relative to simulations with $2^{10}=1024$ tracks for each time point on the x axis (and each scenario in figure 1). The amount of time stabilizes for $\\gtrapprox 100$ tracks, which suggests that the home range estimates should also be stable with more than 100 tracks.", fig.pos='!h'}
+knitr::include_graphics('../figures/5-by-5-sensitivity-analysis/time-to-satiety-rel-difference.png',
+                        rel_path = FALSE)
+```
 
 Script: `analysis/hr-simulation-extreme-scenarios.R`
 
@@ -324,8 +384,7 @@ ggplot(saturation_days, aes(n_days, hr)) +
 ```
 
 ```{r, eval=TRUE, echo=FALSE, fig.cap="Estimated space-use requirements as a function of the number of days sampled for an animal in a habitat with the highest $\\e(R)$ and lowest $\\var(R)$ (left) and an animal with the lowest $\\e(R)$ and highest $\\var(R)$ (right). In both cases, 100 days are sufficient to produce stable estimates of space-use requirements.", cache=FALSE}
-knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/hr-over-days.png',
-                        rel_path = FALSE)
+knitr::include_graphics('../figures/hr-over-days.png', rel_path = FALSE)
 ```
 
 \newpage
@@ -352,7 +411,7 @@ and therefore $\e(R)$ and $\var(R)$ would have similar effects (but about 4.322 
 
 ```{r, eval=TRUE}
 # switch data to long format with a column of quantile
-sims <- readRDS('H:/GitHub/hr-resource-stoch//simulations/days-hrs.rds') %>%
+sims <- readRDS('H:/GitHub/hr-resource-stoch/simulations/days-hrs.rds') %>%
   tibble() %>%
   pivot_longer(c(hr_50, hr_95), names_to = 'quantile', values_to = 'hr') %>%
   mutate(quantile = factor(quantile)) # necessary for GAMs
