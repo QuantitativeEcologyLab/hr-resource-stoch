@@ -88,7 +88,3 @@ analysis/equus-hemonius-hemonius-4
 
 # presentations (except for pdf format)
 *.pptx
-
-# files that are too large
-simulations/*.rds
-simulations/days-5-by-5/*.rds
