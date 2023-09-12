@@ -63,9 +63,6 @@ data/ndvi-rasters/alces-alces-nw
 data/ndvi-rasters/equus-hemionus-hemionus
 data/ndvi-rasters/tapir-arno
 
-# models
-models/*
-
 # personal earthdata credentials
 earthdata-login-info.R
 
@@ -88,3 +85,7 @@ analysis/equus-hemonius-hemonius-4
 
 # presentations (except for pdf format)
 *.pptx
+
+# ignore files over 100 MB
+simulations/hr-saturation-days.rds
+models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds
