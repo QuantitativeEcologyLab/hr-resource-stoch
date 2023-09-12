@@ -76,7 +76,7 @@ knitr::opts_chunk$set(eval = FALSE,         # do not run R code
 
 # Overview
 
-This appendix illustrates all the steps necessary to produce the simulation figures in the main manuscript. For ease of reference, we also include the figures here (figures \@ref(fig:5-5-sims) and \@ref(fig:5-5-reg)). To achieve full transparency while minimizing computational times, the code illustrated in this pdf is not executed during the knitting of the document. Instead, the R Markdown document (`writing/appendix-2-simulations.Rmd`) contains code chunks that import the `RDS` files saved by the scripts used during the analysis via `R` code that is not printed in the pdf file. Although one can replicate the analyses by running the code in this pdf, we suggest only using this document for illustrative purposes and as a general guide. We suggest using the `R` scripts to replicate the simulations, instead.
+This appendix illustrates all the steps necessary to produce the simulation figures in the main manuscript. For ease of reference, we also include the figures here (figs. \@ref(fig:5-5-sims) and \@ref(fig:5-5-reg)). To achieve full transparency while minimizing computational times, the code illustrated in this pdf is not executed during the knitting of the document. Instead, the R Markdown document (`writing/appendix-2-simulations.Rmd`) contains code chunks that import the `RDS` files saved by the scripts used during the analysis via `R` code that is not printed in the pdf file. Although one can replicate the analyses by running the code in this pdf, we suggest only using this document for illustrative purposes and as a general guide. We suggest using the `R` scripts to replicate the simulations, instead.
 
 ```{r 5-5-sims, eval=TRUE, echo=FALSE, fig.cap="Simulated home range sizes, $H$, of an organism living in habitats where the mean and variance in resources are constant, linearly increasing, cyclical, drifting, or erratic over time (and homogenous over space). Note how $H$ decreases nonlinearly as $\\mu(t)$ increases and increases nonlinearly as $\\sigma^2(t)$ increases. Additionally, the variance in $H$ is higher when $\\mu(t)$ is lower or $\\sigma^2(t)$ is higher, and changes in $\\sigma^2(t)$ have greater impacts when $\\mu(t)$ is low.", out.width='100%', cache=FALSE}
 knitr::include_graphics('../figures/mean-variance-5-by-5-hr-sims.png',
@@ -277,7 +277,7 @@ ggplot(all) +
 
 \clearpage
 
-```{r, echo=FALSE, eval=TRUE, fig.cap="Ratios of average time required to reach satiety for each scenario in figure 1 (indicated by each line) and different amounts of tracks (indicated at the top of each facet). The ratios are relative to simulations with $2^{10}=1024$ tracks for each time point on the x axis (and each scenario in figure 1). The amount of time stabilizes for $\\gtrapprox 100$ tracks, which suggests that the home range estimates should also be stable with more than 100 tracks.", fig.pos='!h'}
+```{r, echo=FALSE, eval=TRUE, fig.cap="Ratios of average time required to reach satiety for each scenario in figure 1 (indicated by each line) and different amounts of tracks (indicated at the top of each facet). The ratios are relative to simulations with $2^{10}=1024$ tracks for each time point on the x axis (and each scenario in fig. 1). The amount of time stabilizes for $\\gtrapprox 100$ tracks, which suggests that the home range estimates should also be stable with more than 100 tracks.", fig.pos='!h'}
 knitr::include_graphics('../figures/5-by-5-sensitivity-analysis/time-to-satiety-rel-difference.png',
                         rel_path = FALSE)
 ```
@@ -472,7 +472,7 @@ m <- m_3 # select the best model
 summary(m)
 ```
 
-Figure \@ref(fig:gamls-terms) shows each of the terms from model 3. The estimated effect of `quantile` (see the output of `summary()` above) supports the relationship between the gaussian HR estimates detailed above, since $\exp(1.464) = 4.323218 \approx \log_{0.5}(0.05),$ but there is no differences in the scale parameter between the two quantiles. Additionally, the interaction term of $\mu(t)$ and $\sigma^2(t)$ on the mean HR indicates that the effect of $\sigma^2(t)$ is stronger at lower values of $\mu(t)$ (e.g., $\mu(t) = 100$), since the estimated effect is negative for low values of $\sigma^2(t)$ and positive for high values of $\sigma^2(t)$, which accentuates the effect of $\sigma^2(t)$ on the mean home range. The opposite is true for high values of $\mu(t)$, where the effect of $\sigma^2(t)$ becomes flatter, and thus weaker. Similar but opposite conclusions can be drawn from the interaction term for the scale parameter, since the effect of $\sigma^2(t)$ on the scale parameter is weaker when $\mu(t)$ is low and stronger when $\mu(t)$ is high.
+Fig. \@ref(fig:gamls-terms) shows each of the terms from model 3. The estimated effect of `quantile` (see the output of `summary()` above) supports the relationship between the gaussian HR estimates detailed above, since $\exp(1.464) = 4.323218 \approx \log_{0.5}(0.05),$ but there is no differences in the scale parameter between the two quantiles. Additionally, the interaction term of $\mu(t)$ and $\sigma^2(t)$ on the mean HR indicates that the effect of $\sigma^2(t)$ is stronger at lower values of $\mu(t)$ (e.g., $\mu(t) = 100$), since the estimated effect is negative for low values of $\sigma^2(t)$ and positive for high values of $\sigma^2(t)$, which accentuates the effect of $\sigma^2(t)$ on the mean home range. The opposite is true for high values of $\mu(t)$, where the effect of $\sigma^2(t)$ becomes flatter, and thus weaker. Similar but opposite conclusions can be drawn from the interaction term for the scale parameter, since the effect of $\sigma^2(t)$ on the scale parameter is weaker when $\mu(t)$ is low and stronger when $\mu(t)$ is high.
 
 ```{r gamls-terms, fig.cap = "Marginal and interaction effects of each of the terms present in the final GAMLS (on the log link scales). The dashed lines indicate the 95\\% Bayesian credible intervals. The data points are included as rug plots in all marginal terms and as points in the interaction terms.", eval=TRUE, fig.height=16, fig.width=8, out.width='65%', echo=FALSE}
 # using custom layout to make figure easier to read
@@ -480,7 +480,7 @@ layout(matrix(c(7, 1, 2, 3, 8, 4, 5, 6), nrow = 4, byrow = TRUE))
 plot(m, all.terms = TRUE, scheme = 3, scale = 0)
 ```
 
-Finally, we can use the model to recreate figure \@ref(fig:5-5-reg) and visualize the marginal effects of $\mu(t)$ and $\sigma^2(t)$ on the 95% home range.
+Finally, we can use the model to recreate fig. \@ref(fig:5-5-reg) and visualize the marginal effects of $\mu(t)$ and $\sigma^2(t)$ on the 95% home range.
 
 ```{r, eval=TRUE}
 # effect of mu
