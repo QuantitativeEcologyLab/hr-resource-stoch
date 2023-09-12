@@ -102,7 +102,7 @@ ggplot() +
              alpha = 0.1, color = pal[3]) +
   geom_ribbon(aes(value, ymin = hr_lwr, ymax = hr_upr, fill = x),
               filter(preds, quantile == 'hr_95'), alpha = 0.5) +
-  geom_line(aes(value, hr, color = x),
+  geom_line(aes(value, hr, color = x), linewidth = 1,
             filter(preds, quantile == 'hr_95')) +
   scale_color_manual(values = pal) +
   scale_x_continuous(NULL, breaks = NULL) + 
