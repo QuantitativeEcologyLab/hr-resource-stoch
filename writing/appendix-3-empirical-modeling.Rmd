@@ -267,18 +267,18 @@ m_ndvi <-
   gam(list(
     # mean predictor
     ndvi ~ # not scaling because range is in (0, 1)
-      s(long, lat, bs = 'ds', k = 20) + # mean over space (uses k^2 df)
+      s(long, lat, bs = 'ds', k = 20) + # mean over space
       s(dec_date, bs = 'tp', k = 20),   # high k to account for adaptions
     # scale predictor (sigma2 = mu * (1 - mu) * scale)
     ~
-      s(long, lat, bs = 'ds', k = 10) + # scale over space (uses k^2 df)
+      s(long, lat, bs = 'ds', k = 10) + # scale over space
       s(dec_date, bs = 'tp', k = 10)),  # scale over time
     family = betals(),
     data = anna_ndvi,
     method = 'REML') # performs better than GCV (the default)
 ```
 
-Note that when fitting location-scale GAMs, one should pay particular attention to the number of knots used for each smooth term. While using a penalized maximum likelihood method such as REML (`method = 'REML'`) helps avoid over-fitting the model, finding the right balance between each of the `k` values is crucial. Excessively smooth terms for the mean can inflate the scale term (fig. \@ref(fig:undersmooth)), while excessively wiggly terms for the mean can cause the scale to be under-estimated (fig. \@ref(fig:oversmooth)). Ultimately, each of the `k` values should be decided in such a way as to mimic the animal's responsiveness, adaptability, motility, and memory (or ability to predict cycles or events). If one is unsure where to start from, keeping the `k` for the scale terms below half the `k` for the mean terms is a good starting point. Additionally, note that computation time depends strongly on the complexity of the two-dimensional spatial terms, since changes in `k` alter the size of the term quadratically (since the total size is $\tt k \times \tt k = \tt k^2$).
+Note that when fitting location-scale GAMs, one should pay particular attention to the number of knots used for each smooth term. While using a penalized maximum likelihood method such as REML (`method = 'REML'`) helps avoid over-fitting the model, finding the right balance between each of the `k` values is crucial. Excessively smooth terms for the mean can inflate the scale term (fig. \@ref(fig:undersmooth)), while excessively wiggly terms for the mean can cause the scale to be under-estimated (fig. \@ref(fig:oversmooth)). Ultimately, each of the `k` values should be decided in such a way as to mimic the animal's responsiveness, adaptability, motility, and memory (or ability to predict cycles or events). If one is unsure where to start from, keeping the `k` for the scale terms below half the `k` for the mean terms is a good starting point.
 
 \clearpage
 
