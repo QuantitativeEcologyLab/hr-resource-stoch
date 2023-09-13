@@ -40,16 +40,21 @@ tel <- data.frame(tapir$data[[1]]) %>%
   bind_cols(., ndvi_preds(.)) %>% 
   as_tibble()
 
-tapir <-
-  readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
-  mutate(est = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
-         mu = map_dbl(est, \(.d) mean(.d$mu)),
-         sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
-  select(t_center, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
-  pivot_longer(c(hr_lwr_95, hr_est_95, hr_upr_95), names_to = c('.value', 'quantile'),
-               names_pattern = '(.+)_(.+)') %>%
-  mutate(t_center = as.POSIXct(t_center),
-         quantile = paste0(quantile, '%'))
+if(! file.exists('data/anna-hr-ndvi-data.rds')) {
+  tapir <-
+    readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
+    mutate(est = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
+           mu = map_dbl(est, \(.d) mean(.d$mu)),
+           sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
+    select(t_center, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
+    pivot_longer(c(hr_lwr_95, hr_est_95, hr_upr_95), names_to = c('.value', 'quantile'),
+                 names_pattern = '(.+)_(.+)') %>%
+    mutate(t_center = as.POSIXct(t_center),
+           quantile = paste0(quantile, '%'))
+  saveRDS(tapir, 'data/anna-hr-ndvi-data.rds')
+} else {
+  tapir <- readRDS('data/anna-hr-ndvi-data.rds')
+}
 
 # create the figure
 date_labs <- range(tel$timestamp) %>% as.Date()
