@@ -4,7 +4,7 @@ library('ggplot2')   # for fancy plots
 library('mgcv')      # for GAMs
 library('lubridate') # for smoother date wrangling
 
-source('../ndvi-stochasticity/functions/betals.r') # beta location-scale fam 
+source('functions/betals.r') # beta location-scale fam 
 source('analysis/figures/default-figure-styling.R') # for NDVI color palette
 
 # import 95% home range estimates with no CIs (optional)

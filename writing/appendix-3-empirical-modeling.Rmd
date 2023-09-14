@@ -108,7 +108,7 @@ theme_set(theme_bw()) # change default theme
 getwd()
 
 # attach the beta location-scale family written by Simon Wood
-source('../ndvi-stochasticity/functions/betals.r')
+source('functions/betals.r')
 
 # source all necessary scripts
 source('analysis/figures/default-figure-styling.R') # for color palettes
