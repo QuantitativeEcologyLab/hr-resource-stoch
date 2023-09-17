@@ -89,3 +89,10 @@ analysis/equus-hemonius-hemonius-4
 # ignore files over 100 MB
 simulations/hr-saturation-days.rds
 models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds
+
+# ignore animals not used
+analysis/alces-alces
+models/alces*
+models/aepyceros*
+models/equus*
+
