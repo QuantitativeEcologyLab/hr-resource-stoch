@@ -108,6 +108,12 @@ m <- scam(hr_est_95 ~
           data = tapir)
 plot(m, pages = 1, scheme = 1)
 
+m0 <- scam(hr_est_95 ~ s(mu, bs = 'mpd', k = 5),
+           family = Gamma('log'),
+           weights = weight,
+           data = tapir)
+AIC(m, m0) # model that accounts for both mu and sigma2 fits much better
+
 # removing data from d and splitting into two panels
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
                 sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%

@@ -359,9 +359,9 @@ tapir <-
                    \(.d) filter(anna_tel, timestamp %in% .d$timestamp)),
          mu = map_dbl(est, \(.d) mean(.d$mu)),
          sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
-    select(date, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
-    mutate(weight = 1 / (hr_upr_95 - hr_lwr_95), # small CI => large weight
-           weight = weight / mean(weight)) # standardize weights
+  select(date, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
+  mutate(weight = 1 / (hr_upr_95 - hr_lwr_95), # small CI => large weight
+         weight = weight / mean(weight)) # standardize weights
 sum(tapir$weight) == nrow(tapir) # ensure weights are right
 ```
 
@@ -418,10 +418,10 @@ We can now fit a GAM similar to the one used for the simulated data. However, si
 
 ```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals."}
 gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
-         family = Gamma('log'),
-         weights = weight, # weights based on CI size
-         data = tapir,
-         method = 'REML') %>%
+    family = Gamma('log'),
+    weights = weight, # weights based on CI size
+    data = tapir,
+    method = 'REML') %>%
   plot(pages = 1, scheme = 1) # trends should be monotonic
 ```
 
@@ -437,7 +437,19 @@ m <- scam(hr_est_95 ~
 plot(m, pages = 1, scheme = 1)
 ```
 
-Finally, we can create the predictions from the shape-constrained GAM.
+This SCAM fits substantially better than a SCAM that only accounts for $\mu(t)$:
+
+```{r, eval=TRUE}
+m_mu <- scam(hr_est_95 ~ s(mu, bs = 'mpd', k = 5),
+             family = Gamma('log'),
+             weights = weight,
+             data = tapir)
+round(AIC(m, m_mu), 3)
+```
+
+\newpage
+
+We can now create the predictions from the shape-constrained GAM.
 
 ```{r, eval=TRUE, fig.height=4, fig.width=12, out.width='\\linewidth'}
 theme_set(theme_bw()) # need to set the theme again for some reason
