@@ -43,26 +43,26 @@ n_distinct(d$dec_date)
 # run a test model
 m_test <-
   bam(
-    (ndvi + 1) / 2 ~ # not scaling because range is in (0, 1)
-      s(long, lat, bs = 'ds', k = 20) + # mean over space
+    (ndvi + 1) / 2 ~ # scale from [-1, 1] to [0, 1]
+      s(long, lat, bs = 'ds', k = 300) + # mean over space
       s(dec_date, bs = 'tp', k = 10), # need high k to account for animal adapting
     family = betar(link = 'logit'),
     data = d,
     method = 'fREML',
     discrete = TRUE,
     control = gam.control(trace = TRUE))
-plot(m_test, pages = 1, n = 400, scheme = 3)
+plot(m_test, pages = 1, n = 400, n2 = 200, scheme = 3)
 summary(m_test)
 
 m_ndvi <-
   gam(list(
     # mean predictor
-    ndvi ~ # not scaling because range is in (0, 1)
-      s(long, lat, bs = 'ds', k = 50) + # mean over space
-      s(dec_date, bs = 'tp', k = 10), # need high k to account for animal adapting
+    (ndvi + 1) / 2 ~ # scale from [-1, 1] to [0, 1]
+      s(long, lat, bs = 'ds', k = 300) + # mean over space
+      s(dec_date, bs = 'tp', k = 30), # need high k to account for animal adapting
     # scale predictor (sigma2 = mu * (1 - mu) * scale)
     ~
-      s(long, lat, bs = 'ds', k = 25) +
+      s(long, lat, bs = 'ds', k = 150) +
       s(dec_date, bs = 'tp', k = 10)),
     family = betals(),
     data = d,
@@ -72,5 +72,5 @@ m_ndvi <-
 saveRDS(m_ndvi, file = 'models/tapirs/tapirs-ndvi-betals.rds')
 
 if(FALSE) {
-  plot(m_ndvi, pages = 1, scheme = 3) # plot smooths
+  plot(m_ndvi, pages = 1, n = 400, n2 = 200, scheme = 3) # plot smooths
 }
