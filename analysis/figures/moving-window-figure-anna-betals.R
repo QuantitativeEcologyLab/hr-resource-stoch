@@ -46,11 +46,10 @@ if(! file.exists('data/anna-hr-ndvi-data.rds')) {
     mutate(est = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
            mu = map_dbl(est, \(.d) mean(.d$mu)),
            sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
-    select(t_center, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
-    pivot_longer(c(hr_lwr_95, hr_est_95, hr_upr_95), names_to = c('.value', 'quantile'),
-                 names_pattern = '(.+)_(.+)') %>%
-    mutate(t_center = as.POSIXct(t_center),
-           quantile = paste0(quantile, '%'))
+    select(date, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
+    mutate(weight = 1 / (hr_upr_95 - hr_lwr_95), # weights based on CI width
+           weight = weight / mean(weight)) # standardize weights
+  sum(tapir$weight) == nrow(tapir) # ensure weights are right
   saveRDS(tapir, 'data/anna-hr-ndvi-data.rds')
 } else {
   tapir <- readRDS('data/anna-hr-ndvi-data.rds')
@@ -58,25 +57,24 @@ if(! file.exists('data/anna-hr-ndvi-data.rds')) {
 
 # create the figure
 date_labs <- range(tel$timestamp) %>% as.Date()
-YLIMS <- c(0, 13)
 
 # E(R) and V(R) are highly correlated
 ggplot(tapir) +
-  geom_point(aes(mu, sigma2), alpha = 0.1) +
+  geom_point(aes(mu, sigma2, alpha = weight)) +
   labs(x = '\U1D707(t)', y = '\U1D70E\U00B2(t)')
 
 l_grobs <-
   lapply(
     list(
       # mean, variance and HR
-      ggplot(tapir, aes(t_center, mu)) +
+      ggplot(tapir, aes(date, mu)) +
         geom_line(color = pal[1], linewidth = 2) +
         labs(x = NULL, y = e_r),
-      ggplot(tapir, aes(t_center, sigma2)) +
+      ggplot(tapir, aes(date, sigma2)) +
         geom_line(color = pal[2], linewidth = 2) +
         labs(x = NULL, y = v_r),
       ggplot(tapir) +
-        geom_line(aes(t_center, hr_est), color = pal[3], linewidth = 2) +
+        geom_line(aes(date, hr_est_95), color = pal[3], linewidth = 2) +
         labs(x = NULL, y = hr_lab)),
     as_grob) # convert to grid graphical objects (grobs)
 
@@ -93,11 +91,22 @@ p_left <- plot_grid(plotlist = l_grobs, ncol = 1, labels = c('a.', 'b.', 'c.'),
                     label_size = 22, label_x = -0.01, label_y = 1.025)
 
 # regression plots ----
-# using shape-constrained splines to avoid artifacts
-m <- scam(hr_est ~ s(mu, bs = 'mpd', k = 4) + s(sigma2, bs = 'mpi', k = 4),
+m <- gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
+         family = Gamma('log'),
+         weights = weight, # weights based on CI size
+         data = tapir,
+         method = 'REML')
+# trends should be monotonic...
+plot(m, pages = 1, scheme = 1)
+
+# using shape-constrained splines to avoid artifacts due to correlation
+m <- scam(hr_est_95 ~
+            s(mu, bs = 'mpd', k = 5) +
+            s(sigma2, bs = 'mpi', k = 5),
           family = Gamma('log'),
+          weights = weight,
           data = tapir)
-plot(m, pages = 1, scheme = 2, trans = exp, ylim = c(log(0), log(4)))
+plot(m, pages = 1, scheme = 1)
 
 # removing data from d and splitting into two panels
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
@@ -117,25 +126,27 @@ preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
 
 p_d <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(mu, hr_est), tapir, color = pal[3], alpha = 0.5) +
+  geom_point(aes(mu, hr_est_95, alpha = weight), tapir, color = pal[3]) +
   geom_ribbon(aes(mu, ymin = hr_mu_lwr, ymax = hr_mu_upr), preds,
               fill = pal[1], alpha = 0.3) +
   geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
-  xlab(e_r) +
-  scale_y_continuous(hr_lab)
+  labs(x = e_r, y = hr_lab) +
+  scale_alpha_continuous(range = c(0.3, 1))
 
 p_e <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(sigma2, hr_est), tapir, color = pal[3], alpha = 0.5) +
+  geom_point(aes(sigma2, hr_est_95, alpha = weight), tapir, color = pal[3]) +
   geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr), preds,
               fill = pal[2], alpha = 0.3) +
   geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2], linewidth = 2) +
-  xlab(v_r) +
-  scale_y_continuous(hr_lab)
+  labs(x = v_r, y = hr_lab) +
+  scale_alpha_continuous(range = c(0.3, 1))
 
 p_f <- ggplot(tapir) +
-  geom_point(aes(mu, sigma2), alpha = 0.5) +
-  labs(x = e_r, y = v_r)
+  geom_point(aes(mu, sigma2, alpha = weight)) +
+  labs(x = e_r, y = v_r) +
+  scale_alpha_continuous('Weight', range = c(0.3, 1)) +
+  theme(legend.position = 'right')
 
 r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 
@@ -152,6 +163,7 @@ p_right <- plot_grid(plotlist = r_grobs, ncol = 1, labels = c('d.', 'e.', 'f.'),
 
 # add space to avoid cutting off x axis for (e.)
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
+p
 
 ggsave('figures/tapir-example-with-data.png', plot = p, height = 11,
        width = 14, units = 'in', dpi = 600, bg = 'white')

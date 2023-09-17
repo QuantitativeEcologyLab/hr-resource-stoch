@@ -64,8 +64,8 @@ knitr::opts_knit$set(root.dir = '..')
 
 <!-- add custom commands for formulae -->
 
-\newcommand{\e}{\mathbb E}
-\newcommand{\var}{\mathbb V}
+\newcommand{\e}{\text{E}}
+\newcommand{\var}{\text{Var}}
 
 <!-- have table of contents on pages of its own -->
 
@@ -105,7 +105,6 @@ library('lubridate') # for smoother date wrangling
 library('sf')        # for spatial features
 library('MODIStsp')  # for downloading NDVI rasters
 theme_set(theme_bw()) # change default theme
-getwd()
 
 # attach the beta location-scale family written by Simon Wood
 source('functions/betals.r')
@@ -295,20 +294,9 @@ gam(list(
   ~ s(long, lat, bs = 'ds', k = 20) + s(dec_date, bs = 'tp', k = 20)),
   family = betals(), data = anna_ndvi, method = 'REML') %>%
   plot(pages = 1, scheme = 3, n = 250, scale = 0)
-
-gam(list(
-  # mean predictor (ks too large)
-  ndvi ~ s(long, lat, bs = 'ds', k = 50) +
-    s(dec_date, bs = 'tp', k = n_distinct(anna_ndvi$dec_date)),
-  # scale predictor (ks too small)
-  ~ s(long, lat, bs = 'ds', k = 5) + s(dec_date, bs = 'tp', k = 5)),
-  family = betals(), data = anna_ndvi, method = 'REML') %>%
-  plot(pages = 1, scheme = 3, n = 250, scale = 0)
 ```
 
-\clearpage
-
-```{r undersmooth, fig.cap="Estimated mean and scale parameters with excessively small basis size $\\tt{k}$ for the mean's smooth terms and excessively large for the scale's smooth terms. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Dashed lines inticate the 95\\% credible intervals for the temporal terms.", eval=TRUE, fig.height=8, fig.pos='!h', echo=FALSE}
+```{r undersmooth, fig.cap="Estimated mean and scale parameters with excessively small basis size $\\tt{k}$ for the mean's smooth terms and excessively large for the scale's smooth terms. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Dashed lines inticate the 95\\% credible intervals for the temporal terms.", eval=TRUE, fig.height=6, fig.pos='!h', echo=FALSE}
 gam(list(
   # mean predictor (default ks are too small)
   ndvi ~ s(long, lat, bs = 'ds', k = 10) + s(dec_date, bs = 'tp', k = 10),
@@ -320,7 +308,18 @@ gam(list(
 
 \clearpage
 
-```{r oversmooth, fig.cap="Estimated mean and scale parameters in NDVI with excessively large basis size $\\tt{k}$ for the smooth term of time ($\\tt{dec\\_date}$) for the mean in NDVI and excessively low for the variance temporal smooth term. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Dashed lines inticate the 95\\% credible intervals for the temporal terms.", eval=TRUE, fig.height=8, fig.pos='!h', echo=FALSE}
+```{r}
+gam(list(
+  # mean predictor (ks too large)
+  ndvi ~ s(long, lat, bs = 'ds', k = 50) +
+    s(dec_date, bs = 'tp', k = n_distinct(anna_ndvi$dec_date)),
+  # scale predictor (ks too small)
+  ~ s(long, lat, bs = 'ds', k = 5) + s(dec_date, bs = 'tp', k = 5)),
+  family = betals(), data = anna_ndvi, method = 'REML') %>%
+  plot(pages = 1, scheme = 3, n = 250, scale = 0)
+```
+
+```{r oversmooth, fig.cap="Estimated mean and scale parameters in NDVI with excessively large basis size $\\tt{k}$ for the smooth term of time ($\\tt{dec\\_date}$) for the mean in NDVI and excessively low for the variance temporal smooth term. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Dashed lines inticate the 95\\% credible intervals for the temporal terms.", eval=TRUE, fig.height=6, fig.pos='!h', echo=FALSE}
 gam(list(
   # mean predictor (ks too large)
   ndvi ~ s(long, lat, bs = 'ds', k = 50) +
@@ -333,7 +332,7 @@ gam(list(
 
 \newpage
 
-# Modeling the effects of $\e(R)$ and $\var(R)$ on space-use requirements {#final-fig}
+# Modeling the effects of $\e(R)$ and $\var(R)$ on space use {#final-fig}
 
 We start by predicting the mean and variance in NDVI experienced by the tapir in the known positions using the beta GAMLS.
 
@@ -351,21 +350,24 @@ anna_tel <-
   as_tibble()
 ```
 
-Next, we can estimate the mean and variance in NDVI for each 7-day period by taking the average for the GPS locations within each period.
+Next, we can estimate the mean and variance in NDVI for each 7-day period by taking the average for the GPS locations within each period. We also add a column of weights that are based on the home range confidence estimates' 95% intervals.
 
-```{r, eval=TRUE}
+```{r}
 tapir <-
   readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
   mutate(est = map(dataset,
                    \(.d) filter(anna_tel, timestamp %in% .d$timestamp)),
          mu = map_dbl(est, \(.d) mean(.d$mu)),
          sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
-  select(t_center, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
-  pivot_longer(c(hr_lwr_95, hr_est_95, hr_upr_95),
-               names_to = c('.value', 'quantile'),
-               names_pattern = '(.+)_(.+)') %>%
-  mutate(t_center = as.POSIXct(t_center),
-         quantile = paste0(quantile, '%'))
+    select(date, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
+    mutate(weight = 1 / (hr_upr_95 - hr_lwr_95), # small CI => large weight
+           weight = weight / mean(weight)) # standardize weights
+sum(tapir$weight) == nrow(tapir) # ensure weights are right
+```
+
+```{r, eval=TRUE, echo=FALSE}
+tapir <- readRDS('data/anna-hr-ndvi-data.rds')
+sum(tapir$weight) == nrow(tapir) # ensure weights are right
 ```
 
 We now have all we need to create the left side of figure \@ref(fig:tapir-mw).
@@ -373,12 +375,7 @@ We now have all we need to create the left side of figure \@ref(fig:tapir-mw).
 ```{r, eval=TRUE, fig.height=4, fig.width=12, out.width='\\linewidth'}
 theme_set(theme_bw()) # need to set the theme again for some reason
 
-# create the figure
-date_labs <- range(anna_tel$timestamp) %>% as.Date()
-YLIMS <- c(0, 13)
-
 # axis labels (spaces in hr_lab to avoid overlap with the plot label)
-# removed unicode characters to avoid knitting errors
 e_r <- 'Resource abundance'
 v_r <- 'Resource stochasticity'
 hr_lab <- expression('7-day'~home~range~size~(km^2)~'   ')
@@ -387,15 +384,15 @@ l_grobs <-
   lapply(
     list(
       # mean
-      ggplot(tapir, aes(t_center, mu)) +
+      ggplot(tapir, aes(date, mu)) +
         geom_line(color = pal[1]) +
         labs(x = NULL, y = e_r),
       # variance
-      ggplot(tapir, aes(t_center, sigma2)) +
+      ggplot(tapir, aes(date, sigma2)) +
         geom_line(color = pal[2]) +
         labs(x = NULL, y = v_r),
       # 95% home range
-      ggplot(tapir, aes(t_center, hr_est)) +
+      ggplot(tapir, aes(date, hr_est_95)) +
         geom_line(color = pal[3]) +
         labs(x = NULL, y = hr_lab)),
     as_grob) # convert to grid graphical objects (grobs)
@@ -413,25 +410,31 @@ for (i in seq_along(l_grobs)) {
 plot_grid(plotlist = l_grobs, nrow = 1, labels = c('a.', 'b.', 'c.'))
 ```
 
-To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space-use requirements. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors. However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see fig. \@ref(fig:hr-gam)).
+To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space use. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors. However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see fig. \@ref(fig:hr-gam)).
 
-```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space-use requirements (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Dashed lines inticate the 95\\% credible intervals for the temporal terms."}
-gam(hr_est ~ s(mu,  k = 3) + s(sigma2, k = 3), family = Gamma('log'),
-    data = tapir) %>%
-  plot(pages = 1, scheme = 3)
-```
+We can now fit a GAM similar to the one used for the simulated data. However, since this dataset is much smaller and autocorrelated, we should be more parsimonious with the number of terms and their complexity. A model with a Gamma family of distributions and relatively smooth (i.e., not wiggly) marginal terms of $\mu(t)$ and $\sigma^2(t)$ is a reasonable start. This dataset is too small (and autocorrelated) to estimate changes in scale parameters with reasonable accuracy and precision.
 
 \clearpage
 
-Thus, we use shape-constrained splines to inform the model about the shape we expect the terms to have while also imposing monotonicity.
+```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals."}
+gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
+         family = Gamma('log'),
+         weights = weight, # weights based on CI size
+         data = tapir,
+         method = 'REML') %>%
+  plot(pages = 1, scheme = 1) # trends should be monotonic
+```
 
-```{r hr-scam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space-use requirements (on the log link scale) using a shape-constrained GAM. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Dashed lines inticate the 95\\% credible intervals for the temporal terms."}
-m <- scam(hr_est ~
-            s(mu, bs = 'mpd', k = 4) + # monotone decreasing p-spline
-            s(sigma2, bs = 'mpi', k = 4), # monotone increasing p-spline
+Due to the small sample size, the spatiotemporal autocorrelation, and the correlation between $\mu(t)$ and $\sigma^2(t)$, it is hard to separate the effects of the two predictors. However, since it is reasonable to expect the effects of $\mu(t)$ and $\sigma^2(t)$ to be monotonic decreaseing and increasing, respectively, we can use a Shape-Constrained Additive Model (SCAM) via the `scam` package [@pya_scam_2022].
+
+```{r hr-scam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale) using a shape-constrained GAM. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals."}
+m <- scam(hr_est_95 ~
+            s(mu, bs = 'mpd', k = 5) +
+            s(sigma2, bs = 'mpi', k = 5),
           family = Gamma('log'),
+          weights = weight,
           data = tapir)
-plot(m, pages = 1, scheme = 3)
+plot(m, pages = 1, scheme = 1)
 ```
 
 Finally, we can create the predictions from the shape-constrained GAM.
@@ -460,19 +463,20 @@ preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
 
 p_d <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(mu, hr_est), tapir, color = pal[3], alpha = 0.5) +
+  geom_point(aes(mu, hr_est_95), tapir, color = pal[3], alpha = 0.5) +
   geom_ribbon(aes(mu, ymin = hr_mu_lwr, ymax = hr_mu_upr), preds,
               fill = pal[1], alpha = 0.3) +
-  geom_line(aes(mu, hr_mu_est), preds, color = pal[1]) +
+  geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
   xlab(e_r) +
   scale_y_continuous(hr_lab)
 
 p_e <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(sigma2, hr_est), tapir, color = pal[3], alpha = 0.5) +
+  geom_point(aes(sigma2, hr_est_95), tapir, color = pal[3], alpha = 0.5) +
   geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr),
               preds, fill = pal[2], alpha = 0.3) +
-  geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2]) +
+  geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2],
+            linewidth = 2) +
   xlab(v_r) +
   scale_y_continuous(hr_lab)
 

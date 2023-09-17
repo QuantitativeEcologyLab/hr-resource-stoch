@@ -10,7 +10,7 @@ theme_set(theme_bw()) # change default theme
 # import tapir data from https://github.com/StefanoMezzini/tapirs
 tapirs <- readRDS('../tapirs/models/tapirs-final.rds') %>%
   select(region, name, name.short, data) %>%
-  filter(tapirs, region == 'cerrado')
+  filter(region != 'atlantica') # VHF data is too irregular
 
 # check ranges of tracking data
 tapirs <-
@@ -48,60 +48,12 @@ cerrado <- filter(tapirs, region == 'cerrado')
 select(cerrado, name, days, clicks, daily_clicks)
 
 cerrado %>%
-  filter(name != 'CE_08_COLOMBINA') %>% # remove tapir that fails 
+  filter(name == 'CE_31_ANNA') %>% # remove tapir that fails 
   # filter(name.short %in% # filter to only a few good examples
   #          c('ANNA', 'DONALINA', 'KURUKA', 'LOU', 'ZEFA', 'ZACA', 'TITI', 'ZIGGY')) %>%
   pull(data) %>% # extract data column
   map(function(.d) {
     projection(.d) <- ce_proj # add projection based on mean long and lat
-    cat('Running', .d@info$identity, '\n')
-    .d <- window_hr(.d,
-                    window = 15 %#% 'day', # 1 week of data for sufficient sample size
-                    dt = 15 %#% 'day', # move window over by a single day each time
-                    fig_path = 'figures/tapirs',
-                    rds_path = 'models/tapirs',
-                    cores = 1) # cannot parallelize on Windows
-  })
-
-# join all the Cerrado data into a single tibble
-cerrado <-
-  list.files(path = 'models/tapirs',
-             pattern = '*-window-15-days-dt-15-days.rds',
-             full.names = TRUE) %>%
-  tibble(name = .,
-         d = map(., \(x) readRDS(x))) %>%
-  mutate(name = substr(name,
-                       nchar('models/tapirs/CE_xx_x'),
-                       nchar(name) -
-                         nchar('-window-15-days-dt-15-days.rds'))) %>%
-  unnest(cols = d) %>%
-  select(name, t_center, hr_est_95, hr_lwr_95, hr_upr_95) %>%
-  filter(! is.na(hr_est_95)) %>%
-  mutate(t_center = as.POSIXct(t_center)) %>%
-  group_by(name) %>%
-  # add weights based on CI width
-  mutate(weight = 1 / (hr_upr_95 - hr_lwr_95),
-         weight = weight / mean(weight)) %>% # keep sum(weight) == n()
-  ungroup()
-
-# ensure weights are correct
-sum(cerrado$weight) == nrow(cerrado)
-
-saveRDS(cerrado, 'data/cerrado-hrs.rds')
-
-# Pantanal ----
-pantanal <- filter(tapirs, region == 'pantanal')
-select(pantanal, name, days, clicks, daily_clicks) %>%
-  arrange(desc(days))
-
-# fails: PA_26_SACHIN, PA_16_DORA 
-pantanal %>%
-  filter(name %in% # filter to only a few good examples
-           c('PA_08_BENJAMIN', 'PA_10_VIVEK', 'PA_30_NELSAO',
-             'PA_31_JORDANO', 'PA_23_RICK', 'PA_24_LESLIE', 'PA_12_FELIPPE',
-             'PA_21_CAIO')) %>%
-  pull(data) %>% # extract data column
-  map(function(.d) {
     cat('Running', .d@info$identity, '\n')
     .d <- window_hr(.d,
                     window = 7 %#% 'day', # 1 week of data for sufficient sample size
