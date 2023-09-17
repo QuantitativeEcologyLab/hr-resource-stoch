@@ -96,3 +96,6 @@ models/alces*
 models/aepyceros*
 models/equus*
 
+# moving this to a separate paper
+figures/stochasticity-timescale.png
+analysis/figures/stochasticity-timescale.R
