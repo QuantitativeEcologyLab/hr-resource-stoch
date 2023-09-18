@@ -5,8 +5,6 @@ author:
   - name: Stefano Mezzini
     email: stefano.mezzini@ubc.ca
     institute: [braes, biol]
-  - name: Simon Wood
-    institute: uofe
   - name: Chris H. Fleming
     institute: [ucf, smith]
   - name: E. Patrícia Medici
@@ -17,7 +15,6 @@ author:
 institute:
   - braes: Okanagan Institute for Biodiversity, Resilience, and Ecosystem Services, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
   - biol: Department of Biology, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
-  - uofe: School of Mathematics, James Clerk Maxwell Building, University of Edinburgh, Edinburgh, Unted Kingdom.
   - ucf: Department of Biology, University of Central Florida, Orlando, Florida 32816, United States.
   - smith: Smithsonian Conservation Biology Institute, National Zoological Park, 1500 Remount Rd., Front Royal, VA 22630, United States.
   - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
