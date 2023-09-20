@@ -5,6 +5,8 @@ author:
   - name: Stefano Mezzini
     email: stefano.mezzini@ubc.ca
     institute: [biol, braes]
+  - name: Chris H. Fleming
+    institute: [ucf, smith]
   - name: E. Patrícia Medici
     institute: [tapir, iucn, escas]
   - name: Michael J. Noonan
@@ -13,6 +15,8 @@ author:
 institute:
   - biol: Department of Biology, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
   - braes: Okanagan Institute for Biodiversity, Resilience, and Ecosystem Services, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+  - ucf: Department of Biology, University of Central Florida, Orlando, Florida 32816, United States.
+  - smith: Smithsonian Conservation Biology Institute, National Zoological Park, 1500 Remount Rd., Front Royal, VA 22630, United States.
   - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
   - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
@@ -56,7 +60,6 @@ knitr::opts_chunk$set(eval = FALSE,         # do not run R code
                       fig.align = 'center', # change figure alignment
                       cache = TRUE,         # cache all chunk outputs
                       singlespacing = TRUE) # use single spacing for code chunks
-knitr::opts_knit$set(root.dir = '..')
 ```
 
 <!-- add custom commands for formulae -->
@@ -75,8 +78,7 @@ knitr::opts_knit$set(root.dir = '..')
 This appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript. The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). For ease of reference, we also include the figure below (fig. \@ref(fig:tapir-mw)). Estimating the effects of resource abundance and unpredictability on the tapir's space-use requirements requires us to first estimate the changes in the tapir's space-use requirements (section \@ref(movement), fig. \@ref(fig:tapir-mw)c) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi), figs. \@ref(fig:tapir-mw)a-b) before we can estimate the relationship between resource dynamics and spatial use (section \@ref(final-fig), figs. \@ref(fig:tapir-mw)d-f).
 
 ```{r tapir-mw, fig.cap="Seven-day home-range size of a lowland tapir (\\emph{Tapirus terrestris}) in response to changes in mean and variance in resource abundance. (a.) Mean resource abundance, $\\mu(t)$, esimated as the mean NDVI at the locations visited by the tapir. (b.) Varince in resource abundance, $\\sigma^2(t)$, esimated as the average variance in NDVI at the locations visited by the tapir. (c.) Estimated seven-day home range based on the 95\\% utilization quantiles. (d., e.) estimated marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on home-range size. The model accounted for the marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ and their interaction on mean space-use requirements and the variance around them. (f.) The effect of $\\mu(t)$ does not follow the data closely because $\\e(R)$ and $\\var(R)$ are highly correlated. Consequently, while estimating the effects of $\\e(R)$ and $\\var(R)$ via separate models would allow result in a closer fit, the estimated effects would be inappropriate because they do not disentangle the effects of $\\e(R)$ and $\\var(R)$. See Appendix 3 for additional information. The tapir movement data corresponds to the individual named ``Anna\" from the Cerrado sample of Medici $et~al.$ (2022).", out.width='100%', eval=TRUE, echo=FALSE}
-knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/tapir-example-with-data.png',
-                        rel_path = FALSE)
+knitr::include_graphics('../figures/tapir-example-with-data.png', rel_path = FALSE)
 ```
 
 To minimize the computational costs of creating this appendix, we load the necessary objects through hidden `R` chunks rather than re-running all the code. Still, those interested in replicating the analyses can do so by using the code in the pdf document or the related `R` Markdown (`Rmd`) document (as well as the `R` scripts). All the packages and source scripts required to run the analyses in this document are listed in the code chunk below. For spatial data, we use the `MODIStsp` package [version 2.0.9, @busetto_modistsp_2016] to download the NDVI rasters, the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the NDVI rasters, and the `sf` package [version 1.0-8, @pebesma_simple_2018]. We use the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling and the `lubridate` package [version 1.8.0, @grolemund_dates_2011] for converting calendar dates to decimal dates. Finally, we used the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] and the `mgcv` package [version 1.8-41, @wood_generalized_2017] for modeling and the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
@@ -104,12 +106,12 @@ library('MODIStsp')  # for downloading NDVI rasters
 theme_set(theme_bw()) # change default theme
 
 # attach the beta location-scale family written by Simon Wood
-source('functions/betals.r')
+source('../functions/betals.r')
 
 # source all necessary scripts
-source('analysis/figures/default-figure-styling.R') # for color palettes
-source('earthdata-login-info.R') # personal login info for EarthData
-source('functions/window_hr.R') # function to calculate HRs
+source('../analysis/figures/default-figure-styling.R') # for color palettes
+source('../earthdata-login-info.R') # personal login info for EarthData
+source('../functions/window_hr.R') # function to calculate HRs
 ```
 
 \newpage
@@ -120,7 +122,7 @@ source('functions/window_hr.R') # function to calculate HRs
 
 ```{r}
 # import tapir data from https://github.com/StefanoMezzini/tapirs
-anna <- readRDS('../tapirs/models/tapirs-final.rds') %>%
+anna <- readRDS('../../tapirs/models/tapirs-final.rds') %>%
   filter(name.short == 'ANNA')
 anna_tel <- anna$data[[1]] # telemetry data
 
@@ -134,26 +136,26 @@ window_hr(
   dt = 1 %#% 'day', # move window over by a single day each time
   fig_path = 'figures',
   rds_path = 'models')
-anna_mw <- readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds')
+anna_mw <-readRDS('../models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds')
 anna_mw
 ```
 
 ```{r, echo=FALSE, eval=TRUE}
-anna <- readRDS('../tapirs/models/tapirs-final.rds') %>%
+anna <- readRDS('../../tapirs/models/tapirs-final.rds') %>%
   filter(name.short == 'ANNA')
 anna_tel <- anna$data[[1]] # telemetry data
 
 # projection for the region in the Brazilian Cerrado
 ctmm::projection(anna_tel) <- '+proj=utm +zone=22 +datum=NAD83 +units=m'
 
-anna_mw <- readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds')
+anna_mw <- readRDS('../models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds')
 anna_mw
 ```
 
 The `window_hr()` function estimates the tapir's home range using a sliding window approach with a window size of 7 days (using `ctmm`'s `%#%` operator for unit conversions) that starts with the set of days from `r format(as.POSIXct(anna_mw$t_start[1]), format = '%Y-%m-%d')` to `r format(as.POSIXct(anna_mw$t_end[1]), format = '%Y-%m-%d')` (extremes included), then shifts by one day (`dt = 1 %#% 'day'`), repeats the analysis for the next seven-day set (`r format(as.POSIXct(anna_mw$t_start[2]), format = '%Y-%m-%d')` to `r format(as.POSIXct(anna_mw$t_end[2]), format = '%Y-%m-%d')`), and continues doing so until it reaches the last set of days, `r format(as.POSIXct(anna_mw$t_start[nrow(anna_mw)]), format = '%Y-%m-%d')` to `r format(as.POSIXct(anna_mw$t_end[nrow(anna_mw)]), format = '%Y-%m-%d')`. For each set of days, it fits a positional variogram, a continuous-time movement model [@fleming_ctmm_2021], and a utilization distribution via autocorrelated kernel density estimation [@silva_autocorrelationinformed_2022; @noonan_comprehensive_2019]. Finally, it saves an exploratory figure (fig. \@ref(fig:mw)) to the `figures` folder and the tibble of times, telemetries, movement models, utilization distributions, and home range estimates (with 95% confidence intervals) to the `models` folder.
 
 ```{r mw, eval=TRUE, echo=FALSE, fig.cap="Exploratory figure created by the $\\tt{window\\_hr()}$ function. Panel $\\mathbf{a.}$ shows the tapir's GPS locations, while panel $\\mathbf{b.}$ shows the seven-day home range estimates (95\\% and 50\\% utilization quantiles) with 95\\% confidence intervals.", out.width='\\textwidth'}
-knitr::include_graphics('H:/GitHub/hr-resource-stoch/figures/tapirs/CE_31_ANNA-window-7-days-dt-1-days.png', rel_path = FALSE)
+knitr::include_graphics('../figures/tapirs/CE_31_ANNA-window-7-days-dt-1-days.png')
 ```
 
 \newpage
@@ -371,47 +373,41 @@ We now have all we need to create the left side of figure \@ref(fig:tapir-mw).
 
 ```{r, eval=TRUE, fig.height=4, fig.width=12, out.width='\\linewidth'}
 theme_set(theme_bw()) # need to set the theme again for some reason
-
 # axis labels (spaces in hr_lab to avoid overlap with the plot label)
-e_r <- 'Resource abundance'
-v_r <- 'Resource stochasticity'
-hr_lab <- expression('7-day'~home~range~size~(km^2)~'   ')
+# unicode characters removed because they knitting errors
+e_r <- bquote(paste(bold('Resource abundance, E('), bolditalic(R),
+                    bold(')')))
+v_r <- bquote(paste(bold('Resource stochasticity, Var('), bolditalic(R),
+                    bold(')')))
+hr_lab <- bquote(bold(paste('7-day home range size (', km^2, ')   ')))
 
-l_grobs <-
-  lapply(
-    list(
-      # mean
-      ggplot(tapir, aes(date, mu)) +
-        geom_line(color = pal[1]) +
-        labs(x = NULL, y = e_r),
-      # variance
-      ggplot(tapir, aes(date, sigma2)) +
-        geom_line(color = pal[2]) +
-        labs(x = NULL, y = v_r),
-      # 95% home range
-      ggplot(tapir, aes(date, hr_est_95)) +
-        geom_line(color = pal[3]) +
-        labs(x = NULL, y = hr_lab)),
-    as_grob) # convert to grid graphical objects (grobs)
+l_grobs <- lapply(
+  list(ggplot(tapir, aes(date, mu)) + # mean
+         geom_line(color = pal[1]) +
+         labs(x = NULL, y = e_r),
+       ggplot(tapir, aes(date, sigma2)) + # variance
+         geom_line(color = pal[2]) +
+         labs(x = NULL, y = v_r),
+       ggplot(tapir, aes(date, hr_est_95)) + # 95% home range
+         geom_line(color = pal[3]) +
+         labs(x = NULL, y = hr_lab)),
+  as_grob) # convert to grid graphical objects (grobs)
 
 # align left margins of all plots
-aligned_widths <- align_margin(map(l_grobs,
-                                   function(x) {x$widths}), 'first')
+aligned_widths <- align_margin(map(l_grobs, \(x) {x$widths}), 'first')
 
 # Setting the dimensions of plots to the aligned dimensions
-for (i in seq_along(l_grobs)) {
-  l_grobs[[i]]$widths <- aligned_widths[[i]]
-}
+for(i in seq_along(l_grobs)) l_grobs[[i]]$widths <- aligned_widths[[i]]
 
 # Draw aligned plots
 plot_grid(plotlist = l_grobs, nrow = 1, labels = c('a.', 'b.', 'c.'))
 ```
 
+\clearpage
+
 To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space use. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors. However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see fig. \@ref(fig:hr-gam)).
 
 We can now fit a GAM similar to the one used for the simulated data. However, since this dataset is much smaller and autocorrelated, we should be more parsimonious with the number of terms and their complexity. A model with a Gamma family of distributions and relatively smooth (i.e., not wiggly) marginal terms of $\mu(t)$ and $\sigma^2(t)$ is a reasonable start. This dataset is too small (and autocorrelated) to estimate changes in scale parameters with reasonable accuracy and precision.
-
-\clearpage
 
 ```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals."}
 gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
@@ -421,6 +417,8 @@ gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
     method = 'REML') %>%
   plot(pages = 1, scheme = 1) # trends should be monotonic
 ```
+
+\clearpage
 
 Due to the small sample size, the spatiotemporal autocorrelation, and the correlation between $\mu(t)$ and $\sigma^2(t)$, it is hard to separate the effects of the two predictors. However, since it is reasonable to expect the effects of $\mu(t)$ and $\sigma^2(t)$ to be monotonic decreaseing and increasing, respectively, we can use a Shape-Constrained Additive Model (SCAM) via the `scam` package [@pya_scam_2022].
 
@@ -444,13 +442,10 @@ m_mu <- scam(hr_est_95 ~ s(mu, bs = 'mpd', k = 5),
 round(AIC(m, m_mu), 3)
 ```
 
-\newpage
-
 We can now create the predictions from the shape-constrained GAM.
 
 ```{r, eval=TRUE, fig.height=4, fig.width=12, out.width='\\linewidth'}
 theme_set(theme_bw()) # need to set the theme again for some reason
-
 # predict marginal effects for each term
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
                 sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
@@ -496,13 +491,10 @@ p_f <- ggplot(tapir) +
 r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 
 # align right margins of all plots
-aligned_widths <- align_margin(map(r_grobs,
-                                   function(x) {x$widths}), 'first')
+aligned_widths <- align_margin(map(r_grobs, \(x) {x$widths}), 'first')
 
 # Setting the dimensions of plots to the aligned dimensions
-for (i in seq_along(r_grobs)) {
-  r_grobs[[i]]$widths <- aligned_widths[[i]]
-}
+for(i in seq_along(r_grobs)) r_grobs[[i]]$widths <- aligned_widths[[i]]
 
 plot_grid(plotlist = r_grobs, ncol = 3, labels = c('d.', 'e.', 'f.'))
 ```
