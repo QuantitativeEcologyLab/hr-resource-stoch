@@ -4,10 +4,9 @@ library('mgcv')    # for empirical Bayes GAMs
 library('ggplot2') # for fancy plots
 library('cowplot') # for fancy multi-panel plots
 source('analysis/figures/default-figure-styling.R') # for color palette
-theme_set(theme_bw() + theme(legend.position = 'none'))
 
-e_r <- 'Resource abundance, E(\U1D445)'
-v_r <- 'Resource stochasticity, Var(\U1D445)'
+e_r <- 'paste(bold("Resource abundance, E("), bolditalic("R"), bold(")"))'
+v_r <- 'paste(bold("Resource stochasticity, Var("), bolditalic("R"), bold(")"))'
 
 sims <- readRDS('simulations/days-hrs.rds') %>%
   tibble() %>%
@@ -42,9 +41,24 @@ m_3 <- gam(
   family = gammals(),
   data = sims)
 
-AIC(m_1, m_2, m_3) # smooth model with interactions is best
-BIC(m_1, m_2, m_3) # smooth model with interactions is best
+# check if CV = sigma/mu is better than sigma
+m_4 <- gam(
+  list(
+    hr ~ quantile + s(mu) + s(cv) + ti(mu, cv, k = 5),
+    ~ quantile + s(mu) + s(cv) + ti(mu, cv, k = 5)),
+  family = gammals(),
+  data = mutate(sims, cv = sqrt(sigma2) / mu))
 
+# ti term of the scale parameter looks over-fit and too uncertain
+plot(m_4, all.terms = TRUE, pages = 1, scheme = 3, scale = 0)
+
+AIC(m_1, m_2, m_3, m_4) # smooth model with interactions is best
+BIC(m_1, m_2, m_3, m_4) # smooth model with interactions is best
+
+summary(m_3)
+summary(m_4)
+
+# choose the best model
 m <- m_3
 
 plot(m, all.terms = TRUE, pages = 1, scheme = 3, scale = 0)
@@ -97,7 +111,8 @@ sims_l <- sims %>%
   mutate(x = if_else(name == 'mu', e_r, v_r))
 
 ggplot() +
-  facet_grid(. ~ x, scales = 'free', switch = 'x') + # label below x axis
+  facet_grid(. ~ x, scales = 'free', switch = 'x',
+             labeller = label_parsed) + # label below x axis
   geom_point(aes(value, hr), filter(sims_l, quantile == 'hr_95'),
              alpha = 0.1, color = pal[3]) +
   geom_ribbon(aes(value, ymin = hr_lwr, ymax = hr_upr, fill = x),
@@ -106,17 +121,18 @@ ggplot() +
             filter(preds, quantile == 'hr_95')) +
   scale_color_manual(values = pal) +
   scale_x_continuous(NULL, breaks = NULL) + 
-  scale_y_continuous('Space-use requirements, \U1D43B', breaks = NULL) +
+  scale_y_continuous(bquote(paste(bold('Space-use requirements, '),
+                                  bolditalic('H'))), breaks = NULL) +
   # to make facet strip look like the x axis
   theme(legend.position = 'none',
         strip.background = element_blank(),
-        strip.text = element_text(size = 12))
+        strip.text = element_text(size = 14, face = 'bold'))
 
 ggsave('figures/simulation-regression-plots.png',
        width = 6, height = 3, dpi = 'print', bg = 'white', scale = 1.5)
 
 # effect of sqrt(sigma2) is nonlinear since it is on the same scale as mu
-sd_r <- "Standard deviation in \U1D445, \U221A Var(\U1D445)"
+sd_r <- 'paste(bold("Standard deviation in "), bolditalic("R"))'
 
 preds_sd <- bind_rows(preds,
                       filter(preds, x == v_r) %>%
@@ -133,12 +149,14 @@ sims_sd <- sims %>%
                        name == 'sigma' ~ sd_r))
 
 ggplot() +
-  facet_grid(. ~ x, scales = 'free', switch = 'x') +
+  facet_grid(. ~ x, scales = 'free', switch = 'x',
+             labeller = label_parsed) + # label below x axis
   geom_point(aes(value, hr), sims_sd, alpha = 0.1, color = pal[3]) +
   geom_line(aes(value, hr, group = quantile, color = x), preds_sd,
             linewidth = 1) +
   scale_color_manual(values = pal[-(3:6)]) +
   scale_x_continuous(NULL, breaks = NULL) + 
-  scale_y_continuous('Home range size, \U1D43B', breaks = NULL) +
+  scale_y_continuous(bquote(paste(bold('Space-use requirements, '),
+                                  bolditalic('H'))), breaks = NULL) +
   theme(strip.background = element_blank(),
         strip.text = element_text(size = 12))

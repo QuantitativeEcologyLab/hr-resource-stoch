@@ -4,7 +4,7 @@ library('dplyr') # for data wrangling (e.g., %>%)
 library('purrr') # for functional programming (e.g., map(), map_dbl())
 library('tidyr') # for data wrangling (e.g., nested tibbles)
 library('ggplot2') # for fancy plots
-theme_set(theme_bw())
+source('analysis/figures/default-figure-styling.R')
 source('analysis/mean-variance-trends-panel-data.R') # trends in E(R) and V(R)
 source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
 
@@ -115,7 +115,7 @@ all <-
 ggplot(all) +
   facet_wrap(~ replicates) +
   geom_line(aes(animal, diff_est, group = paste(mean, variance)), alpha = 0.1) +
-  geom_hline(yintercept = 0, color = 'darkorange') +
+  geom_hline(yintercept = 0, color = 'red') +
   labs(x = 'Time', y = 'Difference in average daily time required (hours)')
 
 ggsave('figures/5-by-5-sensitivity-analysis/time-to-satiety-difference.png',
@@ -124,7 +124,7 @@ ggsave('figures/5-by-5-sensitivity-analysis/time-to-satiety-difference.png',
 ggplot(all) +
   facet_wrap(~ replicates) +
   geom_line(aes(animal, rel_est, group = paste(mean, variance)), alpha = 0.1) +
-  geom_hline(yintercept = 1, color = 'darkorange') +
+  geom_hline(yintercept = 1, color = 'red') +
   scale_y_continuous(trans = 'log2', breaks = 2^c(-0.5, 0, 0.5),
                      labels = parse(text = c('2^-0.5', '0', '2^0.5')))+
   labs(x = 'Time',

@@ -11,9 +11,12 @@ library('cowplot')   # for fancy multi-panel plots
 source('analysis/figures/default-figure-styling.R') # for theme & palettes
 
 # axis lables
-e_r <- 'Resource abundance, \U1D707(t)'
-v_r <- 'Resource stochasticity, \U1D70E\U00B2(t)'
-hr_lab <- expression('7-day'~home~range~size~(km^2)~'   ')
+e_r <- bquote(paste(bold('Resource abundance, '), '\U1D6CD', bold('('),
+                    bolditalic('t'), bold(')')))
+v_r <- bquote(paste(bold('Resource stochasticity, '), '\U1D6D4\U00B2',
+                    bold('('), bolditalic('t'), bold(')')))
+hr_lab <- bquote(paste(bold('7-day home range size (km'), '\U00B2',
+                       bold(')')))
 
 # import location-scale model for predictions of mean and variance in NDVI
 m_ndvi <- readRDS('models/tapirs/CE_31_ANNA-mgcv-ndvi-betals.rds')
@@ -61,7 +64,8 @@ date_labs <- range(tel$timestamp) %>% as.Date()
 # E(R) and V(R) are highly correlated
 ggplot(tapir) +
   geom_point(aes(mu, sigma2, alpha = weight)) +
-  labs(x = '\U1D707(t)', y = '\U1D70E\U00B2(t)')
+  labs(x = '\U1D707(t)', y = '\U1D70E\U00B2(t)') +
+  theme(text = element_text(face = 'plain'))
 
 l_grobs <-
   lapply(
@@ -171,5 +175,5 @@ p_right <- plot_grid(plotlist = r_grobs, ncol = 1, labels = c('d.', 'e.', 'f.'),
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
 p
 
-ggsave('figures/tapir-example-with-data.png', plot = p, height = 11,
+ggsave('figures/tapir-example-with-data.png', plot = p, height = 12,
        width = 14, units = 'in', dpi = 600, bg = 'white')

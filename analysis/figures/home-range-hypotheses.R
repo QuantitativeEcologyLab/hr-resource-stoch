@@ -20,7 +20,7 @@ d <-
          h_2 = if_else(split, 2 * mu^2 - 7 * mu + 3.916873, h_1),
          h_3 = if_else(split, h_2 + 30 * (0.35 - mu)^2, h_2))
 
-notes <- tibble(x = c(0.13, 0.3, 0.175, 0.68),
+notes <- tibble(x = c(0.13, 0.32, 0.19, 0.68),
                 y = c(2.05, 3.2, 1.35, 2.05),
                 text = c('range-resident', 'nomadic or\ndispersing',
                          'evolutionary timescale', 'ecological timescale'))
@@ -32,9 +32,11 @@ p_mu <-
               linewidth = 2, fill = pal[1]) +
   geom_brace(aes(x = c(0, 0.345), y = c(1.45, 1.7)), rotate = 180) +
   geom_brace(aes(x = c(0.36, 1), y = c(1.95, 1.7)), rotate = 0) +
-  geom_text(aes(x = x, y = y, label = text), notes, size = 6) +
-  scale_x_continuous('Resource abundance, E(\U1D445)', breaks = NULL,
-                     expand = c(0, 0)) +
+  geom_text(aes(x = x, y = y, label = text), notes, size = 6,
+            fontface = 'bold') +
+  scale_x_continuous(bquote(paste(bold('Resource abundance, E('),
+                                       bolditalic(R), bold(')'))),
+                     breaks = NULL, expand = c(0, 0)) +
   scale_y_continuous(hr_lab, breaks = 0, expand = c(0, 0)); p_mu
 
 # hypothesis for change in H over V(R) ----
@@ -45,8 +47,11 @@ p_s2 <-
               linewidth = 2, fill = pal[2]) +
   geom_brace(aes(x = c(0, 0.345), y = c(1.45, 1.7)), rotate = 180) +
   geom_brace(aes(x = c(0.36, 1), y = c(1.95, 1.7)), rotate = 0) +
-  geom_text(aes(x = x, y = y, label = text), notes, size = 6) +
-  scale_x_reverse('Resource stochasticity, Var(\U1D445)', breaks = NULL,
+  geom_text(aes(x = x, y = y, label = text), notes, size = 6,
+            fontface = 'bold') +
+  scale_x_reverse(bquote(paste(bold(Resource~'stochasticity, Var('),
+                                    bolditalic(R),bold(')'))),
+                  breaks = NULL,
                   expand = c(0, 0)) +
   scale_y_continuous(hr_lab, breaks = 0, expand = c(0, 0)); p_s2
 
@@ -60,5 +65,6 @@ ggsave('figures/variance-abundance-hr-hypotheses.png', plot = p_s2, width = 8,
 # figure the GRS and GRC poster
 p_grid <- plot_grid(p_mu, NULL, p_s2, labels = c('a.', '', 'b.'),
                     rel_widths = c(1, 0.5, 1), label_size = 22, nrow = 1)
-ggsave('figures/2023-GRS-GRC-barga-italy/grid-hr-hypotheses.png', plot = p_grid,
-       width = 60.25, height = 20, units = 'cm', dpi = 600, bg = 'white')
+ggsave('figures/2023-GRS-GRC-barga-italy/grid-hr-hypotheses.png',
+       plot = p_grid, width = 60.25, height = 20, units = 'cm', dpi = 600,
+       bg = 'white')

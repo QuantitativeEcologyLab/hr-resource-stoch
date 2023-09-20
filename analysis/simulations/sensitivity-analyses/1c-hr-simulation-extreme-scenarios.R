@@ -2,11 +2,11 @@ library('ctmm')    # for continuous-time movement modeling
 library('dplyr')   # for data wrangling (e.g., %>%)
 library('tidyr')   # for data wrangling (e.g., nested tibbles)
 library('ggplot2') # for fancy plots
+source('analysis/figures/default-figure-styling.R')
 source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
 source('analysis/mean-variance-trends-panel-data.R') # means & variances
 source('analysis/simulations/movement-model.R') # for consistency across scripts
 source('functions/get_hr.R') # for extracting gaussian home range
-theme_set(theme_bw())
 set.seed(1) # for consistent results
 
 tels <- readRDS('simulations/tracks.rds') # list of telemetry tracks
@@ -141,7 +141,7 @@ saturation_days <-
          m = map(1:n(), \(i) {
            cat('Fitting model', i, '\n')
            ctmm.fit(tel[[i]], theta[[i]])
-           }), # fit movement model
+         }), # fit movement model
          sigma = map_dbl(m, \(.m) ctmm:::area.covm(.m$sigma)), # var(position)
          hr = get_hr(.sigma = sigma, quantile = 0.95)) # Gaussian home range
 
@@ -157,16 +157,17 @@ saturation_days <- readRDS('simulations/hr-saturation-days.rds')
 p_hr_days <-
   ggplot(saturation_days, aes(n_days, hr)) +
   facet_wrap(~ case, nrow = 1) +
-  geom_vline(xintercept = 100, color = 'darkorange') +
+  geom_vline(xintercept = 100, color = 'red') +
   geom_smooth(method = 'gam', color = 'black',
               formula = y ~ s(x, bs = 'cs', k = 10),
               method.args = list(family = Gamma(link = 'log'))) +
   geom_point(alpha = 0.3) +
-  scale_x_continuous(expression(Number~of~days~sampled~(log[2]~scale)),
+  scale_x_continuous(expression(bold(Number~of~days~sampled~(log[2]~scale))),
                      trans = 'log2', breaks = c(2, 16, 128, 1024),
                      limits = c(2, 1100)) +
-  scale_y_continuous(trans = 'log2', expression(atop(Estimated~'space-use',
-                                requirements~(log[2]~scale)))); p_hr_days
+  scale_y_continuous(trans = 'log2',
+                     expression(bold(atop(Estimated~'space-use',
+                                          requirements~(log[2]~scale)))))
 
 ggsave('figures/hr-over-days.png', plot = p_hr_days,
        width = 6, height = 3, dpi = 'print')

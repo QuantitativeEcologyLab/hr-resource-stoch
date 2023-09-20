@@ -16,7 +16,11 @@ source('functions/qgamma2.R') # function to generate qgamma() from mean and vari
 source('analysis/figures/default-figure-styling.R')
 theme_set(theme_get() + 
             theme(legend.position = 'top',
-                  panel.grid = element_blank()))
+                  panel.grid = element_blank(),
+                  legend.text.align = 0,
+                  legend.background = element_rect(fill = 'transparent'),
+                  legend.margin = margin(l = 10, r = 10)))
+
 
 # resource abundance palette
 LOW <- '#744700'
@@ -66,13 +70,13 @@ p_1a <-
   geom_point(aes(color = sigma2), size = 2) +
   scale_x_continuous('Time', expand = c(0, 0), breaks = NULL) +
   scale_y_discrete('Patch', expand = c(0, 0)) +
-  scale_fill_gradient2(e_r, low = LOW, mid = MID, high = HIGH,
-                       limits = lim_food, breaks = lim_food, labels = c('Low', 'High'),
-                       midpoint = quantile(lim_food, 0.5)) +
-  scale_color_viridis_c(var_r, direction = -1, option = 'D', end = 1,
-                        begin = 0.3, limits = lim_sigma2, breaks = lim_sigma2,
-                        labels = c('Low', 'High')) +
-  guides(color = guide_colorbar(order = 0), fill = guide_colorbar(order = 1))
+  scale_fill_gradient(e_r, low = 'white', high = pal[1], limits = lim_food,
+                      breaks = lim_food, labels = c('Low', 'High')) +
+  scale_color_gradient(var_r, low = 'white', high = pal[2],
+                       limits = lim_sigma2, breaks = lim_sigma2,
+                       labels = c('Low', 'High')) +
+  guides(color = guide_colorbar(order = 0),
+         fill = guide_colorbar(order = 1))
 
 # b. variable definition
 # b-1: Gamma distribution
@@ -86,9 +90,11 @@ plot_expr <- function(string) {
 # probability density of R
 r_pdf <-
   ggplot(r_density, aes(r, dens)) +
-  geom_area(fill = pal[3], alpha = 0.5, color = pal[3]) +
-  scale_x_continuous('\U1D445', breaks = NULL) +
-  scale_y_continuous('P(\U1D445 = \U1D45F)', breaks = NULL)
+  geom_area(fill = 'black', alpha = 0.5, color = 'black') +
+  scale_x_continuous(expression(bolditalic(R)), breaks = NULL,
+                     expand = c(0, 0)) +
+  scale_y_continuous(expression(bolditalic(P(R~'='~r))), breaks = NULL,
+                     expand = c(0, 0), limits = c(0, 0.28))
 
 ## b-2, b-3: mean and variance trends
 p_mean <-
@@ -96,32 +102,41 @@ p_mean <-
   geom_point(aes(t, food), d_1, alpha = 0.25, show.legend = FALSE) +
   geom_line(aes(t, mu, color = mu), params, lwd = 1, show.legend = FALSE) +
   scale_x_continuous('Time', breaks = NULL) +
-  scale_y_continuous('\U1D707(t)', limits = lim_food, breaks = lim_food,
+  scale_y_continuous(bquote(paste('\U1D6CD', bold((t)))),
+                     limits = lim_food, breaks = lim_food,
                      labels = c('Low', 'High')) +
-  scale_color_gradient2(low = LOW, mid = MID, high = HIGH, limits = lim_food,
-                        midpoint = quantile(lim_food, 0.5))
+  scale_color_gradient(e_r, low = 'white', high = pal[1], limits =lim_food,
+                       breaks = lim_food, labels = c('Low', 'High'))
 
 p_var <-
   ggplot() +
-  geom_line(aes(t, sigma2_constant, color = sigma2_constant), params, lwd = 1,
-            show.legend = FALSE) +
+  geom_line(aes(t, sigma2_constant, color = sigma2_constant), params,
+            lwd = 1, show.legend = FALSE) +
   scale_x_continuous('Time', breaks = NULL) +
-  scale_y_continuous('\U1D70E\U00B2', limits = lim_sigma2,
+  scale_y_continuous(bquote(paste('\U1D6D4\U00B2')), limits = lim_sigma2,
                      breaks = lim_sigma2, labels = c('Low', 'High')) +
-  scale_color_viridis_c(direction = -1, option = 'D', end = 1,
-                        begin = 0.3, limits = lim_sigma2)
+  scale_color_gradient(var_r, low = 'white', high = pal[2],
+                       limits = lim_sigma2, breaks = lim_sigma2,
+                       labels = c('Low', 'High'))
 
 p_1b <-
   plot_grid(
-    plot_expr('\U1D445 \U007E \U0393(\U1D707(t), \U1D70E\U00B2)'), r_pdf,
-    plot_expr('E(\U1D445) = \U1D707(t)'), p_mean,
-    plot_expr('Var(\U1D445) = \U1D70E\U00B2'), p_var,
+    plot_expr(bquote(paste(bolditalic(R), ' ~ \U1D6AA',
+                           bold('('), '\U1D6CD', bold('('), bolditalic(t),
+                           bold('), '), '\U1D6D4\U00B2', bold(')')))),
+    r_pdf,
+    plot_expr(bquote(paste(bold('E('), bolditalic(R), bold(') = '),
+                           '\U1D6CD', bold('('), bolditalic('t'), bold(')')))),
+    p_mean,
+    plot_expr(bquote(paste(bold('Var('), bolditalic(R),
+                           bold(') = '), '\U1D6D4\U00B2'))),
+    p_var,
     ncol = 2); p_1b
 
 p_1 <- plot_grid(p_1a,
                  plot_grid(p_1b,
                            nrow = 1, labels = c('b.', '')),
-                 labels = c('a.', ''), ncol = 1)
+                 labels = c('a.', ''), ncol = 1); p_1
 
 ggsave('figures/habitat-examples-constant-variance.png',
        plot = p_1, width = 6, height = 8, bg ='white')
@@ -145,12 +160,11 @@ p_2a <-
   geom_point(aes(color = sigma2), size = 2) +
   scale_x_continuous('Time', expand = c(0, 0), breaks = NULL) +
   scale_y_discrete('Patch', expand = c(0, 0)) +
-  scale_color_viridis_c(var_r, direction = -1, option = 'D', end = 1,
-                        begin = 0.3, limits = lim_sigma2, breaks = lim_sigma2,
-                        labels = c('Low', 'High')) +
-  scale_fill_gradient2(e_r, low = LOW, mid = MID, high = HIGH,
-                       limits = lim_food, breaks = lim_food, labels = c('Low', 'High'),
-                       midpoint = quantile(lim_food, 0.5)) +
+  scale_color_gradient(var_r, low = 'white', high = pal[2],
+                       limits = lim_sigma2, breaks = lim_sigma2,
+                       labels = c('Low', 'High')) +
+  scale_fill_gradient(e_r, low = 'white', high = pal[1], limits = lim_food,
+                      breaks = lim_food, labels = c('Low', 'High')) +
   guides(color = guide_colorbar(order = 0), fill = guide_colorbar(order = 1))
 
 # b. variable definition
@@ -160,27 +174,40 @@ p_mean <-
   geom_point(aes(t, food), d_2, alpha = 0.25, show.legend = FALSE) +
   geom_line(aes(t, mu, color = mu), params, lwd = 1, show.legend = FALSE) +
   scale_x_continuous('Time', breaks = NULL) +
-  scale_y_continuous('\U1D707(t)', limits = lim_food, breaks = lim_food,
-                     labels = c('Low', 'High')) +
-  scale_color_gradient2(low = LOW, mid = MID, high = HIGH, limits = lim_food,
-                        midpoint = quantile(lim_food, 0.5))
+  scale_y_continuous(bquote(paste('\U1D6CD', bold('('), bolditalic('t'),
+                                  bold(')'))), limits = lim_food,
+                     breaks = lim_food, labels = c('Low', 'High')) +
+  scale_color_gradient(e_r, low = 'white', high = pal[1], limits =lim_food,
+                       breaks = lim_food, labels = c('Low', 'High'))
 
 p_var <-
   ggplot() +
   geom_line(aes(t, sigma2, color = sigma2), params, lwd = 1,
             show.legend = FALSE) +
   scale_x_continuous('Time', breaks = NULL) +
-  scale_y_continuous('\U1D70E\U00B2(t)', limits = lim_sigma2,
-                     breaks = lim_sigma2, labels = c('Low', 'High')) +
-  scale_color_viridis_c(direction = -1, option = 'D', end = 1,
-                        begin = 0.3, limits = lim_sigma2)
+  scale_y_continuous(bquote(paste('\U1D6D4\U00B2', bold('('),
+                                  bolditalic('t'), bold(')'))),
+                     limits = lim_sigma2, breaks = lim_sigma2,
+                     labels = c('Low', 'High')) +
+  scale_color_gradient(var_r, low = 'white', high = pal[2],
+                       limits = lim_sigma2, breaks = lim_sigma2,
+                       labels = c('Low', 'High'))
 
 p_2b <-
   plot_grid(
-    plot_expr('\U1D445 \U007E \U0393(\U1D707(t), \U1D70E\U000B2(t))'), r_pdf,
-    plot_expr('E(\U1D445) = \U1D707(t)'), p_mean,
-    plot_expr('Var(\U1D445) = \U1D70E\U000B2(t)'), p_var,
-    ncol = 2)
+    plot_expr(bquote(paste(bolditalic(R), ' ~ \U1D6AA',
+                           bold('('), '\U1D6CD', bold('('), bolditalic(t),
+                           bold('), '), '\U1D6D4\U00B2', bold('('), bolditalic(t),
+                           bold('))')))),
+    r_pdf,
+    plot_expr(bquote(paste(bold('E('), bolditalic(R), bold(') = '),
+                           '\U1D6CD', bold('('), bolditalic('t'), bold(')')))),
+    p_mean,
+    plot_expr(bquote(paste(bold('Var('), bolditalic(R),
+                           bold(') = '), '\U1D6D4\U00B2',
+                           bold('('), bolditalic('t'), bold(')')))),
+    p_var,
+    ncol = 2); p_2b
 
 p_2 <-
   plot_grid(

@@ -7,9 +7,13 @@ source('analysis/mean-variance-trends-panel-data.R') # tibble of mu, var
 days <- readRDS('simulations/days-hrs.rds')
 
 # main simulation figure of change in home range (5x5 plot) ----
-e_r <- 'Resource abundance, E(\U1D445|t) = \U1D707(\U1D461)'
-v_r <- 'Resource stochasticity, Var(\U1D445|t) = \U1D70E\U00B2(\U1D461)'
-hr_lab <- 'Space-use requirements, \U1D43B' # label for y axis
+e_r <- bquote(paste(bold('Resource abundance, E('), bolditalic('R'),
+                    bold(') = '), '\U1D6CD', bold('('), bolditalic('t'), bold(')')))
+v_r <- bquote(paste(bold('Resource stochasticity, Var('), bolditalic('R'),
+                    bold(') = '), '\U1D6D4\U00B2', bold('('),
+                    bolditalic('t'), bold(')')))
+hr_lab <- bquote(paste(bold('Space-use requirements, '), bolditalic('H')))
+
 p_sim <-
   ggplot(days) +
   facet_grid(variance ~ mean, drop = FALSE) + # facet by trends in mu and var
