@@ -391,7 +391,7 @@ It is also worth noting that carnivores may be more susceptible to changes in $\
 
 # Acknowledgements
 
-\noindent We would like to thank all those who provided feedback on all posters, presentation, and writings related to this project. In particular, we thank all those who provided feedback on the manuscript and appendices despite not being authors, namely: Aimee Chhen, Kim Hinz, Lauren Mills, and Sarah Wyse. This work was supported by the NSERC Discovery Grant RGPIN-2021-02758 to MJN and funds from the University of British Columbia Okanagan, the Canadian Foundation for Innovation, Mitacs, and BC Parks.
+\noindent We would like to thank Dr. Simon Wood for providing code to fit a Beta location-scale GAM despite not being involved directly with the project. Additionally, we thank all those who provided feedback on all posters, presentation, and writings related to this project. In particular, we thank all those who provided feedback on the manuscript and appendices despite not being authors, namely: Aimee Chhen, Kim Hinz, Lauren Mills, Sarah Wyse, and Dr. Simon Wood. This work was supported by the NSERC Discovery Grant RGPIN-2021-02758 to MJN and funds from the University of British Columbia Okanagan, the Canadian Foundation for Innovation, Mitacs, and BC Parks.
 
 # Code and data availability
 
