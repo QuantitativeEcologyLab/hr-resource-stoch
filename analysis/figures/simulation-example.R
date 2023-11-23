@@ -176,8 +176,9 @@ p <-
               theme(legend.key.height = unit(0.5, 'cm'),
                     text = element_text(face = 'bold', size = 18),
                     legend.key = element_rect(color = 'black'))),
-          nrow = 1, labels = c('a.', 'b.', 'c.', 'd.', 'e.', ''),
-          rel_widths = c(rep(1, 5), 0.4), label_size = 22)
+          nrow = 1, labels = c('A', 'B', 'C', 'D', 'E', ''),
+          rel_widths = c(rep(1, 5), 0.4),
+          label_size = 22)
 
 ggsave('figures/simulation-example.png', plot = p, width = 20,
        height = 3, scale = 1, bg = 'white', dpi = 600)

@@ -91,7 +91,7 @@ for (i in seq_along(l_grobs)) {
 }
 
 # Draw aligned plots
-p_left <- plot_grid(plotlist = l_grobs, ncol = 1, labels = c('a.', 'b.', 'c.'),
+p_left <- plot_grid(plotlist = l_grobs, ncol = 1, labels = 'AUTO',
                     label_size = 22, label_x = -0.01, label_y = 1.025)
 
 # regression plots ----
@@ -141,7 +141,11 @@ p_d <- ggplot() +
               fill = pal[1], alpha = 0.3) +
   geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
   labs(x = e_r, y = hr_lab) +
-  scale_alpha_continuous(range = c(0.3, 1))
+  scale_alpha_continuous('Weight', range = c(0.3, 1)) +
+  theme(legend.position = c(0.93, 0.86),
+        legend.box.background = element_rect(color = '#00000080'),
+        legend.background = element_blank()) +
+  guides(alpha = guide_legend(override.aes = list(color = 'black')))
 
 p_e <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
@@ -155,8 +159,7 @@ p_e <- ggplot() +
 p_f <- ggplot(tapir) +
   geom_point(aes(mu, sigma2, alpha = weight)) +
   labs(x = e_r, y = v_r) +
-  scale_alpha_continuous('Weight', range = c(0.3, 1)) +
-  theme(legend.position = 'right')
+  scale_alpha_continuous(range = c(0.3, 1))
 
 r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 
@@ -168,8 +171,9 @@ for (i in seq_along(r_grobs)) {
   r_grobs[[i]]$widths <- aligned_widths[[i]]
 }
 
-p_right <- plot_grid(plotlist = r_grobs, ncol = 1, labels = c('d.', 'e.', 'f.'),
-                     label_size = 22, label_x = -0.01, label_y = 1.025)
+p_right <-
+  plot_grid(plotlist = r_grobs, ncol = 1, labels = c('D', 'E', 'F'),
+            label_size = 22, label_x = -0.01, label_y = 1.025)
 
 # add space to avoid cutting off x axis for (e.)
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))

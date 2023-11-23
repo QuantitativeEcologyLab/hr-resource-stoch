@@ -1,5 +1,5 @@
-library('terra')   # for working with rasters
 library('ctmm')    # for generating movement models
+library('terra')   # for working with rasters
 library('dplyr')   # for data wrangling (%>%, mutate(), slice(), filter(), etc.)
 library('tidyr')   # for data wrangling (unnest, etc.)
 library('purrr')   # for functional programming (map_*(), etc.)
@@ -113,7 +113,8 @@ tel_short <- tel[tel$t <= max(consecutive_encounters$t) + 500, ]
 
 track <- tel_short %>%
   data.frame() %>%
-  mutate(cell_id = cellFromXY(HABITAT, SpatialPoints.telemetry(tel_short)),
+  mutate(cell_id = cellFromXY(HABITAT,
+                              SpatialPoints.telemetry(tel_short)),
          new_cell = c(1, diff(cell_id)) != 0)
 
 thin <- function(dt) {
@@ -186,7 +187,7 @@ panels <-
   plot_grid(plot_grid(get_legend(p_hist + theme(legend.position = 'top')),
                       get_legend(p_thinning + theme(legend.position = 'top'))),
             plot_grid(p_hist, p_prop, p_thinning, p_tracks,
-                      labels = c('a.', 'b.', 'c.', 'd.'), ncol = 2),
+                      labels = 'AUTO', ncol = 2),
             ncol = 1, rel_heights = c(1, 10))
 
 ggsave('figures/thinning-examples.png', plot = panels,

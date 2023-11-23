@@ -131,7 +131,7 @@ window_hr <- function(tel, window, dt, projection, full_ud = NULL,
       geom_line(aes(date, hr_est_50, color = posixct))
   }
   
-  plt <- cowplot::plot_grid(plt_a, plt_b, labels = c('a.', 'b.'), nrow = 1,
+  plt <- cowplot::plot_grid(plt_a, plt_b, labels = c('A', 'B'), nrow = 1,
                             align = 'hv')
   
   if (! is.null(fig_path)) {
