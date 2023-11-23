@@ -169,5 +169,5 @@ p_hr_days <-
                      expression(bold(atop(Estimated~'space-use',
                                           requirements~(log[2]~scale)))))
 
-ggsave('figures/hr-over-days.png', plot = p_hr_days,
+ggsave('figures/hr-over-days.png', plot = p_hr_days, scale = 2,
        width = 6, height = 3, dpi = 'print')
