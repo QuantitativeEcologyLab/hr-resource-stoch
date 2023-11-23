@@ -21,12 +21,6 @@ theme_set(theme_get() +
                   legend.background = element_rect(fill = 'transparent'),
                   legend.margin = margin(l = 10, r = 10)))
 
-
-# resource abundance palette
-LOW <- '#744700'
-MID <- '#d9bb94'
-HIGH <- 'darkgreen'
-
 # variable definition ----
 # functions for trends in mean and variance
 mean_fcn <- function(.t) {
@@ -133,13 +127,11 @@ p_1b <-
     p_var,
     ncol = 2); p_1b
 
-p_1 <- plot_grid(p_1a,
-                 plot_grid(p_1b,
-                           nrow = 1, labels = c('b.', '')),
-                 labels = c('a.', ''), ncol = 1); p_1
+p_1 <- plot_grid(p_1a, plot_grid(p_1b, nrow = 1),
+                 labels = c('A', 'B'), ncol = 2); p_1
 
 ggsave('figures/habitat-examples-constant-variance.png',
-       plot = p_1, width = 6, height = 8, bg ='white')
+       plot = p_1, width = 12, height = 4, bg ='white')
 
 # varying mean, varying variance ----
 # samples
@@ -209,12 +201,7 @@ p_2b <-
     p_var,
     ncol = 2); p_2b
 
-p_2 <-
-  plot_grid(
-    p_2a,
-    plot_grid(p_2b,
-              nrow = 1, labels = c('b.', NA)),
-    labels = c('a.', NA), ncol = 1)
+p_2 <- plot_grid(p_2a, plot_grid(p_2b, nrow = 1), labels = 'AUTO', nrow = 1)
 
 ggsave('figures/habitat-examples-changing-variance.png',
-       plot = p_2, width = 6, height = 8, bg ='white')
+       plot = p_2, width = 12, height = 4, bg ='white')
