@@ -1,6 +1,6 @@
 library('ggplot2') # for fancy plots
 library('cowplot') # for multi-panel fancy plots
-source('analysis/mean-variance-trends-panel-data.R') # tibble of mu, var
+source('analysis/simulations/mean-variance-trends-panel-data.R')
 
 # for common theme and color palette
 source('analysis/figures/barga-italy-2023/default-figure-styling-barga-2023.R')

@@ -1,7 +1,7 @@
 library('ggplot2') # for fancy plots
 library('cowplot') # for multi-panel fancy plots
 source('analysis/figures/default-figure-styling.R') # defaults for figures
-source('analysis/mean-variance-trends-panel-data.R') # tibble of mu, var
+source('analysis/simulations/mean-variance-trends-panel-data.R')
 
 # import simulation data
 days <- readRDS('simulations/days-hrs.rds')

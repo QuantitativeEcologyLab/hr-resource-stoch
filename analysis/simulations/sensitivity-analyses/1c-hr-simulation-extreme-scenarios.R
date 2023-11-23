@@ -4,7 +4,7 @@ library('tidyr')   # for data wrangling (e.g., nested tibbles)
 library('ggplot2') # for fancy plots
 source('analysis/figures/default-figure-styling.R')
 source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
-source('analysis/mean-variance-trends-panel-data.R') # means & variances
+source('analysis/simulations/mean-variance-trends-panel-data.R')
 source('analysis/simulations/movement-model.R') # for consistency across scripts
 source('functions/get_hr.R') # for extracting gaussian home range
 set.seed(1) # for consistent results

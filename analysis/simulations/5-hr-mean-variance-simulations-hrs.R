@@ -2,7 +2,7 @@ library('ctmm')  # for continuous-time movement modeling
 library('dplyr') # for data wrangling (e.g., %>%)
 library('purrr') # for functional programming (e.g., map(), map_dbl())
 library('tidyr') # for data wrangling (e.g., nested tibbles)
-source('analysis/mean-variance-trends-panel-data.R') # trends mu and s2
+source('analysis/simulations/mean-variance-trends-panel-data.R')
 source('functions/get_hr.R') # for gaussian HR estimate from spatial variance
 
 N <- nrow(d55)

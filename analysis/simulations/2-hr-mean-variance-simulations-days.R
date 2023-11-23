@@ -5,7 +5,7 @@ library('purrr') # for functional programming (e.g., map(), map_dbl())
 library('tidyr') # for data wrangling (e.g., nested tibbles)
 library('ggplot2') # for fancy plots
 source('analysis/figures/default-figure-styling.R')
-source('analysis/mean-variance-trends-panel-data.R') # trends in E(R) and V(R)
+source('analysis/simulations/mean-variance-trends-panel-data.R')
 source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
 
 tracks <- readRDS('simulations/labelled-tracks.rds') %>% # movement tracks

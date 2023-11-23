@@ -1,7 +1,7 @@
 # runtime: ~15 minutes
 
 # import trends in means and variances
-source('analysis/mean-variance-trends-panel-data.R')
+source('analysis/simulations/mean-variance-trends-panel-data.R')
 
 N <- nrow(d55) # to decrease computation time substantially (>~ 3 times)
 
