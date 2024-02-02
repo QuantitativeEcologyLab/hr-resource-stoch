@@ -55,6 +55,12 @@ knitr::opts_chunk$set(echo = FALSE, fig.align = 'center', out.width = '100%')
 
 \noindent In this appendix, we presents the foundational concepts and terms used in the main manuscript. We introduce each concept without assuming a statistical or quantitative background to maximize accessibility and minimize misunderstandings and misinterpretations.
 
+# Resources as a random variable
+
+\noindent In statistics, random variables indicate random (i.e., unknown) quantities and are indicated with capital letters (e.g., $R$). Known values, such as realizations of random variables (i.e., known observations or instances), are indicated with lower-case letters (e.g., $r$). Using this notation, we can write the statement "the probability of random variable $R$ taking the value $r$" as $P(R = r)$.
+
+In this section, we simulate $R$ using a Gamma distribution with time-dependent (but spatially homogeneous) mean $\mu(t)$ and variance $\sigma^2(t)$, which we write as $R \sim \Gamma\big(\mu(t), \sigma^2(t)\big)$. Although Gamma distributions are more often parameterized using parameters shape and scale ($k > 0$ and $\theta > 0$) or shape and rate ($\alpha > 0$ and $\beta = 1/\theta > 0$), we use $\e(R) = k \theta$ and $\var(R) = k \theta^2$ to facilitate visualizing the simulations. However, note that $\e(R)$ and $\var(R)$ are not independent because the variance depends strongly on the mean (and vice-versa). As the mean approaches zero from the positive side, the variance also does: $\e(R) \rightarrow 0^+ \iff k \theta \rightarrow 0^+ \iff k \theta^2 = 0^+ \iff \var(R) = 0^+$. This assumption also holds biologically, since resources tend to be less variable when they are less abundant.
+
 ## Probability distributions
 
 \noindent Random variables are defined by specifying the distribution the variable is assumed to follow (e.g., Gaussian, Gamma, Poisson, Bernoulli). Since the variable is random, it can take multiple possible values, each with different probabilities. The set or range of values which have non-zero probabilities in a distribution is referred to as the distribution's support.
