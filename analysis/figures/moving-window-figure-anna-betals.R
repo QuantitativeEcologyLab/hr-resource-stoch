@@ -104,30 +104,39 @@ m <- gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
 plot(m, pages = 1, scheme = 1)
 
 # using shape-constrained splines to avoid artifacts due to correlation
-m <- scam(hr_est_95 ~
-            s(mu, bs = 'mpd', k = 5) +
-            s(sigma2, bs = 'mpi', k = 5),
-          family = Gamma('log'),
-          weights = weight,
-          data = tapir)
-plot(m, pages = 1, scheme = 1)
+m_mu <- gam(hr_est_95 ~ s(mu, k = 3),
+            family = Gamma('log'),
+            weights = weight,
+            data = tapir,
+            method = 'REML')
+plot(m_mu, trans = exp, scheme = 1)
 
-m0 <- scam(hr_est_95 ~ s(mu, bs = 'mpd', k = 5),
-           family = Gamma('log'),
-           weights = weight,
-           data = tapir)
-AIC(m, m0) # model that accounts for both mu and sigma2 fits much better
+m_sigma2 <- gam(hr_est_95 ~ s(sigma2, k = 3),
+                family = Gamma('log'),
+                weights = weight,
+                data = tapir,
+                method = 'REML')
+plot(m_sigma2, trans = exp, scheme = 1)
 
-# removing data from d and splitting into two panels
+m <- gam(hr_est_95 ~ mu + s(sigma2, k = 4), # linear mu bc of autocorrelation
+         family = Gamma('log'),
+         weights = weight,
+         data = tapir,
+         method = 'REML')
+plot(m, scheme = 3, too.far = 1, pages = 1, all.terms = TRUE)
+AIC(m_mu, m_sigma2, m) # model that accounts for both fits best
+BIC(m_mu, m_sigma2, m) # model that accounts for both fits best
+
+# marginals of mu and sigma2, and a plot to show the lack of independence
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
                 sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
-  bind_cols(predict(m, newdata = ., terms = 's(mu)',
+  bind_cols(predict(m, newdata = ., exclude = 's(sigma2)',
                     type = 'link', se.fit = TRUE) %>%
               as.data.frame() %>%
               transmute(hr_mu_est = exp(fit),
                         hr_mu_lwr = exp(fit - 1.96 * se.fit),
                         hr_mu_upr = exp(fit + 1.96 * se.fit)),
-            predict(m, newdata = ., terms = 's(sigma2)',
+            predict(m, newdata = ., exclude = 's(mu)',
                     type = 'link', se.fit = TRUE) %>%
               as.data.frame() %>%
               transmute(hr_sigma2_est = exp(fit),
@@ -179,5 +188,5 @@ p_right <-
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
 p
 
-ggsave('figures/tapir-example-with-data.png', plot = p, height = 12,
-       width = 14, units = 'in', dpi = 600, bg = 'white')
+ggsave('figures/tapir-example.png', plot = p, height = 12, width = 14,
+       units = 'in', dpi = 600, bg = 'white')
