@@ -98,6 +98,8 @@ library('tidyr')   # for data wrangling (e.g., nested tibbles)
 library('mgcv')    # for empirical Bayes GAMs
 library('ggplot2') # for fancy plots
 library('cowplot') # for fancy multi-panel plots
+library('dagitty') # for directed acyclical graphs
+library('ggdag')   # for directed acyclical graphs
 theme_set(theme_bw()) # change default theme
 
 # source custom functions
@@ -147,6 +149,8 @@ library('tidyr')   # for data wrangling (e.g., nested tibbles)
 library('mgcv')    # for empirical Bayes GAMs
 library('ggplot2') # for fancy plots
 library('cowplot') # for fancy multi-panel plots
+library('dagitty') # for directed acyclical graphs
+library('ggdag')   # for directed acyclical graphs
 theme_set(theme_bw()) # change default theme
 
 # source custom functions
@@ -419,7 +423,19 @@ ggplot(sims, aes(mu, sigma2)) +
   theme_bw()
 ```
 
-The abundance of data for the average $\e(R)$ and $\var(R)$ did not create biases in the models, since removing such values had no appreciable effect on the model estimates (not shown). To estimate the effects of resource abundance and stochasticity on the simulated space-use requirements, we fit 3 location-scale GAMs (GAMLSs) with a location-scale gamma distribution (since home ranges are strictly positive) of increasing complexity. We hypothesized that the effect of $\e(R)$ would depend on $\var(R)$ (and the effect of $\var(R)$ would depend on $\e(R)$), since we expected organisms to respond to changes in $\mu(t)$ less in predictable environments than in stochastic ones. The three models are detailed below and compared using the Akaike Information Criterion and the Bayesian Information Criterion. Both information criteria demonstrate that the third model, which accounts for the interaction effects of $\e(R)$ and $\var(R)$, is the best model.
+The abundance of data for the average $\e(R)$ and $\var(R)$ did not create biases in the models, since removing such values had no appreciable effect on the model estimates (not shown). To estimate the effects of resource abundance and stochasticity on the simulated space-use requirements, we fit 3 location-scale GAMs (GAMLSs) with a location-scale gamma distribution (since home ranges are strictly positive) of increasing complexity. We hypothesized that the effect of $\e(R)$ would depend on $\var(R)$ (and the effect of $\var(R)$ would depend on $\e(R)$), since we expected organisms to respond to changes in $\mu(t)$ less in predictable environments than in stochastic ones. The three models are detailed below and compared using the Akaike Information Criterion and the Bayesian Information Criterion. Both information criteria demonstrate that the third model, which accounts for the interaction effects of $\e(R)$ and $\var(R)$, is the best model. Each of the three models are based on the directed acyclical graph (DAG) shown in figure B\@ref(fig:dag). Within a Bayesian framework, DAGs can be used to infer causality within statistical models [as the latter alone does not allow one to infer causality, see @mcelreath_statistical_2016]. The DAG we present in this appendix can be interpreted as follows: $\e(R)$ and $\var(R)$ are the controlled variables that determine both the amount of resources in a given encounter with resources, $R$, and, consequently, an organism's space-use requirements, $H$. Additionally, as indicated by the arrow going from $\e(R)$ to $\var(R)$, the effect of $\var(R)$ depends of the value of $\e(R)$ (and vice-versa, but arrows in DAGs have to be unidirectional).
+
+```{r dag, eval=TRUE, echo = FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$.", fig.height=4, fig.width=4}
+dag <- dagitty('dag{
+"E(R)" -> R <- "Var(R)"
+"E(R)" -> "Var(R)"
+R -> H
+}')
+coordinates(dag) <- list(x = c(R = 0, 'E(R)' = -1, 'Var(R)' = 1, H = 0),
+                         y = c(R = 1, 'E(R)' = 0, 'Var(R)' = 0, H = 2))
+ggdag(dag) +
+  theme_dag()
+```
 
 ```{r, eval=TRUE, fig.height=8, fig.width=8, out.width='65%'}
 # marginal effects of mu and sigma only (linear on the log link scale)
@@ -430,7 +446,8 @@ m_1 <- gam(
     # predictor for the scale (variance = scale * mean)
     ~ quantile + mu + sigma2),
   family = gammals(),
-  data = sims)
+  data = sims,
+  method = 'REML')
 
 # marginal effects of mu and sigma only (nonlinear on the log link scale)
 m_2 <- gam(
@@ -438,16 +455,17 @@ m_2 <- gam(
     hr ~ quantile + s(mu) + s(sigma2),
     ~ quantile + s(mu) + s(sigma2)),
   family = gammals(),
-  data = sims)
+  data = sims,
+  method = 'REML')
 
 # marginal and interaction effects (nonlinear on the log link scale)
 m_3 <- gam(
   list(
-    hr ~ quantile + s(mu) + s(sigma2) + ti(mu, sigma2, k = 5),
-    ~ quantile + s(mu) + s(sigma2) + ti(mu, sigma2, k = 5)),
+    hr ~ quantile + s(mu, k = 5) + s(sigma2, k = 5) + ti(mu, sigma2, k = 5),
+    ~ quantile + s(mu, k = 5) + s(sigma2, k = 5) + ti(mu, sigma2, k = 5)),
   family = gammals(),
-  data = sims)
-
+  data = sims,
+  method = 'REML')
 
 # check if CV = sigma/mu is better than sigma
 m_4 <- gam(
@@ -455,11 +473,16 @@ m_4 <- gam(
     hr ~ quantile + s(mu) + s(cv) + ti(mu, cv, k = 5),
     ~ quantile + s(mu) + s(cv) + ti(mu, cv, k = 5)),
   family = gammals(),
-  data = mutate(sims, cv = sqrt(sigma2) / mu))
+  data = mutate(sims, cv = sqrt(sigma2) / mu),
+  method = 'REML')
 
 # ti term of the scale parameter looks over-fit and too uncertain
 plot(m_4, all.terms = TRUE, pages = 1, scheme = 3, scale = 0)
+```
 
+\clearpage
+
+```{r, eval=TRUE}
 AIC(m_1, m_2, m_3, m_4) # not much of a difference between m_3 and m_4
 BIC(m_1, m_2, m_3, m_4) # not much of a difference between m_3 and m_4
 ```

@@ -76,7 +76,107 @@ knitr::opts_chunk$set(eval = FALSE,         # do not run R code
 
 \newpage
 
-This appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript (fig. 5). The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). Estimating the effects of resource abundance and unpredictability on the tapir's space-use requirements requires us to first estimate the changes in the tapir's space-use requirements (section \@ref(movement)) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and spatial use (section \@ref(final-fig)).
+We start by providing examples and considerations on how one may model $R$ and the effects of $\e(R)$ and $\var(R)$ on organisms' space-use requirements. Next, we apply the methods to the tapir's GPS tracking data and use NDVI as a proxy for $R$. Finally, we offer suggestions on how this approach can be used to inform conservation-related decisions, including assessing habitat quality and estimating organisms' space-use requirements under different scenarios.
+
+# Modeling $R$ {#modeling-r}
+
+\noindent Location-scale models [@stasinopoulos_generalized_2007; @rigby_generalized_2005] are a class of statistical models that allow us to estimate changes in a random variable's mean (i.e. its location) and variance (which depends on its scale) while allowing the mean-variance relationship to vary. `mgcv` [@wood_generalized_2017] is a commonly used package for `R` [@r_core_team_r_2023] that allows one to fit Generalized Linear Models [GLMs, see @zuur_mixed_2009] and Generalized Additive Models [GAMs, see @wood_generalized_2017], including hierarchical and location-scale GLMs and GAMs. Currently, the `mgcv` package allows one to fit location-scale models with various families of distributions, including Gaussian (i.e., normal), gamma, and Tweedie location-scale families.
+
+The Gaussian location-scale family of distributions is very flexible, since the mean and variance parameters are assumed to be independent, and the response can be either positive or negative. However, the distribution's flexibility can also result in unreliable estimates for non-Gaussian responses, such as strictly positive data (e.g. available biomass), count data (e.g., number of prey), proportions (e.g., percentage of forested habitat), and bounded ratios [e.g., NDVI, see @pettorelli_normalized_2011].
+
+The Gamma location-scale family is best for strictly positive responses, such as areas (including home ranges), elemental compositions [e.g., carbon to nitrogen ratio, see @rizzuto_forage_2021], total biomass<!-- (e.g., kg of carbon per m$^2$)-->, or energetic intake<!-- (e.g., kcal/day)-->. The Tweedie location-scale family is similar to the Gamma family, but it allows for zero data, so it is appropriate for data with a non-trivial amount of zeros, such as daily precipitation or prey density [but see zero-inflated distributions: @zuur_zero-truncated_2009]. In this paper, we estimate $R$ by modeling NDVI using `mgcv` and a beta location-scale family (not available in `mgcv` at the time of publication). If one is interested in families of distributions which are not available in `mgcv`, we suggest using the `brms` package [@burkner_brms_2017], which allows full control over all of a family's parameters via a fully Bayesian approach [as opposed to `mgcv`'s Empirical Bayes method -- see @burkner_advanced_2018].
+
+Modeling the mean and variance terms of $R$ should be done carefully. Since trends in both $\e(R)$ and $\var(R)$ can be spatiotemporally nonlinear and non-monotonic, we suggest using a GAM rather than a GLM. However, the complexity of the spatiotemporal terms should be chosen carefully, particularly for the mean's terms. An excessively wiggly $\hat \mu(t)$ will cause $\sigma^2(t)$ to be under-estimated, while an excessively smooth $\hat \mu(t)$ will cause $\sigma^2(t)$ to be over-estimated. Although there is no error-proof system, choosing the complexity of the terms based on the organism's ability to detect change and adapt is a reasonable starting point. Additionally, setting the basis dimension (`k`) of the scale terms to be half or less than that of the mean terms and using restricted marginal likelihood [@wood_fast_2011] should provide reasonably accurate results. We suggest starting with low values of `k` and adjusting `k` based on the trends in the residuals. Note that since $R$ is likely spatiotemporally autocorrelated, it may be easy to overfit the model. @simpson_modelling_2018 provides a useful introduction to GAMs for biological time series.
+
+# Estimating $R$ using NDVI
+
+\noindent Since there is no commonly-used distribution with a support over the interval $[-1, 1]$, we use beta distribution after scaling NDVI to the interval $[0, 1]$ by applying the linear transformation
+
+\begin{equation}
+\nu_{[0, 1]} = \frac{\nu + 1}{2},
+(\#eq:ndvi-to-01)
+\end{equation}
+
+\noindent where $\nu$ indicates the NDVI value in $[-1, 1]$ and $\nu_{[0, 1]}$ is the scaled NDVI value [see @denny_fallacy_2017 for more information on transforming response data]. <!--Note that only linear transformations (i.e. only addition, subtraction, multiplication, and division) should be applied to random variables to avoid biases while estimating the distribution and its parameters [@denny_fallacy_2017; @jensen_sur_1906; @ohara_not_2010].--> In this case, we can define $R$ as following a beta distribution with mean and variance that depend on time using the notation $B (\mu(t), \sigma^2(t))$. We use this parameterization here for ease of explanation, but note that beta distributions are generally parameterized using the shape parameters $\alpha$ and $\beta$ such that the mean is
+
+\begin{equation}
+\e(R) = \frac{\alpha}{\alpha + \beta}
+(\#eq:beta-mean)
+\end{equation}
+
+\noindent while the variance is
+
+\begin{equation}
+\var(R) = \frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta+1)}.
+(\#eq:beta-var)
+\end{equation}
+
+\noindent We can easily convert $\mu(t)$ and $\sigma^2(t)$ back to mean and variance in NDVI using the inverse of equation \@ref(eq:ndvi-to-01):
+
+\singlespace <!-- to avoid excessive spacing -->
+\begin{equation}
+\nu = 2 \nu_{[0, 1]} - 1.
+(\#eq:01-to-ndvi)
+\end{equation}
+
+\noindent Consequently, we have
+
+\begin{equation}
+\e(\nu|t) = 2 \mu(t) - 1.
+(\#eq:mu-to-e-ndvi)
+\end{equation}
+
+\noindent and
+
+\begin{equation}
+\var(\nu|t) = 2^2 \sigma^2(t) + 0 = 4 \sigma^2(t).
+(\#eq:sigma2-to-v-ndvi)
+\end{equation}
+
+\doublespace <!-- back to double spaced -->
+
+Particular attention should be be given when deciding what distribution to use and how to estimate means and variances in $R$. Improper models and simulations of resource abundance can fail to produce robust, sensible, and accurate estimates of $R$.
+
+<!--
+## Movement as a stochastic process
+
+### Drivers of movement
+
+\noindent @nathan_movement_2008 suggested we can generalize movement from location $\vec l_t$ to location $\vec l_{t+1}$ using the model
+
+\begin{equation}
+\vec l_{t+1} = F(\Omega, \Phi, \vec w_t, \vec l_t, \vec \xi_t),
+(\#eq:nathan-movement)
+\end{equation}
+
+\noindent such that an organism's position as time $t+1$ depends on its motion capacity ($\Omega$), navigation capacity ($\Phi$), internal state ($\vec w_t$) and current location ($\vec l_t$), as well as how each of the parameters may change in response to the current environmental factors ($\vec \xi_t$). This model is conceptually useful, as it can form the basis for many models, experiments, and hypotheses, but fitting such a model would be very difficult in practice (if not impossible). The parameters $\Omega, \Phi, \vec w_t$ and $\vec \xi_t$ cannot be quantified directly, and although it may be possible to monitor proxies for the parameters (e.g., limb length, body size, site fidelity, cortisol levels, reproductive stage), doing so with sufficient frequency and accuracy would not be simple. Thus, we can instead focus on organisms' movement and space-use requirements as a response to overall resource abundance and unpredictability while accepting other drivers of movement as causes of stochastic behaviors.
+
+### Visualizing movement as a stochastic process
+
+\noindent To understand how movement can be viewed as a stochastic process, imagine an organism that leaves its den or nest to collect resources and returns to it once it has collected enough resources for the day. If we do not know why the organism is choosing to move in one direction or another, nor do we know what the environment is like, we cannot predict where the organism may move from one time point to another. However, we can use the organism's positional data to estimate the amount of time it spends collecting resources before returning "home" (or the time required for the position to "decay" back to the average position). This period is often referred to as the range crossing time or the positional autocorrelation parameter, $\tau_p$. Similarly, we can define $\tau_v$ to be the amount of time the organism moves with the same direction and speed, or the time required for an organism's velocity to "decay" back to the average velocity, $\e(v)$, estimated by $\widehat{\e(v)} = \bar v$. $\tau_v$ is referred to the organism's directional persistence or the velocity autocorrelation parameter.
+
+By modeling movement via stochastic models which account for autocorrelation in position [e.g., Ornstein–Uhlenbeck or OU models, see @uhlenbeck_theory_1930] and autocorrelation in velocity [Ornstein–Uhlenbeck Foraging or OUF models, see @fleming_fine-scale_2014], one is able to account for and leverage autocorrelation in tracking data. While autocorrelation is problematic for models that assume locations to be independent, modeling movement as a stochastic, autocorrelated process avoids systematic biases in the estimation of home ranges [@noonan_comprehensive_2019] as well as travelling distances and speeds [@noonan_scale-insensitive_2019].
+
+Accurate speed estimates require the sampling interval, $\Delta t$, to be sufficiently small [$\Delta t < \tau_v$, see @noonan_scale-insensitive_2019], since the data must contain multiple consecutive samples where the organism is moving with a similar speed and direction. However, since the time required for an organism to cross its home range is orders of magnitude larger than the time it moves with a consistent behavior (i.e., $\tau_p > \tau_v$), it is still possible to produce good estimates of range crossing time even if there is no information on the organism's speed. Similarly, if the data is too sparse to estimate $\tau_p$, one can still obtain good estimates of the organism's space-use requirements and home-range size, provided that the total sampling duration, $T$, is sufficiently long. Model selection procedures with criteria such as the Akaike Information Criterion [@akaike_new_1974] can help choose the most appropriate model for the available data [@silva_autocorrelationinformed_2022].
+
+Predicting movement using stochastic models may seem less straightforward and more complex than using deterministic models, but ignoring the exact causes and decisions that determine the movement allows us to focus on how the organism moved and less on why it moved. Organisms may temporarily change their behavior in response to many causes, including predators [mule deer: @ciuti_effects_2012; shovelnose sturgeon: @hintz_shovelnose_2013; rodents: @randler_predator_2020; macaques: @liu_predator_2022; but also see beaked whales: @siegal_beaked_2022], competitors [Capuchin monkeys: @torrez-herrera_monkeys_2020], weather [framework: @gibert_crossing_2016; giant anteaters: @giroux_role_2022], and mates or mating periods [feral cats: @zhang_home_2022; yellow mongoose: @cronk_home_2021]. Accounting for these causes of variation as a sum of stochastic processes allows us to account for the unpredictability in organism movement while focusing on the organisms' movement behaviors rather than the causes.
+
+### Quantifying space-use requirements
+
+\noindent The concept of a home range has a long history in ecological research as an indicator of the space an organism requires to satisfy its essential requirements during a period of time [@burt_territoriality_1943], but home range analysis is not appropriate for organisms which are not range-resident, such as migrating organisms [e.g., @jonzen_rapid_2006; @geremia_migrating_2019; @abrahms_memory_2019] and nomadic organisms [e.g., @morato_space_2016; @nandintsetseg_variability_2019]. Although here we quantify organism's space-use requirements using 95% home-range estimates, we expect that similar conclusions can be drawn about the positional variance, $\vpos$, of organisms that are not range-resident. In the case of organisms that are range resident for short periods of time, we can model their movement and short-term space-use requirements within distinct and discrete periods or using a sliding window approach (see the discussion section). Note, however, that although range-resident organisms will generally have smaller positional variance ($\vpos$) than migratory and nomadic organisms, $\vpos$ is not sufficient to distinguish between range residency, migration, and nomadism, since $\vpos$ determines the scale and size of an organism's movement but not its behavior. Instead, the organism's $\tau_p$, $\tau_v$, and $\bar v$ can help discriminate between different behaviors. Organisms with a $\tau_p$ shorter than a year are likely range-resident, while organisms with a $\tau_p$ on the order of a year are likely to be migratory (as long as their life expectancy is greater than a year). In contrast, when an organism's $\tau_p$ is on the order of its expected lifespan, it is most often nomadic, since it does not have an average position it returns to regularly.
+-->
+
+<!-- ### Modeling space-use requirements -->
+
+<!-- \noindent Recent improvements in animal tracking technologies (e.g., increasing sampling duration and frequency of GPS units) have allowed scientists to demonstrate that changes in animals movement and behavior may be more common than previously thought [leatherback turtles: @hays_flexible_2006; arctic foxes: @lai_movement_2017; elephants: @foley_severe_2008; bison and mule deer: @geremia_migrating_2019; bald eagles: @wheat_migrate_2017]. However, most commonly used movement models assume organisms' behaviors to remain consistent during the entirety of the tracking period [but see behavior-switching state-space models, e.g., @michelot_movehmm_2016]. -->
+
+<!-- To quantify an organism's changes in behavior in response to $\e(R)$ and $\var(R)$, we suggest using a sliding window approach. The width of the window, $w$, should be a fixed value greater than two or three times the organism's expected range crossing time [@fleming_overcoming_2019]. If the organism's spatial use is relatively consistent over time, one may determine $w$ using the value of $\tau_p$ estimated using the whole dataset. Alternatively, if the organism's behavior changes repeatedly (e.g., uses a small area for a short period of time before moving to a new one), then one may want to test multiple values of $w$ to find a value sufficiently large for an effective sample size of at least 2 or 3 range crossings (i.e., $w \gtrapprox 2.5 \,\tau_p$). -->
+
+<!-- Modeling movement as a continuous-time stochastic process is particularly useful in this approach, since it accounts for the uncertainty and limited amount of information contained in short periods of (autocorrelated) tracking data by differentiating between the sample size (i.e., the number of locations) and effective sample size [i.e., the number of range crossings, see @noonan_scale-insensitive_2019; @noonan_comprehensive_2019]. In this paper, we model tracking data using continuous-time movement models via the `ctmm` package [@fleming_ctmm_2021] for `R` [@r_core_team_r_2023]. -->
+
+# Reproducing the analyses
+
+This section of the appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript (fig. 5). The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). Estimating the effects of resource abundance and unpredictability on the tapir's space-use requirements requires us to first estimate the changes in the tapir's space-use requirements (section \@ref(movement)) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and spatial use (section \@ref(final-fig)).
 
 To minimize the computational costs of creating this appendix, we load the necessary objects through hidden `R` chunks rather than re-running all the code. Still, those interested in replicating the analyses can do so by using the code in the pdf document or the related `R` Markdown (`Rmd`) document (as well as the `R` scripts). All the packages and source scripts required to run the analyses in this document are listed in the code chunk below. For spatial data, we use the `MODIStsp` package [version 2.0.9, @busetto_modistsp_2016] to download the NDVI rasters, the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the NDVI rasters, and the `sf` package [version 1.0-8, @pebesma_simple_2018]. We use the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling and the `lubridate` package [version 1.8.0, @grolemund_dates_2011] for converting calendar dates to decimal dates. Finally, we used the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] and the `mgcv` package [version 1.8-41, @wood_generalized_2017] for modeling and the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
 
@@ -94,7 +194,7 @@ print('H:/GitHub/hr-resource-stoch/writing') # for anonymity in peer review
 
 ```{r, eval=TRUE}
 # attach all necessary packages
-library('terra')    # to import and save rasters
+library('terra')     # to import and save rasters
 library('dplyr')     # for data wrangling
 library('purrr')     # for functional programming
 library('tidyr')     # for data wrangling
@@ -106,6 +206,8 @@ library('scam')      # for shape-constrained splines
 library('lubridate') # for smoother date wrangling
 library('sf')        # for spatial features
 library('MODIStsp')  # for downloading NDVI rasters
+library('dagitty')   # for directed acyclical graphs
+library('ggdag')     # for directed acyclical graphs
 theme_set(theme_bw()) # change default theme
 
 # attach the beta location-scale family written by Simon Wood
@@ -255,7 +357,7 @@ We fit the beta GAMLS via the `mgcv` package (note `family = betals()` in the co
 
 ```{r, echo=FALSE, eval=TRUE, fig.height=2}
 ggplot(anna_ndvi, aes(ndvi)) +
-  geom_histogram(na.rm = TRUE) +
+  geom_histogram(na.rm = TRUE, color = 'black', fill = 'grey') +
   labs(x = 'NDVI', y = 'Count') +
   xlim(c(-1, 1)) +
   theme_bw()
@@ -406,11 +508,23 @@ for(i in seq_along(l_grobs)) l_grobs[[i]]$widths <- aligned_widths[[i]]
 plot_grid(plotlist = l_grobs, nrow = 1, labels = 'AUTO')
 ```
 
+<!-- \clearpage -->
+
+To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space use. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors.<!-- However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see fig. C\@ref(fig:hr-gam)).-->
+
+We can now fit a GAM similar to the one used for the simulated data. However, since this dataset is much smaller and autocorrelated, we should be more parsimonious with the number of terms and their complexity. A model with a Gamma family of distributions and relatively smooth (i.e., not wiggly) marginal terms of $\mu(t)$ and $\sigma^2(t)$ is a reasonable start. This dataset is too small (and autocorrelated) to estimate changes in scale parameters with reasonable accuracy and precision. As in Appendix B, we provide the causal Directed Acyclical Graph (DAG) in figure C\@ref(fig:dag). See the section on strengths and limitations of the empirical approach in the main text for a discussion of the DAG.
+
+```{r dag, eval=TRUE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$, where NDVI was used as a proxy for $R$. $Z$ and $S$ indicate unaccounted confounding factors that result from habitat-level variables (e.g., competition, predation, etc.) and satellite-level variables (e.g., noise, cloud cover).", fig.height=4, fig.width=4}
+dag <- dagitty('dag{
+Z -> R -> "NDVI" <- S <- R
+R -> H <- Z
+}')
+coordinates(dag) <- list(x = c(R = 0, 'NDVI' = 0, Z = 1, S = 1, H = 0),
+                         y = c(R = 0, 'NDVI' = 1, Z = 0, S = 1, H = -1))
+plot(dag)
+```
+
 \clearpage
-
-To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space use. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors. However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see fig. C\@ref(fig:hr-gam)).
-
-We can now fit a GAM similar to the one used for the simulated data. However, since this dataset is much smaller and autocorrelated, we should be more parsimonious with the number of terms and their complexity. A model with a Gamma family of distributions and relatively smooth (i.e., not wiggly) marginal terms of $\mu(t)$ and $\sigma^2(t)$ is a reasonable start. This dataset is too small (and autocorrelated) to estimate changes in scale parameters with reasonable accuracy and precision.
 
 ```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals."}
 gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
