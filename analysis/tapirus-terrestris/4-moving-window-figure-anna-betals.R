@@ -100,18 +100,19 @@ m <- gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
          weights = weight, # weights based on CI size
          data = tapir,
          method = 'REML')
-# trends should be monotonic...
+#' non monotonicity is likely an artifact of autocorrelation in `mu` and
+#' `sigma2` and poor data availability rather than an actual effect
 plot(m, pages = 1, scheme = 1)
 
 # using shape-constrained splines to avoid artifacts due to correlation
-m_mu <- gam(hr_est_95 ~ s(mu, k = 3),
+m_mu <- gam(hr_est_95 ~ s(mu, k = 4),
             family = Gamma('log'),
             weights = weight,
             data = tapir,
             method = 'REML')
 plot(m_mu, trans = exp, scheme = 1)
 
-m_sigma2 <- gam(hr_est_95 ~ s(sigma2, k = 3),
+m_sigma2 <- gam(hr_est_95 ~ s(sigma2, k = 4),
                 family = Gamma('log'),
                 weights = weight,
                 data = tapir,
@@ -123,9 +124,9 @@ m <- gam(hr_est_95 ~ mu + s(sigma2, k = 4), # linear mu bc of autocorrelation
          weights = weight,
          data = tapir,
          method = 'REML')
-plot(m, scheme = 3, too.far = 1, pages = 1, all.terms = TRUE)
-AIC(m_mu, m_sigma2, m) # model that accounts for both fits best
-BIC(m_mu, m_sigma2, m) # model that accounts for both fits best
+plot(m, scheme = 1, pages = 1, all.terms = TRUE)
+arrange(AIC(m_mu, m_sigma2, m), AIC) # m is best
+arrange(BIC(m_mu, m_sigma2, m), BIC) # m is best
 
 # marginals of mu and sigma2, and a plot to show the lack of independence
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
@@ -169,6 +170,18 @@ p_f <- ggplot(tapir) +
   geom_point(aes(mu, sigma2, alpha = weight)) +
   labs(x = e_r, y = v_r) +
   scale_alpha_continuous(range = c(0.3, 1))
+
+expand_grid(mu = gratia:::seq_min_max(tapir$mu, n = 250),
+            sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
+  mutate(hr_full_est = predict(m, newdata = ., type = 'response')) %>%
+  ggplot() +
+  geom_raster(aes(mu, sigma2, fill = hr_full_est)) +
+  geom_contour(aes(mu, sigma2, z = hr_full_est), color = 'black') +
+  scale_x_continuous(e_r, expand = c(0, 0)) +
+  scale_y_continuous(v_r, expand = c(0, 0)) +
+  scale_fill_gradient(hr_lab, low = 'grey90', high = pal[3],
+                      limits = c(0, 13), breaks = c(0, 5, 10)) +
+  theme(legend.position = 'top')
 
 r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 
