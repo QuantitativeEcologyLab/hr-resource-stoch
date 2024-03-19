@@ -31,21 +31,27 @@ m_1 <- gam(
     # predictor for the scale (variance = scale * mean)
     ~ quantile + mu + sigma2),
   family = gammals(),
-  data = sims)
+  data = sims,
+  method = 'REML')
+plot(m_1, pages = 1, all.terms = TRUE) # acceptable but likely too rigid
 
 m_2 <- gam(
   list(
     hr ~ quantile + s(mu) + s(sigma2),
     ~ quantile + s(mu) + s(sigma2)),
   family = gammals(),
-  data = sims)
+  data = sims,
+  method = 'REML')
+plot(m_2, pages = 1, all.terms = TRUE) # scale terms are inappropriate
 
 m_3 <- gam(
   list(
     hr ~ quantile + s(mu, k = 5) + s(sigma2, k = 5) + ti(mu, sigma2, k = 5),
     ~ quantile + s(mu, k = 5) + s(sigma2, k = 5) + ti(mu, sigma2, k = 5)),
   family = gammals(),
-  data = sims)
+  data = sims,
+  method = 'REML')
+plot(m_3, pages = 1, all.terms = TRUE, scheme = 3) # much better
 
 # check if CV = sigma/mu is better than sigma
 m_4 <- gam(
@@ -53,9 +59,9 @@ m_4 <- gam(
     hr ~ quantile + s(mu) + s(cv) + ti(mu, cv, k = 5),
     ~ quantile + s(mu) + s(cv) + ti(mu, cv, k = 5)),
   family = gammals(),
-  data = mutate(sims, cv = sqrt(sigma2) / mu))
-
-# ti term of the scale parameter looks over-fit and too uncertain
+  data = mutate(sims, cv = sqrt(sigma2) / mu),
+  method = 'REML')
+# ti term of the scale parameter looks over-fit
 plot(m_4, all.terms = TRUE, pages = 1, scheme = 3, scale = 0)
 
 AIC(m_1, m_2, m_3, m_4) # smooth model with interactions is best
@@ -72,7 +78,7 @@ plot(m, all.terms = TRUE, pages = 1, scheme = 3, scale = 0)
 # filter to 95% HR for simplicity
 sims <- filter(sims, quantile == 'hr_95')
 
-# predictions
+# predictions for calculating (squared) residuals
 sims$hr_est_95 <- predict(m, newdata = sims, type = 'response',
                           se.fit = FALSE)[, 1]
 
@@ -118,8 +124,7 @@ p_mu_var <-
     bquote(paste(bold('Resource abundance, E('),
                  bolditalic('R'), bold(')'))), breaks = NULL) +
   scale_y_continuous(bquote(paste(
-    bold('Variance in Space-use requirements, Var('),
-    bolditalic('H'), bold(')'))), breaks = NULL)
+    bold('Variance in space-use requirements'))), breaks = NULL)
 
 # effects of sigma2 ----
 newd_sigma2 <-
@@ -144,12 +149,13 @@ preds_sigma2 <-
 p_sigma2_mean <-
   ggplot() +
   geom_point(aes(sigma2, hr), sims, alpha = 0.1, color = pal[3]) +
-  geom_ribbon(aes(sigma2, ymin = hr_mean_025, ymax = hr_mean_975),
+  geom_ribbon(aes(sigma2, ymin = hr_mean_025, ymax = hr_mean_975, group = mu),
               fill = pal[2], preds_sigma2, alpha = 0.3) +
-  geom_line(aes(sigma2, hr_mean), color = pal[2], linewidth = 1,
+  geom_line(aes(sigma2, hr_mean, lty = factor(mu)),
+            color = pal[2], linewidth = 1,
             preds_sigma2) +
   scale_x_continuous(
-    bquote(paste(bold('Resource abundance, E('),
+    bquote(paste(bold('Resource stochasticity, Var('),
                  bolditalic('R'), bold(')'))), breaks = NULL) +
   scale_y_continuous(bquote(paste(bold('Space-use requirements, '),
                                   bolditalic('H'))), breaks = NULL)
@@ -166,19 +172,18 @@ p_sigma2_var <-
     bquote(paste(bold('Resource stochasticity, Var('),
                  bolditalic('R'), bold(')'))), breaks = NULL) +
   scale_y_continuous(bquote(paste(
-    bold('Variance in space-use requirements, Var('),
-    bolditalic('H'), bold(')'))), breaks = NULL)
+    bold('Variance in space-use requirements'))), breaks = NULL)
 
 # full plots with interactions ----
 newd_full <-
-  expand_grid(mu = seq(min(sims$mu), max(sims$mu), length.out = 200),
+  expand_grid(mu = seq(min(sims$mu), max(sims$mu), length.out = 100),
               sigma2 = seq(min(sims$sigma2), max(sims$sigma2),
-                           length.out = 200),
+                           length.out = 100),
               quantile = 'hr_95')
 
 preds_full <-
-  left_join(gammals_mean(m, newd_full, nsims = 30, unconditional = TRUE),
-            gammals_var(m, newd_full, nsims = 30, unconditional = TRUE),
+  left_join(gammals_mean(m, newd_full, nsims = 1e4, unconditional = TRUE),
+            gammals_var(m, newd_full, nsims = 1e4, unconditional = TRUE),
             by = c('row', 'mu', 'sigma2', 'quantile', 'simulation')) %>%
   group_by(row, mu, sigma2, quantile) %>%
   summarise(hr_mean = mean(mean),
@@ -189,6 +194,15 @@ preds_full <-
 fill_mean_lab <- bquote(atop(bold('Mean space-use'),
                              paste(bold('requirements, E('),
                                    bolditalic('H'), bold(')  '))))
+
+preds_full %>%
+  filter(sigma2 %in% sort(unique(sigma2))[c(10, 30, 50, 70, 90)]) %>%
+  ggplot() +
+  geom_line(aes(mu, hr_mean, group = sigma2), color = pal[1]) +
+  scale_x_continuous( bquote(paste(bold('Resource abundance, E('),
+                                   bolditalic('R'), bold(')'))),
+                      breaks = NULL) +
+  scale_y_continuous(fill_mean_lab, breaks = NULL)
 
 p_full_mean <-
   ggplot(preds_full) +
@@ -202,16 +216,24 @@ p_full_mean <-
     bquote(paste(bold('Resource stochasticity, Var('),
                  bolditalic('R'), bold(')'))), breaks = NULL,
     expand = c(0, 0)) +
-  scale_fill_distiller(fill_mean_lab, palette = 3, type = 'div',
+  scale_fill_gradient(fill_mean_lab, low = 'grey90', high = pal[3], 
                        breaks = range(preds_full$hr_mean),
-                       labels = c('low', 'high'),
-                       direction = 1) +
+                       labels = c('low', 'high')) +
   theme(legend.position = 'top')
 
 # variance
 fill_var_lab <- bquote(atop(bold('Variance in space-use'),
                             paste(bold('requirements, Var('),
                                   bolditalic('H'), bold(')  '))))
+
+preds_full %>%
+  filter(mu %in% sort(unique(mu))[c(10, 30, 50, 70, 90)]) %>%
+  ggplot() +
+  geom_line(aes(sigma2, hr_mean, group = mu), color = pal[2]) +
+  scale_x_continuous(bquote(paste(bold('Resource stochasticity, Var('),
+                                  bolditalic('R'), bold(')'))),
+                     breaks = NULL) +
+  scale_y_continuous(fill_mean_lab, breaks = NULL)
 
 p_full_var <-
   ggplot(preds_full) +
@@ -225,10 +247,9 @@ p_full_var <-
     bquote(paste(bold('Resource stochasticity, Var('),
                  bolditalic('R'), bold(')'))), breaks = NULL,
     expand = c(0, 0)) +
-  scale_fill_distiller(fill_var_lab, palette = 4, type = 'div',
-                       breaks = range(preds_full$hr_var),
-                       labels = c('low', 'high'),
-                       direction = -1) +
+  scale_fill_gradient(fill_var_lab, low = 'grey90', high = pal[3], 
+                      breaks = range(preds_full$hr_var),
+                      labels = c('low', 'high')) +
   theme(legend.position = 'top')
 
 # final figures ----
