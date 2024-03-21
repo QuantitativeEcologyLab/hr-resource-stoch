@@ -15,7 +15,7 @@ e_r <- bquote(paste(bold('Resource abundance, '), '\U1D6CD', bold('('),
                     bolditalic('t'), bold(')')))
 v_r <- bquote(paste(bold('Resource stochasticity, '), '\U1D6D4\U00B2',
                     bold('('), bolditalic('t'), bold(')')))
-hr_lab <- bquote(paste(bold('7-day home range size (km'), '\U00B2',
+hr_lab <- bquote(paste(bold('7-day space-use requirement (km'), '\U00B2',
                        bold(')')))
 
 # import location-scale model for predictions of mean and variance in NDVI
@@ -46,13 +46,13 @@ tel <- data.frame(tapir$data[[1]]) %>%
 if(! file.exists('data/anna-hr-ndvi-data.rds')) {
   tapir <-
     readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
-    mutate(est = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
-           mu = map_dbl(est, \(.d) mean(.d$mu)),
-           sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
-    select(date, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
-    mutate(weight = 1 / (hr_upr_95 - hr_lwr_95), # weights based on CI width
-           weight = weight / mean(weight)) # standardize weights
-  sum(tapir$weight) == nrow(tapir) # ensure weights are right
+    mutate(sub_tel = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
+           mu = map_dbl(sub_tel, \(.d) mean(.d$mu)),
+           sigma2 = map_dbl(sub_tel, \(.d) mean(.d$sigma2)),
+           weights = map_dbl(model, \(.m) summary(.m)$DOF['area']),
+           weights = sqrt(weights)) %>% # var is proportional to sqrt(n)
+    select(date, mu, sigma2, hr_est_95, weights, hr_lwr_95, hr_upr_95)
+  
   saveRDS(tapir, 'data/anna-hr-ndvi-data.rds')
 } else {
   tapir <- readRDS('data/anna-hr-ndvi-data.rds')
@@ -63,7 +63,7 @@ date_labs <- range(tel$timestamp) %>% as.Date()
 
 # E(R) and V(R) are highly correlated
 ggplot(tapir) +
-  geom_point(aes(mu, sigma2, alpha = weight)) +
+  geom_point(aes(mu, sigma2, alpha = weights)) +
   labs(x = '\U1D707(t)', y = '\U1D70E\U00B2(t)') +
   theme(text = element_text(face = 'plain'))
 
@@ -95,50 +95,26 @@ p_left <- plot_grid(plotlist = l_grobs, ncol = 1, labels = 'AUTO',
                     label_size = 22, label_x = -0.01, label_y = 1.025)
 
 # regression plots ----
-m <- gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
+m <- gam(hr_est_95 ~ s(mu, k = 3) + s(sigma2, k = 3),
          family = Gamma('log'),
-         weights = weight, # weights based on CI size
+         weights = weights, # sqrt(range crossings)
          data = tapir,
          method = 'REML')
 #' non monotonicity is likely an artifact of autocorrelation in `mu` and
 #' `sigma2` and poor data availability rather than an actual effect
-plot(m, pages = 1, scheme = 1)
-
-# using shape-constrained splines to avoid artifacts due to correlation
-m_mu <- gam(hr_est_95 ~ s(mu, k = 4),
-            family = Gamma('log'),
-            weights = weight,
-            data = tapir,
-            method = 'REML')
-plot(m_mu, trans = exp, scheme = 1)
-
-m_sigma2 <- gam(hr_est_95 ~ s(sigma2, k = 4),
-                family = Gamma('log'),
-                weights = weight,
-                data = tapir,
-                method = 'REML')
-plot(m_sigma2, trans = exp, scheme = 1)
-
-m <- gam(hr_est_95 ~ mu + s(sigma2, k = 4), # linear mu bc of autocorrelation
-         family = Gamma('log'),
-         weights = weight,
-         data = tapir,
-         method = 'REML')
-plot(m, scheme = 1, pages = 1, all.terms = TRUE)
-arrange(AIC(m_mu, m_sigma2, m), AIC) # m is best
-arrange(BIC(m_mu, m_sigma2, m), BIC) # m is best
+plot(m, pages = 1, scheme = 1, residuals = TRUE, all.terms = TRUE)
 
 # marginals of mu and sigma2, and a plot to show the lack of independence
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
                 sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
   bind_cols(predict(m, newdata = ., exclude = 's(sigma2)',
-                    type = 'link', se.fit = TRUE) %>%
+                    type = 'link', se.fit = TRUE, unconditional = TRUE) %>%
               as.data.frame() %>%
               transmute(hr_mu_est = exp(fit),
                         hr_mu_lwr = exp(fit - 1.96 * se.fit),
                         hr_mu_upr = exp(fit + 1.96 * se.fit)),
             predict(m, newdata = ., exclude = 's(mu)',
-                    type = 'link', se.fit = TRUE) %>%
+                    type = 'link', se.fit = TRUE, unconditional = TRUE) %>%
               as.data.frame() %>%
               transmute(hr_sigma2_est = exp(fit),
                         hr_sigma2_lwr = exp(fit - 1.96 * se.fit),
@@ -146,42 +122,55 @@ preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
 
 p_d <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(mu, hr_est_95, alpha = weight), tapir, color = pal[3]) +
+  geom_point(aes(mu, hr_est_95, alpha = weights), tapir, color = pal[3]) +
   geom_ribbon(aes(mu, ymin = hr_mu_lwr, ymax = hr_mu_upr), preds,
               fill = pal[1], alpha = 0.3) +
   geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
   labs(x = e_r, y = hr_lab) +
-  scale_alpha_continuous('Weight', range = c(0.3, 1)) +
-  theme(legend.position = c(0.93, 0.86),
-        legend.box.background = element_rect(color = '#00000080'),
+  scale_alpha_continuous(expression(bold(sqrt(Range~crossings))),
+                         range = c(0.3, 1), breaks = c(4, 6, 8)) +
+  theme(legend.position = c(1, 1),
+        legend.justification = c('right', 'top'),
+        legend.box.background = element_blank(),
         legend.background = element_blank()) +
-  guides(alpha = guide_legend(override.aes = list(color = 'black')))
+  guides(alpha = guide_legend(override.aes = list(color = 'black'),
+                              nrow = 1))
 
 p_e <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(sigma2, hr_est_95, alpha = weight), tapir, color = pal[3]) +
+  geom_point(aes(sigma2, hr_est_95, alpha = weights), tapir, color = pal[3]) +
   geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr), preds,
               fill = pal[2], alpha = 0.3) +
   geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2], linewidth = 2) +
   labs(x = v_r, y = hr_lab) +
   scale_alpha_continuous(range = c(0.3, 1))
 
-p_f <- ggplot(tapir) +
-  geom_point(aes(mu, sigma2, alpha = weight)) +
-  labs(x = e_r, y = v_r) +
-  scale_alpha_continuous(range = c(0.3, 1))
-
-expand_grid(mu = gratia:::seq_min_max(tapir$mu, n = 250),
-            sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
+p_f <-
+  expand_grid(mu = seq(from = 0.64, to = 0.86, length.out = 250),
+              sigma2 = seq(from = 0.001, to = 0.0055, length.out = 250)) %>%
+  filter(! exclude.too.far(mu, sigma2, tapir$mu, tapir$sigma2, 0.15)) %>%
   mutate(hr_full_est = predict(m, newdata = ., type = 'response')) %>%
   ggplot() +
   geom_raster(aes(mu, sigma2, fill = hr_full_est)) +
   geom_contour(aes(mu, sigma2, z = hr_full_est), color = 'black') +
+  geom_point(aes(mu, sigma2, alpha = weights), tapir, show.legend = FALSE) +
   scale_x_continuous(e_r, expand = c(0, 0)) +
   scale_y_continuous(v_r, expand = c(0, 0)) +
-  scale_fill_gradient(hr_lab, low = 'grey90', high = pal[3],
-                      limits = c(0, 13), breaks = c(0, 5, 10)) +
-  theme(legend.position = 'top')
+  scale_alpha_continuous(expression(bold(sqrt(Range~crossings))),
+                         range = c(0.3, 1), breaks = c(4, 6, 8)) +
+  scale_fill_gradient(bquote(atop(bold('7-day space-use'),
+                                  paste(bold('requirement (km'), '\U00B2',
+                                        bold(')')))),
+                      low = 'grey90', high = pal[3], limits = c(0, NA)) +
+  theme(legend.position = c(1, 1),
+        legend.justification = c('right', 'top'),
+        legend.box.background = element_blank(),
+        legend.background = element_blank(),
+        legend.key.width = unit(0.35, 'in')) +
+  guides(fill = guide_colorbar(
+    title.position = 'top',
+    theme = theme(legend.title = element_text(hjust = 1)),
+    direction = 'horizontal')); p_f
 
 r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 
@@ -201,5 +190,5 @@ p_right <-
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
 p
 
-ggsave('figures/tapir-example.png', plot = p, height = 12, width = 14,
+ggsave('figures/tapir-example.png', plot = p, height = 14, width = 14,
        units = 'in', dpi = 600, bg = 'white')
