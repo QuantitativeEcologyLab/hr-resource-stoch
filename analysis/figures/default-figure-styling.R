@@ -3,7 +3,8 @@ library('ggplot2') # for fancy figures
 # set default ggplot theme
 theme_set(theme_bw() +
             theme(legend.position = 'none',
-                  text = element_text(size = 15, face = 'bold')))
+                  text = element_text(size = 15, face = 'bold'),
+                  panel.grid = element_blank()))
 
 # custom color-blind palette
 pal <- c('#ff8c00', '#4477AA', '#009900', '#66CCEE',
