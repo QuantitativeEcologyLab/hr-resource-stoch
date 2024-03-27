@@ -6,9 +6,11 @@ library('mgcv')      # for empirical Bayesian modeling
 library('scam')      # for shape-constrained splines
 library('lubridate') # for smoother date wrangling
 library('ggplot2')   # for fancy figures
+library('gratia')    # for ggplot-based GAM graphics
 library('cowplot')   # for fancy multi-panel plots
 
 source('analysis/figures/default-figure-styling.R') # for theme & palettes
+theme_set(theme_get() + theme(legend.title = element_text(size = 13)))
 
 # axis lables
 e_r <- bquote(paste(bold('Resource abundance, '), '\U1D6CD', bold('('),
@@ -34,10 +36,12 @@ ndvi_preds <- function(.data) {
 }
 
 # import tapir data (from https://doi.org/10.1186/s40462-022-00313-w)
-tapir <- readRDS('../tapirs/models/tapirs-final.rds') %>%
-  filter(name.short == 'ANNA')
-
-tel <- data.frame(tapir$data[[1]]) %>%
+tel <-
+  readRDS('../tapirs/models/tapirs-final.rds') %>%
+  filter(name.short == 'ANNA') %>%
+  pull(data) %>%
+  first() %>%
+  data.frame() %>%
   rename(long = longitude, lat = latitude) %>%
   mutate(dec_date = decimal_date(timestamp)) %>%
   bind_cols(., ndvi_preds(.)) %>% 
@@ -46,7 +50,8 @@ tel <- data.frame(tapir$data[[1]]) %>%
 if(! file.exists('data/anna-hr-ndvi-data.rds')) {
   tapir <-
     readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
-    mutate(sub_tel = map(dataset, \(.d) filter(tel, timestamp %in% .d$timestamp)),
+    mutate(sub_tel = map(dataset,
+                         \(.d) filter(tel, timestamp %in% .d$timestamp)),
            mu = map_dbl(sub_tel, \(.d) mean(.d$mu)),
            sigma2 = map_dbl(sub_tel, \(.d) mean(.d$sigma2)),
            weights = map_dbl(model, \(.m) summary(.m)$DOF['area']),
@@ -95,18 +100,34 @@ p_left <- plot_grid(plotlist = l_grobs, ncol = 1, labels = 'AUTO',
                     label_size = 22, label_x = -0.01, label_y = 1.025)
 
 # regression plots ----
-m <- gam(hr_est_95 ~ s(mu, k = 3) + s(sigma2, k = 3),
+# adding weights biases towards smaller HRs and gives bad q-q plots
+m <- gam(hr_est_95 ~
+           s(mu, k = 4) +
+           s(sigma2, k = 4),
          family = Gamma('log'),
-         weights = weights, # sqrt(range crossings)
          data = tapir,
          method = 'REML')
-#' non monotonicity is likely an artifact of autocorrelation in `mu` and
-#' `sigma2` and poor data availability rather than an actual effect
-plot(m, pages = 1, scheme = 1, residuals = TRUE, all.terms = TRUE)
+appraise(m, method = 'simulate', n_simulate = 1e3)
+draw(m, rug = FALSE, scales = 'fixed')
+
+# diagnostics aren't bad given the autocorrelation
+ggplot(mapping = aes(tapir$mu, resid(m))) +
+  geom_point() +
+  geom_smooth(method = 'gam', formula = y ~ s(x, k = 5))
+
+ggplot(mapping = aes(tapir$sigma2, resid(m))) +
+  geom_point() +
+  geom_smooth(method = 'gam', formula = y ~ s(x, k = 5))
+
+ggplot(mapping = aes(tapir$mu, tapir$sigma2)) +
+  geom_point(size = 2.5) +
+  geom_point(aes(color = resid(m))) +
+  scale_color_distiller('Resiuals', type = 'div', palette = 5) +
+  theme(legend.position = 'top')
 
 # marginals of mu and sigma2, and a plot to show the lack of independence
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
-                sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
+                sigma2 = seq(5e-4, 25e-4, length.out = 250)) %>%
   bind_cols(predict(m, newdata = ., exclude = 's(sigma2)',
                     type = 'link', se.fit = TRUE, unconditional = TRUE) %>%
               as.data.frame() %>%
@@ -122,55 +143,47 @@ preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
 
 p_d <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(mu, hr_est_95, alpha = weights), tapir, color = pal[3]) +
+  geom_point(aes(mu, hr_est_95), tapir, alpha = 0.3, color = pal[3]) +
   geom_ribbon(aes(mu, ymin = hr_mu_lwr, ymax = hr_mu_upr), preds,
               fill = pal[1], alpha = 0.3) +
   geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
   labs(x = e_r, y = hr_lab) +
   scale_alpha_continuous(expression(bold(sqrt(Range~crossings))),
-                         range = c(0.3, 1), breaks = c(4, 6, 8)) +
-  theme(legend.position = c(1, 1),
-        legend.justification = c('right', 'top'),
-        legend.box.background = element_blank(),
-        legend.background = element_blank()) +
-  guides(alpha = guide_legend(override.aes = list(color = 'black'),
-                              nrow = 1))
+                         range = c(0.3, 1), breaks = c(4, 6, 8))
 
 p_e <- ggplot() +
-  coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(sigma2, hr_est_95, alpha = weights), tapir, color = pal[3]) +
+  geom_point(aes(sigma2, hr_est_95), tapir, alpha = 0.3, color = pal[3]) +
   geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr), preds,
               fill = pal[2], alpha = 0.3) +
   geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2], linewidth = 2) +
-  labs(x = v_r, y = hr_lab) +
-  scale_alpha_continuous(range = c(0.3, 1))
+  labs(x = v_r, y = hr_lab)
 
 p_f <-
-  expand_grid(mu = seq(from = 0.64, to = 0.86, length.out = 250),
-              sigma2 = seq(from = 0.001, to = 0.0055, length.out = 250)) %>%
-  filter(! exclude.too.far(mu, sigma2, tapir$mu, tapir$sigma2, 0.15)) %>%
+  expand_grid(mu = seq(from = floor(min(tapir$mu) * 100) / 100,
+                       to = ceiling(max(tapir$mu) * 100) / 100,
+                       length.out = 250),
+              sigma2 = seq(from = 0, to = 0.0035, length.out = 250)) %>%
+  # filter(! exclude.too.far(mu, sigma2, tapir$mu, tapir$sigma2, 0.2)) %>%
   mutate(hr_full_est = predict(m, newdata = ., type = 'response')) %>%
   ggplot() +
   geom_raster(aes(mu, sigma2, fill = hr_full_est)) +
   geom_contour(aes(mu, sigma2, z = hr_full_est), color = 'black') +
-  geom_point(aes(mu, sigma2, alpha = weights), tapir, show.legend = FALSE) +
+  geom_point(aes(mu, sigma2), tapir, alpha = 0.3, show.legend = FALSE) +
   scale_x_continuous(e_r, expand = c(0, 0)) +
   scale_y_continuous(v_r, expand = c(0, 0)) +
-  scale_alpha_continuous(expression(bold(sqrt(Range~crossings))),
-                         range = c(0.3, 1), breaks = c(4, 6, 8)) +
   scale_fill_gradient(bquote(atop(bold('7-day space-use'),
                                   paste(bold('requirement (km'), '\U00B2',
                                         bold(')')))),
                       low = 'grey90', high = pal[3], limits = c(0, NA)) +
   theme(legend.position = c(1, 1),
         legend.justification = c('right', 'top'),
-        legend.box.background = element_blank(),
+        legend.box.background = element_rect(),
         legend.background = element_blank(),
         legend.key.width = unit(0.35, 'in')) +
   guides(fill = guide_colorbar(
     title.position = 'top',
     theme = theme(legend.title = element_text(hjust = 1)),
-    direction = 'horizontal')); p_f
+    direction = 'horizontal'))
 
 r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 
