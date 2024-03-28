@@ -70,8 +70,6 @@ knitr::opts_chunk$set(eval = FALSE,         # do not run R code
 
 <!-- have table of contents on pages of its own -->
 
-\newpage
-
 \tableofcontents
 
 \newpage
@@ -80,7 +78,7 @@ We start by providing examples and considerations on how one may model $R$ and t
 
 # Modeling $R$ {#modeling-r}
 
-\noindent Location-scale models [@stasinopoulos_generalized_2007; @rigby_generalized_2005] are a class of statistical models that allow us to estimate changes in a random variable's mean (i.e. its location) and variance (which depends on its scale) while allowing the mean-variance relationship to vary. `mgcv` [@wood_generalized_2017] is a commonly used package for `R` [@r_core_team_r_2023] that allows one to fit Generalized Linear Models [GLMs, see @zuur_mixed_2009] and Generalized Additive Models [GAMs, see @wood_generalized_2017], including hierarchical and location-scale GLMs and GAMs. Currently, the `mgcv` package allows one to fit location-scale models with various families of distributions, including Gaussian (i.e., normal), gamma, and Tweedie location-scale families.
+\noindent Location-scale models [theory: @rigby_generalized_2005; @stasinopoulos_generalized_2007; examples: @bjorndahl_abrupt_2022; @marien_timing_2022; @gushulak_impacts_2024] are a class of statistical models that allow us to estimate changes in a random variable's mean (i.e. its location) and variance (which depends on its scale) while allowing the mean-variance relationship to vary. `mgcv` [@wood_generalized_2017] is a commonly used package for `R` [@r_core_team_r_2023] that allows one to fit Generalized Linear Models [GLMs, see @zuur_mixed_2009] and Generalized Additive Models [GAMs, see @wood_generalized_2017], including hierarchical and location-scale GLMs and GAMs. Currently, the `mgcv` package allows one to fit location-scale models with various families of distributions, including Gaussian (i.e., normal), gamma, and Tweedie location-scale families.
 
 The Gaussian location-scale family of distributions is very flexible, since the mean and variance parameters are assumed to be independent, and the response can be either positive or negative. However, the distribution's flexibility can also result in unreliable estimates for non-Gaussian responses, such as strictly positive data (e.g. available biomass), count data (e.g., number of prey), proportions (e.g., percentage of forested habitat), and bounded ratios [e.g., NDVI, see @pettorelli_normalized_2011].
 
@@ -90,14 +88,9 @@ Modeling the mean and variance terms of $R$ should be done carefully. Since tren
 
 # Estimating $R$ using NDVI
 
-\noindent Since there is no commonly-used distribution with a support over the interval $[-1, 1]$, we use beta distribution after scaling NDVI to the interval $[0, 1]$ by applying the linear transformation
+\noindent Although there is no commonly-used distribution with a support over the full range of NDVI (i.e., $[-1, 1]$), we use beta distribution (support (0, 1)) since the all NDVI values were sufficiently greater than 0 (range: 0.3534 to 0.9475). Thus, here we can define $R$ as following a beta distribution with mean and variance that depend on time using the notation $B (\mu(t), \sigma^2(t))$. We use this parameterization here for ease of explanation, but note that beta distributions are generally parameterized using the shape parameters $\alpha$ and $\beta$ such that the mean is
 
-\begin{equation}
-\nu_{[0, 1]} = \frac{\nu + 1}{2},
-(\#eq:ndvi-to-01)
-\end{equation}
-
-\noindent where $\nu$ indicates the NDVI value in $[-1, 1]$ and $\nu_{[0, 1]}$ is the scaled NDVI value [see @denny_fallacy_2017 for more information on transforming response data]. <!--Note that only linear transformations (i.e. only addition, subtraction, multiplication, and division) should be applied to random variables to avoid biases while estimating the distribution and its parameters [@denny_fallacy_2017; @jensen_sur_1906; @ohara_not_2010].--> In this case, we can define $R$ as following a beta distribution with mean and variance that depend on time using the notation $B (\mu(t), \sigma^2(t))$. We use this parameterization here for ease of explanation, but note that beta distributions are generally parameterized using the shape parameters $\alpha$ and $\beta$ such that the mean is
+\singlespace
 
 \begin{equation}
 \e(R) = \frac{\alpha}{\alpha + \beta}
@@ -111,31 +104,9 @@ Modeling the mean and variance terms of $R$ should be done carefully. Since tren
 (\#eq:beta-var)
 \end{equation}
 
-\noindent We can easily convert $\mu(t)$ and $\sigma^2(t)$ back to mean and variance in NDVI using the inverse of equation \@ref(eq:ndvi-to-01):
-
-\singlespace <!-- to avoid excessive spacing -->
-\begin{equation}
-\nu = 2 \nu_{[0, 1]} - 1.
-(\#eq:01-to-ndvi)
-\end{equation}
-
-\noindent Consequently, we have
-
-\begin{equation}
-\e(\nu|t) = 2 \mu(t) - 1.
-(\#eq:mu-to-e-ndvi)
-\end{equation}
-
-\noindent and
-
-\begin{equation}
-\var(\nu|t) = 2^2 \sigma^2(t) + 0 = 4 \sigma^2(t).
-(\#eq:sigma2-to-v-ndvi)
-\end{equation}
-
 \doublespace <!-- back to double spaced -->
 
-Particular attention should be be given when deciding what distribution to use and how to estimate means and variances in $R$. Improper models and simulations of resource abundance can fail to produce robust, sensible, and accurate estimates of $R$.
+Particular attention should be be given when deciding what distribution to use and how to estimate means and variances in $R$. Improper models and simulations of resource abundance can fail to produce robust, sensible, and accurate estimates of $R$. The following section addresses these concerns.
 
 <!--
 ## Movement as a stochastic process
@@ -176,23 +147,13 @@ Predicting movement using stochastic models may seem less straightforward and mo
 
 # Reproducing the analyses
 
-This section of the appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript (fig. 5). The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). Estimating the effects of resource abundance and unpredictability on the tapir's space-use requirements requires us to first estimate the changes in the tapir's space-use requirements (section \@ref(movement)) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and spatial use (section \@ref(final-fig)).
+This section of the appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript (fig. 5). The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). Estimating the effects of resource abundance and unpredictability on the tapir's space-use requirements requires us to first estimate the changes in the tapir's space-use requirements (section \@ref(movement)) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and space use (section \@ref(final-fig)).
 
 To minimize the computational costs of creating this appendix, we load the necessary objects through hidden `R` chunks rather than re-running all the code. Still, those interested in replicating the analyses can do so by using the code in the pdf document or the related `R` Markdown (`Rmd`) document (as well as the `R` scripts). All the packages and source scripts required to run the analyses in this document are listed in the code chunk below. For spatial data, we use the `MODIStsp` package [version 2.0.9, @busetto_modistsp_2016] to download the NDVI rasters, the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the NDVI rasters, and the `sf` package [version 1.0-8, @pebesma_simple_2018]. We use the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling and the `lubridate` package [version 1.8.0, @grolemund_dates_2011] for converting calendar dates to decimal dates. Finally, we used the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] and the `mgcv` package [version 1.8-41, @wood_generalized_2017] for modeling and the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
 
-\newpage
-
 We start by attaching all necessary packages and custom functions we need:
 
-```{r, eval=FALSE}
-getwd() # change working directory or file paths if needed
-```
-
-```{r, eval=TRUE, echo=FALSE}
-print('H:/GitHub/hr-resource-stoch/writing') # for anonymity in peer review
-```
-
-```{r, eval=TRUE}
+```{r, eval=TRUE, warning=FALSE}
 # attach all necessary packages
 library('terra')     # to import and save rasters
 library('dplyr')     # for data wrangling
@@ -202,18 +163,14 @@ library('ggplot2')   # for fancy plots
 library('cowplot')   # for fancy multi-panel plots
 library('ctmm')      # for movement modeling
 library('mgcv')      # for empirical Bayesian GAMs
-library('scam')      # for shape-constrained splines
 library('lubridate') # for smoother date wrangling
 library('sf')        # for spatial features
 library('MODIStsp')  # for downloading NDVI rasters
 library('dagitty')   # for directed acyclical graphs
 library('ggdag')     # for directed acyclical graphs
+library('gratia')    # for ggplot-based GAM figures
 theme_set(theme_bw()) # change default theme
-
-# attach the beta location-scale family written by Simon Wood
-source('../functions/betals.r')
-
-# source all necessary scripts
+source('../functions/betals.r') # betals family written by Simon Wood
 source('../analysis/figures/default-figure-styling.R') # for color palettes
 source('../earthdata-login-info.R') # personal login info for EarthData
 source('../functions/window_hr.R') # function to calculate HRs
@@ -300,7 +257,11 @@ MODIStsp(gui = FALSE, # do not use the browser GUI, only run in R
          scale_val = TRUE, # convert from integers to floats within [-1, 1]
          out_format = 'GTiff', # output format
          verbose = TRUE) # print processing messages
+```
 
+\newpage
+
+```{r}
 # save NDVI data as an rds file of a tibble
 list.files(path = 'data/ndvi-rasters/tapir-anna/VI_16Days_250m_v61/NDVI/',
            pattern = '.tif', full.names = TRUE) %>%
@@ -332,7 +293,7 @@ anna_ndvi <-
 anna_ndvi
 ```
 
-We removed the raster for 2017-12-19 because the values were unusually low for the region. We hypothesize the change in NDVI was drastic, temporary, and widespread because of a sudden flood (which is common for the Cerrado):
+We removed the raster for 2017-12-19 because the values were unusually low for the region. We hypothesize the change in NDVI was drastic, temporary, and widespread because of a sudden flood. While sudden floods are common for the Cerrado, we believe NDVI was not representative of the available forage availability.
 
 <!-- using echo = TRUE and eval = TRUE because this needs to be both visible and evaluated -->
 
@@ -370,68 +331,25 @@ m_ndvi <-
   gam(list(
     # mean predictor
     ndvi ~ # not scaling because range is in (0, 1)
-      s(long, lat, bs = 'ds', k = 20) + # mean over space
-      s(dec_date, bs = 'tp', k = 20),   # high k to account for adaptions
+      s(long, lat, bs = 'ds', k = 50) + # mean over space
+      s(dec_date, bs = 'tp', k = 10), # mean over time
     # scale predictor (sigma2 = mu * (1 - mu) * scale)
     ~
-      s(long, lat, bs = 'ds', k = 10) + # scale over space
+      s(long, lat, bs = 'ds', k = 30) + # scale over space
       s(dec_date, bs = 'tp', k = 10)),  # scale over time
     family = betals(),
     data = anna_ndvi,
     method = 'REML') # REstricted Maximum Likelihood 
 ```
 
-Note that when fitting location-scale GAMs, one should pay particular attention to the number of knots used for each smooth term. While using a penalized maximum likelihood method such as REML (`method = 'REML'`) helps avoid over-fitting the model, finding the right balance between each of the `k` values is crucial. Excessively smooth terms for the mean can inflate the scale term (fig. C\@ref(fig:undersmooth)), while excessively wiggly terms for the mean can cause the scale to be under-estimated (fig. C\@ref(fig:oversmooth)). Ultimately, each of the `k` values should be decided in such a way as to mimic the animal's responsiveness, adaptability, motility, and memory (or ability to predict cycles or events). If one is unsure where to start from, keeping the `k` for the scale terms below half the `k` for the mean terms is a good starting point.
+Note that when fitting location-scale GAMs, one should pay particular attention to the number of knots used for each smooth term. While using a penalized maximum likelihood method such as REML (`method = 'REML'`) helps avoid over-fitting the model, it does not prevent over-fitting, so finding the right balance between each of the `k` values is crucial. Excessively smooth terms for the mean can inflate the scale term, while excessively wiggly terms for the mean can cause the scale to be under-estimated. Ultimately, each of the `k` values should be decided in such a way as to mimic the animal's responsiveness, adaptability, motility, and memory (or ability to predict cycles or events). If one is unsure where to start from, keeping the `k` for the scale terms below half the `k` for the mean terms is a good starting point.
 
 \clearpage
 
-```{r gamls-terms, echo=FALSE, eval=TRUE, fig.height=8, fig.cap="Estimated spatiotemporal trends in mean and scale parameters using the model detailed in the code chunk above. Estimates are provided on the logit link scale. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Dashed lines inticate the 95\\% credible intervals for the temporal terms.", fig.pos='!h'}
+```{r gamls-terms, echo=FALSE, eval=TRUE, fig.height=8, fig.cap="Estimated spatiotemporal trends in mean and scale parameters using the model detailed in the code chunk above. Estimates are provided on the logit link scale. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Shaded ribbons inticate the 95\\% credible intervals for the temporal terms.", fig.height=6, fig.pos='!h'}
 m_ndvi <- readRDS('../models/tapirs/CE_31_ANNA-mgcv-ndvi-betals.rds')
-plot(m_ndvi, pages = 1, scheme = 3, n = 250, scale = 0)
-```
-
-```{r}
-gam(list(
-  # mean predictor (default ks are too small)
-  ndvi ~ s(long, lat, bs = 'ds', k = 10) + s(dec_date, bs = 'tp', k = 10),
-  # scale predictor (excessively high k)
-  ~ s(long, lat, bs = 'ds', k = 20) + s(dec_date, bs = 'tp', k = 20)),
-  family = betals(), data = anna_ndvi, method = 'REML') %>%
-  plot(pages = 1, scheme = 3, n = 250, scale = 0)
-```
-
-```{r undersmooth, fig.cap="Estimated mean and scale parameters with excessively small basis size $\\tt{k}$ for the mean's smooth terms and excessively large for the scale's smooth terms. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Dashed lines inticate the 95\\% credible intervals for the temporal terms.", eval=TRUE, fig.height=6, fig.pos='!h', echo=FALSE}
-gam(list(
-  # mean predictor (default ks are too small)
-  ndvi ~ s(long, lat, bs = 'ds', k = 10) + s(dec_date, bs = 'tp', k = 10),
-  # scale predictor (excessively high k)
-  ~ s(long, lat, bs = 'ds', k = 20) + s(dec_date, bs = 'tp', k = 20)),
-  family = betals(), data = anna_ndvi, method = 'REML') %>%
-  plot(pages = 1, scheme = 3, n = 250, scale = 0)
-```
-
-\clearpage
-
-```{r}
-gam(list(
-  # mean predictor (ks too large)
-  ndvi ~ s(long, lat, bs = 'ds', k = 50) +
-    s(dec_date, bs = 'tp', k = n_distinct(anna_ndvi$dec_date)),
-  # scale predictor (ks too small)
-  ~ s(long, lat, bs = 'ds', k = 5) + s(dec_date, bs = 'tp', k = 5)),
-  family = betals(), data = anna_ndvi, method = 'REML') %>%
-  plot(pages = 1, scheme = 3, n = 250, scale = 0)
-```
-
-```{r oversmooth, fig.cap="Estimated mean and scale parameters in NDVI with excessively large basis size $\\tt{k}$ for the smooth term of time ($\\tt{dec\\_date}$) for the mean in NDVI and excessively low for the variance temporal smooth term. The estimated degrees of freedom for each term can be seen in parentheses in the title of the spatial terms and the y-axis labels of the temporal terms. Dashed lines inticate the 95\\% credible intervals for the temporal terms.", eval=TRUE, fig.height=6, fig.pos='!h', echo=FALSE}
-gam(list(
-  # mean predictor (ks too large)
-  ndvi ~ s(long, lat, bs = 'ds', k = 50) +
-    s(dec_date, bs = 'tp', k = n_distinct(anna_ndvi$dec_date)),
-  # scale predictor (ks too small)
-  ~ s(long, lat, bs = 'ds', k = 5) + s(dec_date, bs = 'tp', k = 5)),
-  family = betals(), data = anna_ndvi, method = 'REML') %>%
-  plot(pages = 1, scheme = 3, n = 250, scale = 0)
+draw(m_ndvi, rug = FALSE) &
+  theme_bw() + theme(panel.grid = element_blank())
 ```
 
 \newpage
@@ -454,47 +372,44 @@ anna_tel <-
   as_tibble()
 ```
 
-Next, we can estimate the mean and variance in NDVI for each 7-day period by taking the average for the GPS locations within each period. We also add a column of weights that are based on the home range confidence estimates' 95% intervals.
+Next, we can estimate the mean and variance in NDVI for each 7-day period by taking the average for the GPS locations within each period.
 
 ```{r}
 tapir <-
-  readRDS('../models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
-  mutate(est = map(dataset,
-                   \(.d) filter(anna_tel, timestamp %in% .d$timestamp)),
-         mu = map_dbl(est, \(.d) mean(.d$mu)),
-         sigma2 = map_dbl(est, \(.d) mean(.d$sigma2))) %>%
-  select(date, mu, sigma2, hr_lwr_95, hr_est_95, hr_upr_95) %>%
-  mutate(weight = 1 / (hr_upr_95 - hr_lwr_95), # small CI => large weight
-         weight = weight / mean(weight)) # standardize weights
-sum(tapir$weight) == nrow(tapir) # ensure weights are right
-```
-
-```{r, eval=TRUE, echo=FALSE}
-tapir <- readRDS('../data/anna-hr-ndvi-data.rds')
-sum(tapir$weight) == nrow(tapir) # ensure weights are right
+  readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
+  mutate(sub_tel = map(dataset,
+                       \(.d) filter(tel, timestamp %in% .d$timestamp)),
+         mu = map_dbl(sub_tel, \(.d) mean(.d$mu)),
+         sigma2 = map_dbl(sub_tel, \(.d) mean(.d$sigma2))) %>%
+  select(date, mu, sigma2, hr_est_95)
 ```
 
 We now have all we need to create the left side of figure 5 from the main manuscript.
 
+```{r, eval=TRUE, echo=FALSE}
+tapir <- readRDS('../data/anna-hr-ndvi-data.rds')
+```
+
+\clearpage
+
 ```{r, eval=TRUE, fig.height=4, fig.width=12, out.width='\\linewidth'}
-theme_set(theme_bw()) # need to set the theme again for some reason
-# axis labels (spaces in hr_lab to avoid overlap with the plot label)
-# unicode characters removed because they knitting errors
-e_r <- bquote(paste(bold('Resource abundance, E('), bolditalic(R),
-                    bold(')')))
-v_r <- bquote(paste(bold('Resource stochasticity, Var('), bolditalic(R),
-                    bold(')')))
-hr_lab <- bquote(bold(paste('7-day home range size (', km^2, ')   ')))
+# need to set the theme again for some reason
+theme_set(theme_bw() + theme(panel.grid = element_blank()))
+
+# axis labels (unicode characters removed because they knitting errors)
+e_r <- bquote(paste(bold('Resource abundance')))
+v_r <- bquote(paste(bold('Resource stochasticity')))
+hr_lab <- bquote(bold(paste('7-day space-use requirement (', km^2, ')')))
 
 l_grobs <- lapply(
   list(ggplot(tapir, aes(date, mu)) + # mean
-         geom_line(color = pal[1], size = 2) +
+         geom_line(color = pal[1], linewidth = 2) +
          labs(x = NULL, y = e_r),
        ggplot(tapir, aes(date, sigma2)) + # variance
-         geom_line(color = pal[2], size = 2) +
+         geom_line(color = pal[2], linewidth = 2) +
          labs(x = NULL, y = v_r),
        ggplot(tapir, aes(date, hr_est_95)) + # 95% home range
-         geom_line(color = pal[3], size = 2) +
+         geom_line(color = pal[3], linewidth = 2) +
          labs(x = NULL, y = hr_lab)),
   as_grob) # convert to grid graphical objects (grobs)
 
@@ -508,109 +423,101 @@ for(i in seq_along(l_grobs)) l_grobs[[i]]$widths <- aligned_widths[[i]]
 plot_grid(plotlist = l_grobs, nrow = 1, labels = 'AUTO')
 ```
 
-<!-- \clearpage -->
+\clearpage
 
 To create the right side of the figure, we will need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space use. To do this, we fit a GAM to the the tapir's 7-day home range estimates using the mean and variance in NDVI as predictors.<!-- However, since the two predictors are highly correlated, using a regular GAM causes the effects to be non-monotonic (after strongly restricting `k` to avoid over-fitting; see fig. C\@ref(fig:hr-gam)).-->
 
 We can now fit a GAM similar to the one used for the simulated data. However, since this dataset is much smaller and autocorrelated, we should be more parsimonious with the number of terms and their complexity. A model with a Gamma family of distributions and relatively smooth (i.e., not wiggly) marginal terms of $\mu(t)$ and $\sigma^2(t)$ is a reasonable start. This dataset is too small (and autocorrelated) to estimate changes in scale parameters with reasonable accuracy and precision. As in Appendix B, we provide the causal Directed Acyclical Graph (DAG) in figure C\@ref(fig:dag). See the section on strengths and limitations of the empirical approach in the main text for a discussion of the DAG.
 
-```{r dag, eval=TRUE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$, where NDVI was used as a proxy for $R$. $Z$ and $S$ indicate unaccounted confounding factors that result from habitat-level variables (e.g., competition, predation, etc.) and satellite-level variables (e.g., noise, cloud cover).", fig.height=4, fig.width=4}
+```{r dag, eval=TRUE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$, where NDVI was used as a proxy for $R$. $Z$ and $S$ indicate unaccounted confounding factors that result from habitat-level variables (e.g., competition, predation, etc.) and satellite-level variables (e.g., noise, cloud cover).", fig.height=4, fig.width=6, out.width='50%'}
 dag <- dagitty('dag{
 Z -> R -> "NDVI" <- S <- R
 R -> H <- Z
 }')
 coordinates(dag) <- list(x = c(R = 0, 'NDVI' = 0, Z = 1, S = 1, H = 0),
                          y = c(R = 0, 'NDVI' = 1, Z = 0, S = 1, H = -1))
-plot(dag)
+ggdag(dag) + theme_dag()
 ```
 
 \clearpage
 
-```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale) using a GAM with no shape constraints. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals."}
-gam(hr_est_95 ~ s(mu, bs = 'ts', k = 5) + s(sigma2, bs = 'ts', k = 5),
-    family = Gamma('log'),
-    weights = weight, # weights based on CI size
-    data = tapir,
-    method = 'REML') %>%
-  plot(pages = 1, scheme = 1) # trends should be monotonic
+```{r hr-gam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale). The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals.", fig.height=3}
+m <- gam(hr_est_95 ~ s(mu, k = 4) + s(sigma2, k = 4),
+         family = Gamma('log'), data = tapir, method = 'REML')
+draw(m) & theme_bw() + theme(panel.grid = element_blank())
 ```
 
-\clearpage
+We can now create the predictions from the GAM.
 
-Due to the small sample size, the spatiotemporal autocorrelation, and the correlation between $\mu(t)$ and $\sigma^2(t)$, it is hard to separate the effects of the two predictors. However, since it is reasonable to expect the effects of $\mu(t)$ and $\sigma^2(t)$ to be monotonic decreaseing and increasing, respectively, we can use a Shape-Constrained Additive Model (SCAM) via the `scam` package [@pya_scam_2022].
-
-```{r hr-scam, eval=TRUE, fig.pos='!h', fig.height=3, fig.cap="Marginal effects of $\\mu(t)$ and $\\sigma^2(t)$ on the tapir's space use (on the log link scale) using a shape-constrained GAM. The estimated degrees of freedom for each term can be seen in parentheses in the y-axis labels. Shaded areas inticate the 95\\% credible intervals."}
-m <- scam(hr_est_95 ~
-            s(mu, bs = 'mpd', k = 5) +
-            s(sigma2, bs = 'mpi', k = 5),
-          family = Gamma('log'),
-          weights = weight,
-          data = tapir)
-plot(m, pages = 1, scheme = 1)
-```
-
-This SCAM fits substantially better than a SCAM that only accounts for $\mu(t)$:
-
-```{r, eval=TRUE}
-m_mu <- scam(hr_est_95 ~ s(mu, bs = 'mpd', k = 5),
-             family = Gamma('log'),
-             weights = weight,
-             data = tapir)
-round(AIC(m, m_mu), 3)
-```
-
-We can now create the predictions from the shape-constrained GAM.
-
-```{r, eval=TRUE, fig.height=4, fig.width=12, out.width='\\linewidth'}
-theme_set(theme_bw()) # need to set the theme again for some reason
+```{r, eval=TRUE, out.width='\\linewidth'}
 # predict marginal effects for each term
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
-                sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
+                sigma2 = seq(5e-4, 25e-4, length.out = 250)) %>%
   bind_cols(
     # predictions for the marginal effect of mu
-    predict(m, newdata = ., terms = 's(mu)', type = 'link',
-            se.fit = TRUE) %>%
-      as.data.frame() %>% # convert list to data frame
-      transmute(hr_mu_est = exp(fit), # transform to the response scale
-                hr_mu_lwr = exp(fit - 1.96 * se.fit), # 95% cred. intervals
+    predict(m, newdata = ., exclude = 's(sigma2)',
+            type = 'link', se.fit = TRUE, unconditional = TRUE) %>%
+      as.data.frame() %>%
+      transmute(hr_mu_est = exp(fit),
+                hr_mu_lwr = exp(fit - 1.96 * se.fit),
                 hr_mu_upr = exp(fit + 1.96 * se.fit)),
     # predictions for the marginal effect of sigma2
-    predict(m, newdata = ., terms = 's(sigma2)', type = 'link',
-            se.fit = TRUE) %>%
+    predict(m, newdata = ., exclude = 's(mu)',
+            type = 'link', se.fit = TRUE, unconditional = TRUE) %>%
       as.data.frame() %>%
       transmute(hr_sigma2_est = exp(fit),
                 hr_sigma2_lwr = exp(fit - 1.96 * se.fit),
                 hr_sigma2_upr = exp(fit + 1.96 * se.fit)))
+```
+
+```{r, eval=TRUE, fig.height=4, fig.width=12, out.width='\\linewidth'}
+theme_set(theme_bw() + theme(panel.grid = element_blank()))
 
 p_d <- ggplot() +
   coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(mu, hr_est_95), tapir, color = pal[3], alpha = 0.5) +
+  geom_point(aes(mu, hr_est_95), tapir, alpha = 0.3, color = pal[3]) +
   geom_ribbon(aes(mu, ymin = hr_mu_lwr, ymax = hr_mu_upr), preds,
               fill = pal[1], alpha = 0.3) +
   geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
-  xlab(e_r) +
-  scale_y_continuous(hr_lab)
+  labs(x = e_r, y = hr_lab)
 
 p_e <- ggplot() +
-  coord_cartesian(ylim = c(0, 12.5)) +
-  geom_point(aes(sigma2, hr_est_95), tapir, color = pal[3], alpha = 0.5) +
+  geom_point(aes(sigma2, hr_est_95), tapir, alpha = 0.3, color = pal[3]) +
   geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr),
               preds, fill = pal[2], alpha = 0.3) +
   geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2],
             linewidth = 2) +
-  xlab(v_r) +
-  scale_y_continuous(hr_lab)
+  labs(x = v_r, y = hr_lab)
 
-p_f <- ggplot(tapir) +
-  geom_point(aes(mu, sigma2), alpha = 0.5) +
-  labs(x = e_r, y = v_r)
-
-r_grobs <- map(list(p_d, p_e, p_f), as_grob)
+p_f <-
+  expand_grid(mu = seq(from = floor(min(tapir$mu) * 100) / 100,
+                       to = ceiling(max(tapir$mu) * 100) / 100,
+                       length.out = 250),
+              sigma2 = seq(from = 0, to = 0.0035, length.out = 250)) %>%
+  mutate(hr_full_est = predict(m, newdata = ., type = 'response')) %>%
+  ggplot() +
+  geom_raster(aes(mu, sigma2, fill = hr_full_est)) +
+  geom_contour(aes(mu, sigma2, z = hr_full_est), color = 'black') +
+  geom_point(aes(mu, sigma2), tapir, alpha = 0.3, show.legend = FALSE) +
+  scale_x_continuous(e_r, expand = c(0, 0)) +
+  scale_y_continuous(v_r, expand = c(0, 0)) +
+  scale_fill_gradient(bquote(atop(bold('7-day space-use'),
+                                  paste(bold('requirement (km'), '\U00B2',
+                                        bold(')')))),
+                      low = 'grey90', high = pal[3], limits = c(0, NA)) +
+  theme(legend.position = c(1, 1),
+        legend.justification = c('right', 'top'),
+        legend.box.background = element_rect(),
+        legend.background = element_rect(),
+        legend.key.width = unit(0.35, 'in')) +
+  guides(fill = guide_colorbar(
+    title.position = 'top',
+    theme = theme(legend.title = element_text(hjust = 1)),
+    direction = 'horizontal'))
 
 # align right margins of all plots
+r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 aligned_widths <- align_margin(map(r_grobs, \(x) {x$widths}), 'first')
-
-# Setting the dimensions of plots to the aligned dimensions
 for(i in seq_along(r_grobs)) r_grobs[[i]]$widths <- aligned_widths[[i]]
 
 plot_grid(plotlist = r_grobs, ncol = 3, labels = c('D', 'E', 'F'))

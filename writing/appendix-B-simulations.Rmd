@@ -100,6 +100,7 @@ library('ggplot2') # for fancy plots
 library('cowplot') # for fancy multi-panel plots
 library('dagitty') # for directed acyclical graphs
 library('ggdag')   # for directed acyclical graphs
+library('gratia')  # for ggplot-based GAM figures
 theme_set(theme_bw()) # change default theme
 
 # source custom functions
@@ -151,6 +152,7 @@ library('ggplot2') # for fancy plots
 library('cowplot') # for fancy multi-panel plots
 library('dagitty') # for directed acyclical graphs
 library('ggdag')   # for directed acyclical graphs
+library('gratia')  # for ggplot-based GAM figures
 theme_set(theme_bw()) # change default theme
 
 # source custom functions
@@ -425,7 +427,7 @@ ggplot(sims, aes(mu, sigma2)) +
 
 The abundance of data for the average $\e(R)$ and $\var(R)$ did not create biases in the models, since removing such values had no appreciable effect on the model estimates (not shown). To estimate the effects of resource abundance and stochasticity on the simulated space-use requirements, we fit 3 location-scale GAMs (GAMLSs) with a location-scale gamma distribution (since home ranges are strictly positive) of increasing complexity. We hypothesized that the effect of $\e(R)$ would depend on $\var(R)$ (and the effect of $\var(R)$ would depend on $\e(R)$), since we expected organisms to respond to changes in $\mu(t)$ less in predictable environments than in stochastic ones. The three models are detailed below and compared using the Akaike Information Criterion and the Bayesian Information Criterion. Both information criteria demonstrate that the third model, which accounts for the interaction effects of $\e(R)$ and $\var(R)$, is the best model. Each of the three models are based on the directed acyclical graph (DAG) shown in figure B\@ref(fig:dag). Within a Bayesian framework, DAGs can be used to infer causality within statistical models [as the latter alone does not allow one to infer causality, see @mcelreath_statistical_2016]. The DAG we present in this appendix can be interpreted as follows: $\e(R)$ and $\var(R)$ are the controlled variables that determine both the amount of resources in a given encounter with resources, $R$, and, consequently, an organism's space-use requirements, $H$. Additionally, as indicated by the arrow going from $\e(R)$ to $\var(R)$, the effect of $\var(R)$ depends of the value of $\e(R)$ (and vice-versa, but arrows in DAGs have to be unidirectional).
 
-```{r dag, eval=TRUE, echo = FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$.", fig.height=4, fig.width=4}
+```{r dag, eval=TRUE, echo = FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$.", fig.height=4, fig.width=6, out.width='50%'}
 dag <- dagitty('dag{
 "E(R)" -> R <- "Var(R)"
 "E(R)" -> "Var(R)"
@@ -437,7 +439,7 @@ ggdag(dag) +
   theme_dag()
 ```
 
-```{r, eval=TRUE, fig.height=8, fig.width=8, out.width='65%'}
+```{r, eval=TRUE, fig.height=7.5, fig.width=12, out.width='\\linewidth'}
 # marginal effects of mu and sigma only (linear on the log link scale)
 m_1 <- gam(
   list(
@@ -477,7 +479,7 @@ m_4 <- gam(
   method = 'REML')
 
 # ti term of the scale parameter looks over-fit and too uncertain
-plot(m_4, all.terms = TRUE, pages = 1, scheme = 3, scale = 0)
+draw(m_4) & theme_bw() + theme(panel.grid = element_blank())
 ```
 
 \clearpage
@@ -508,10 +510,10 @@ m <- m_3 # select the best model
 
 Fig. B\@ref(fig:gamls-terms) shows each of the terms from model 3. The estimated effect of `quantile` (see the output of `summary()` above) supports the relationship between the gaussian HR estimates detailed above, since $\exp(1.464) = 4.323218 \approx \log_{0.5}(0.05),$ but there is no differences in the scale parameter between the two quantiles. Additionally, the interaction term of $\mu(t)$ and $\sigma^2(t)$ on the mean HR indicates that the effect of $\sigma^2(t)$ is stronger at lower values of $\mu(t)$ (e.g., $\mu(t) = 100$), since the estimated effect is negative for low values of $\sigma^2(t)$ and positive for high values of $\sigma^2(t)$, which accentuates the effect of $\sigma^2(t)$ on the mean home range. The opposite is true for high values of $\mu(t)$, where the effect of $\sigma^2(t)$ becomes flatter, and thus weaker. Similar but opposite conclusions can be drawn from the interaction term for the scale parameter, since the effect of $\sigma^2(t)$ on the scale parameter is weaker when $\mu(t)$ is low and stronger when $\mu(t)$ is high.
 
-```{r gamls-terms, fig.cap = "Marginal and interaction effects of each of the terms present in the final GAMLS (on the log link scales). The dashed lines indicate the 95\\% Bayesian credible intervals. The data points are included as rug plots in all marginal terms and as points in the interaction terms.", eval=TRUE, fig.height=16, fig.width=8, out.width='65%', echo=FALSE}
+```{r gamls-terms, fig.cap = "Marginal and interaction effects of each of the terms present in the final GAMLS (on the log link scales). The dashed lines indicate the 95\\% Bayesian credible intervals. The data points are included as rug plots in all marginal terms and as points in the interaction terms.", eval=TRUE, fig.height=7.5, fig.width=12, out.width='\\linewidth', echo=FALSE}
 # using custom layout to make figure easier to read
 layout(matrix(c(7, 1, 2, 3, 8, 4, 5, 6), nrow = 4, byrow = TRUE))
-plot(m, all.terms = TRUE, scheme = 3, scale = 0)
+draw(m) & theme_bw() + theme(panel.grid = element_blank())
 ```
 
 Finally, we can use the model to recreate fig. 4 from the main text and visualize the marginal effects of $\mu(t)$ and $\sigma^2(t)$ on the 95% home range.
