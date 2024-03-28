@@ -48,15 +48,14 @@ tel <-
   as_tibble()
 
 if(! file.exists('data/anna-hr-ndvi-data.rds')) {
+  # using a 1-day window and dt gave approximately the same results 
   tapir <-
     readRDS('models/tapirs/CE_31_ANNA-window-7-days-dt-1-days.rds') %>%
     mutate(sub_tel = map(dataset,
                          \(.d) filter(tel, timestamp %in% .d$timestamp)),
            mu = map_dbl(sub_tel, \(.d) mean(.d$mu)),
-           sigma2 = map_dbl(sub_tel, \(.d) mean(.d$sigma2)),
-           weights = map_dbl(model, \(.m) summary(.m)$DOF['area']),
-           weights = sqrt(weights)) %>% # var is proportional to sqrt(n)
-    select(date, mu, sigma2, hr_est_95, weights, hr_lwr_95, hr_upr_95)
+           sigma2 = map_dbl(sub_tel, \(.d) mean(.d$sigma2))) %>%
+    select(date, mu, sigma2, hr_est_95, hr_lwr_95, hr_upr_95)
   
   saveRDS(tapir, 'data/anna-hr-ndvi-data.rds')
 } else {
@@ -68,7 +67,7 @@ date_labs <- range(tel$timestamp) %>% as.Date()
 
 # E(R) and V(R) are highly correlated
 ggplot(tapir) +
-  geom_point(aes(mu, sigma2, alpha = weights)) +
+  geom_point(aes(mu, sigma2)) +
   labs(x = '\U1D707(t)', y = '\U1D70E\U00B2(t)') +
   theme(text = element_text(face = 'plain'))
 
@@ -152,6 +151,7 @@ p_d <- ggplot() +
                          range = c(0.3, 1), breaks = c(4, 6, 8))
 
 p_e <- ggplot() +
+  coord_cartesian(ylim = c(0, 12.5)) +
   geom_point(aes(sigma2, hr_est_95), tapir, alpha = 0.3, color = pal[3]) +
   geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr), preds,
               fill = pal[2], alpha = 0.3) +
@@ -163,7 +163,6 @@ p_f <-
                        to = ceiling(max(tapir$mu) * 100) / 100,
                        length.out = 250),
               sigma2 = seq(from = 0, to = 0.0035, length.out = 250)) %>%
-  # filter(! exclude.too.far(mu, sigma2, tapir$mu, tapir$sigma2, 0.2)) %>%
   mutate(hr_full_est = predict(m, newdata = ., type = 'response')) %>%
   ggplot() +
   geom_raster(aes(mu, sigma2, fill = hr_full_est)) +
@@ -178,7 +177,7 @@ p_f <-
   theme(legend.position = c(1, 1),
         legend.justification = c('right', 'top'),
         legend.box.background = element_rect(),
-        legend.background = element_blank(),
+        legend.background = element_rect(),
         legend.key.width = unit(0.35, 'in')) +
   guides(fill = guide_colorbar(
     title.position = 'top',
