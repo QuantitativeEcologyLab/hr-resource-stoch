@@ -247,7 +247,7 @@ p_full_var <-
     bquote(paste(bold('Resource stochasticity, Var('),
                  bolditalic('R'), bold(')'))), breaks = NULL,
     expand = c(0, 0)) +
-  scale_fill_gradient(fill_var_lab, low = 'grey90', high = pal[3], 
+  scale_fill_gradient(fill_var_lab, low = 'grey90', high = pal[7], 
                       breaks = range(preds_full$hr_var),
                       labels = c('low', 'high')) +
   theme(legend.position = 'top')
@@ -266,6 +266,14 @@ cowplot::plot_grid(p_mu_var, p_sigma2_var, p_full_var, labels = 'AUTO',
 
 ggsave('figures/simulation-regression-var.png',
        width = 9, height = 3, dpi = 'print', bg = 'white', scale = 1.5)
+
+# mean and variance together
+cowplot::plot_grid(p_mu_mean, p_sigma2_mean, p_full_mean,
+                   p_mu_var, p_sigma2_var, p_full_var,
+                   labels = 'AUTO', nrow = 2)
+
+ggsave('figures/simulation-regression-mean-and-var.png',
+       width = 9, height = 6, dpi = 'print', bg = 'white', scale = 1.5)
 
 # effect of sigma2 for a few values of mu ----
 newd_mu_2 <-
