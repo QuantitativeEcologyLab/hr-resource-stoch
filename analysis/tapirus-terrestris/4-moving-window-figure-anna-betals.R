@@ -141,17 +141,15 @@ preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
                         hr_sigma2_upr = exp(fit + 1.96 * se.fit)))
 
 p_d <- ggplot() +
-  coord_cartesian(ylim = c(0, 12.5)) +
+  coord_cartesian(ylim = c(0, 12.5)) + # CIs go higher
   geom_point(aes(mu, hr_est_95), tapir, alpha = 0.3, color = pal[3]) +
   geom_ribbon(aes(mu, ymin = hr_mu_lwr, ymax = hr_mu_upr), preds,
               fill = pal[1], alpha = 0.3) +
   geom_line(aes(mu, hr_mu_est), preds, color = pal[1], linewidth = 2) +
-  labs(x = e_r, y = hr_lab) +
-  scale_alpha_continuous(expression(bold(sqrt(Range~crossings))),
-                         range = c(0.3, 1), breaks = c(4, 6, 8))
+  labs(x = e_r, y = hr_lab)
 
 p_e <- ggplot() +
-  coord_cartesian(ylim = c(0, 12.5)) +
+  coord_cartesian(ylim = c(0, 12.5)) + # to have same y breaks as p_d
   geom_point(aes(sigma2, hr_est_95), tapir, alpha = 0.3, color = pal[3]) +
   geom_ribbon(aes(sigma2, ymin = hr_sigma2_lwr, ymax = hr_sigma2_upr), preds,
               fill = pal[2], alpha = 0.3) +
