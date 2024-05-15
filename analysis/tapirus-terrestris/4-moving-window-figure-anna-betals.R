@@ -3,7 +3,6 @@ library('purrr')     # for functional programming
 library('tidyr')     # for data wrangling
 library('ctmm')      # for movement modeling
 library('mgcv')      # for empirical Bayesian modeling
-library('scam')      # for shape-constrained splines
 library('lubridate') # for smoother date wrangling
 library('ggplot2')   # for fancy figures
 library('gratia')    # for ggplot-based GAM graphics
@@ -17,7 +16,7 @@ e_r <- bquote(paste(bold('Resource abundance, '), '\U1D6CD', bold('('),
                     bolditalic('t'), bold(')')))
 v_r <- bquote(paste(bold('Resource stochasticity, '), '\U1D6D4\U00B2',
                     bold('('), bolditalic('t'), bold(')')))
-hr_lab <- bquote(paste(bold('7-day space-use requirement (km'), '\U00B2',
+hr_lab <- bquote(paste(bold('7-day home range size (km'), '\U00B2',
                        bold(')')))
 
 # import location-scale model for predictions of mean and variance in NDVI
@@ -96,7 +95,7 @@ for (i in seq_along(l_grobs)) {
 
 # Draw aligned plots
 p_left <- plot_grid(plotlist = l_grobs, ncol = 1, labels = 'AUTO',
-                    label_size = 22, label_x = -0.01, label_y = 1.025)
+                    label_size = 22, label_x = -0.01, label_y = 1)
 
 # regression plots ----
 # adding weights biases towards smaller HRs and gives bad q-q plots
@@ -168,15 +167,14 @@ p_f <-
   geom_point(aes(mu, sigma2), tapir, alpha = 0.3, show.legend = FALSE) +
   scale_x_continuous(e_r, expand = c(0, 0)) +
   scale_y_continuous(v_r, expand = c(0, 0)) +
-  scale_fill_gradient(bquote(atop(bold('7-day space-use'),
-                                  paste(bold('requirement (km'), '\U00B2',
-                                        bold(')')))),
+  scale_fill_gradient(bquote(bold(paste('7-day home range size (km',
+                                   '\U00B2', ')'))),
                       low = 'grey90', high = pal[3], limits = c(0, NA)) +
   theme(legend.position = c(1, 1),
         legend.justification = c('right', 'top'),
         legend.box.background = element_rect(),
         legend.background = element_rect(),
-        legend.key.width = unit(0.35, 'in')) +
+        legend.key.width = unit(0.5, 'in')) +
   guides(fill = guide_colorbar(
     title.position = 'top',
     theme = theme(legend.title = element_text(hjust = 1)),
@@ -194,7 +192,7 @@ for (i in seq_along(r_grobs)) {
 
 p_right <-
   plot_grid(plotlist = r_grobs, ncol = 1, labels = c('D', 'E', 'F'),
-            label_size = 22, label_x = -0.01, label_y = 1.025)
+            label_size = 22, label_x = -0.01, label_y = 1)
 
 # add space to avoid cutting off x axis for (e.)
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
