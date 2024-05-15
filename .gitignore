@@ -107,3 +107,7 @@ models/impala/aepyceros-melampus-1757-window-1-days-dt-1-days.rds
 models/impala/aepyceros-melampus-1757-window-7-days-dt-1-days.rds
 models/impala/aepyceros-melampus-1757-window-7-days-dt-7-days.rds
 models/impala/1757-ndvi-betals.rds
+
+# all tapirs except for Anna
+figures/tapirs
+! figures/tapirs/CE_31_ANNA-window-7-days-dt-1-days.png
