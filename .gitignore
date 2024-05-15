@@ -99,3 +99,11 @@ models/equus*
 # moving this to a separate paper
 figures/stochasticity-timescale.png
 analysis/figures/stochasticity-timescale.R
+code-and-data.zip
+analysis/aepyceros-melampus-1757/aepyceros-melampus-1757.R
+analysis/aepyceros-melampus-1757/download-ndvi-aepyceros-melampus-1757.R
+figures/impala-example.png
+models/impala/aepyceros-melampus-1757-window-1-days-dt-1-days.rds
+models/impala/aepyceros-melampus-1757-window-7-days-dt-1-days.rds
+models/impala/aepyceros-melampus-1757-window-7-days-dt-7-days.rds
+models/impala/1757-ndvi-betals.rds
