@@ -12,7 +12,7 @@ e_r <- bquote(paste(bold('Resource abundance, E('), bolditalic('R'),
 v_r <- bquote(paste(bold('Resource stochasticity, Var('), bolditalic('R'),
                     bold(') = '), '\U1D6D4\U00B2', bold('('),
                     bolditalic('t'), bold(')')))
-hr_lab <- bquote(paste(bold('Space-use requirements, '), bolditalic('H')))
+hr_lab <- bquote(paste(bold('Home-range size, '), bolditalic('H')))
 
 p_sim <-
   ggplot(days) +
@@ -45,8 +45,8 @@ p_variance <-
         axis.title.x = element_text(color = 'transparent'))
 
 # create a single plot
-p_full <- plot_grid(NULL, p_mean, p_variance, p_sim, rel_widths = c(1, 4.5),
-                    rel_heights = c(1, 3.5), nrow = 2)
+p_full <- plot_grid(NULL, p_mean, p_variance, p_sim, rel_widths = c(1, 4),
+                    rel_heights = c(1, 3.1), nrow = 2)
 p_full
 
 # save the plot as a png

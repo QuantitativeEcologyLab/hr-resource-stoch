@@ -1,6 +1,4 @@
-library('ctmm')    # for movement modeling
 library('dplyr')   # for data wrangling
-library('tidyr')   # for data wrangling
 library('ggplot2') # for fancy plots
 library('ggbrace') # for curly braces on fancy plots
 library('cowplot') # for fancy multi-panel plots
@@ -9,7 +7,7 @@ source('analysis/figures/default-figure-styling.R') # theme & color palette
 theme_set(theme_get() + theme(legend.position = 'none',
                               text = element_text(size = 22)))
 
-hr_lab <- 'Space-use requirements' # label for y axis
+hr_lab <- 'Range size' # label for y axis
 
 # hypothesis for change in H over E(R) ----
 d <-
