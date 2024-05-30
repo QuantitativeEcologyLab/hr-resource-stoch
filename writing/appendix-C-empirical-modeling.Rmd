@@ -1,5 +1,5 @@
 ---
-title: \large How resource abundance and stochasticity affect animals' space-use requirements
+title: \large How resource abundance and stochasticity affect organisms' range sizes
 subtitle: "Appendix C: Empirical modeling"
 # author:
 #   - name: Stefano Mezzini
@@ -22,7 +22,7 @@ subtitle: "Appendix C: Empirical modeling"
 #   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
 #   - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
 bibliography: 'hr-resource-stoch.bib'
-csl: 'the-american-naturalist.csl'
+# csl: 'the-american-naturalist.csl'
 fontsize: 12pt
 header-includes:
     - \renewcommand{\figurename}{Figure C\!\!} # for "Figure Sx.
@@ -74,7 +74,7 @@ knitr::opts_chunk$set(eval = FALSE,         # do not run R code
 
 \newpage
 
-We start by providing examples and considerations on how one may model $R$ and the effects of $\e(R)$ and $\var(R)$ on organisms' space-use requirements. Next, we apply the methods to the tapir's GPS tracking data and use NDVI as a proxy for $R$. Finally, we offer suggestions on how this approach can be used to inform conservation-related decisions, including assessing habitat quality and estimating organisms' space-use requirements under different scenarios.
+We start by providing examples and considerations on how one may model $R$ and the effects of $\e(R)$ and $\var(R)$ on organisms' home-range sizes. Next, we apply the methods to the tapir's GPS tracking data and use NDVI as a proxy for $R$. Finally, we offer suggestions on how this approach can be used to inform conservation-related decisions, including assessing habitat quality and estimating organisms' range sizes under different scenarios.
 
 # Modeling $R$ {#modeling-r}
 
@@ -120,7 +120,7 @@ Particular attention should be be given when deciding what distribution to use a
 (\#eq:nathan-movement)
 \end{equation}
 
-\noindent such that an organism's position as time $t+1$ depends on its motion capacity ($\Omega$), navigation capacity ($\Phi$), internal state ($\vec w_t$) and current location ($\vec l_t$), as well as how each of the parameters may change in response to the current environmental factors ($\vec \xi_t$). This model is conceptually useful, as it can form the basis for many models, experiments, and hypotheses, but fitting such a model would be very difficult in practice (if not impossible). The parameters $\Omega, \Phi, \vec w_t$ and $\vec \xi_t$ cannot be quantified directly, and although it may be possible to monitor proxies for the parameters (e.g., limb length, body size, site fidelity, cortisol levels, reproductive stage), doing so with sufficient frequency and accuracy would not be simple. Thus, we can instead focus on organisms' movement and space-use requirements as a response to overall resource abundance and unpredictability while accepting other drivers of movement as causes of stochastic behaviors.
+\noindent such that an organism's position as time $t+1$ depends on its motion capacity ($\Omega$), navigation capacity ($\Phi$), internal state ($\vec w_t$) and current location ($\vec l_t$), as well as how each of the parameters may change in response to the current environmental factors ($\vec \xi_t$). This model is conceptually useful, as it can form the basis for many models, experiments, and hypotheses, but fitting such a model would be very difficult in practice (if not impossible). The parameters $\Omega, \Phi, \vec w_t$ and $\vec \xi_t$ cannot be quantified directly, and although it may be possible to monitor proxies for the parameters (e.g., limb length, body size, site fidelity, cortisol levels, reproductive stage), doing so with sufficient frequency and accuracy would not be simple. Thus, we can instead focus on organisms' movement and range sizes as a response to overall resource abundance and unpredictability while accepting other drivers of movement as causes of stochastic behaviors.
 
 ### Visualizing movement as a stochastic process
 
@@ -128,16 +128,16 @@ Particular attention should be be given when deciding what distribution to use a
 
 By modeling movement via stochastic models which account for autocorrelation in position [e.g., Ornstein–Uhlenbeck or OU models, see @uhlenbeck_theory_1930] and autocorrelation in velocity [Ornstein–Uhlenbeck Foraging or OUF models, see @fleming_fine-scale_2014], one is able to account for and leverage autocorrelation in tracking data. While autocorrelation is problematic for models that assume locations to be independent, modeling movement as a stochastic, autocorrelated process avoids systematic biases in the estimation of home ranges [@noonan_comprehensive_2019] as well as travelling distances and speeds [@noonan_scale-insensitive_2019].
 
-Accurate speed estimates require the sampling interval, $\Delta t$, to be sufficiently small [$\Delta t < \tau_v$, see @noonan_scale-insensitive_2019], since the data must contain multiple consecutive samples where the organism is moving with a similar speed and direction. However, since the time required for an organism to cross its home range is orders of magnitude larger than the time it moves with a consistent behavior (i.e., $\tau_p > \tau_v$), it is still possible to produce good estimates of range crossing time even if there is no information on the organism's speed. Similarly, if the data is too sparse to estimate $\tau_p$, one can still obtain good estimates of the organism's space-use requirements and home-range size, provided that the total sampling duration, $T$, is sufficiently long. Model selection procedures with criteria such as the Akaike Information Criterion [@akaike_new_1974] can help choose the most appropriate model for the available data [@silva_autocorrelationinformed_2022].
+Accurate speed estimates require the sampling interval, $\Delta t$, to be sufficiently small [$\Delta t < \tau_v$, see @noonan_scale-insensitive_2019], since the data must contain multiple consecutive samples where the organism is moving with a similar speed and direction. However, since the time required for an organism to cross its home range is orders of magnitude larger than the time it moves with a consistent behavior (i.e., $\tau_p > \tau_v$), it is still possible to produce good estimates of range crossing time even if there is no information on the organism's speed. Similarly, if the data is too sparse to estimate $\tau_p$, one can still obtain good estimates of the organism's home-range sizes and home-range size, provided that the total sampling duration, $T$, is sufficiently long. Model selection procedures with criteria such as the Akaike Information Criterion [@akaike_new_1974] can help choose the most appropriate model for the available data [@silva_autocorrelationinformed_2022].
 
 Predicting movement using stochastic models may seem less straightforward and more complex than using deterministic models, but ignoring the exact causes and decisions that determine the movement allows us to focus on how the organism moved and less on why it moved. Organisms may temporarily change their behavior in response to many causes, including predators [mule deer: @ciuti_effects_2012; shovelnose sturgeon: @hintz_shovelnose_2013; rodents: @randler_predator_2020; macaques: @liu_predator_2022; but also see beaked whales: @siegal_beaked_2022], competitors [Capuchin monkeys: @torrez-herrera_monkeys_2020], weather [framework: @gibert_crossing_2016; giant anteaters: @giroux_role_2022], and mates or mating periods [feral cats: @zhang_home_2022; yellow mongoose: @cronk_home_2021]. Accounting for these causes of variation as a sum of stochastic processes allows us to account for the unpredictability in organism movement while focusing on the organisms' movement behaviors rather than the causes.
 
-### Quantifying space-use requirements
+### Quantifying home-range sizes
 
-\noindent The concept of a home range has a long history in ecological research as an indicator of the space an organism requires to satisfy its essential requirements during a period of time [@burt_territoriality_1943], but home range analysis is not appropriate for organisms which are not range-resident, such as migrating organisms [e.g., @jonzen_rapid_2006; @geremia_migrating_2019; @abrahms_memory_2019] and nomadic organisms [e.g., @morato_space_2016; @nandintsetseg_variability_2019]. Although here we quantify organism's space-use requirements using 95% home-range estimates, we expect that similar conclusions can be drawn about the positional variance, $\vpos$, of organisms that are not range-resident. In the case of organisms that are range resident for short periods of time, we can model their movement and short-term space-use requirements within distinct and discrete periods or using a sliding window approach (see the discussion section). Note, however, that although range-resident organisms will generally have smaller positional variance ($\vpos$) than migratory and nomadic organisms, $\vpos$ is not sufficient to distinguish between range residency, migration, and nomadism, since $\vpos$ determines the scale and size of an organism's movement but not its behavior. Instead, the organism's $\tau_p$, $\tau_v$, and $\bar v$ can help discriminate between different behaviors. Organisms with a $\tau_p$ shorter than a year are likely range-resident, while organisms with a $\tau_p$ on the order of a year are likely to be migratory (as long as their life expectancy is greater than a year). In contrast, when an organism's $\tau_p$ is on the order of its expected lifespan, it is most often nomadic, since it does not have an average position it returns to regularly.
+\noindent The concept of a home range has a long history in ecological research as an indicator of the space an organism requires to satisfy its essential requirements during a period of time [@burt_territoriality_1943], but home range analysis is not appropriate for organisms which are not range-resident, such as migrating organisms [e.g., @jonzen_rapid_2006; @geremia_migrating_2019; @abrahms_memory_2019] and nomadic organisms [e.g., @morato_space_2016; @nandintsetseg_variability_2019]. Although here we quantify organism's home-range sizes using 95% home-range estimates, we expect that similar conclusions can be drawn about the positional variance, $\vpos$, of organisms that are not range-resident. In the case of organisms that are range resident for short periods of time, we can model their movement and short-term home-range sizes within distinct and discrete periods or using a sliding window approach (see the discussion section). Note, however, that although range-resident organisms will generally have smaller positional variance ($\vpos$) than migratory and nomadic organisms, $\vpos$ is not sufficient to distinguish between range residency, migration, and nomadism, since $\vpos$ determines the scale and size of an organism's movement but not its behavior. Instead, the organism's $\tau_p$, $\tau_v$, and $\bar v$ can help discriminate between different behaviors. Organisms with a $\tau_p$ shorter than a year are likely range-resident, while organisms with a $\tau_p$ on the order of a year are likely to be migratory (as long as their life expectancy is greater than a year). In contrast, when an organism's $\tau_p$ is on the order of its expected lifespan, it is most often nomadic, since it does not have an average position it returns to regularly.
 -->
 
-<!-- ### Modeling space-use requirements -->
+<!-- ### Modeling home-range sizes -->
 
 <!-- \noindent Recent improvements in animal tracking technologies (e.g., increasing sampling duration and frequency of GPS units) have allowed scientists to demonstrate that changes in animals movement and behavior may be more common than previously thought [leatherback turtles: @hays_flexible_2006; arctic foxes: @lai_movement_2017; elephants: @foley_severe_2008; bison and mule deer: @geremia_migrating_2019; bald eagles: @wheat_migrate_2017]. However, most commonly used movement models assume organisms' behaviors to remain consistent during the entirety of the tracking period [but see behavior-switching state-space models, e.g., @michelot_movehmm_2016]. -->
 
@@ -147,13 +147,13 @@ Predicting movement using stochastic models may seem less straightforward and mo
 
 # Reproducing the analyses
 
-This section of the appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript (fig. 5). The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). Estimating the effects of resource abundance and unpredictability on the tapir's space-use requirements requires us to first estimate the changes in the tapir's space-use requirements (section \@ref(movement)) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and space use (section \@ref(final-fig)).
+This section of the appendix illustrates the steps necessary to reproduce the tapir movement analysis and the related figure in the manuscript (fig. 5). The tapir data used here is from the work of @medici_movement_2022 and can be found at the GitHub repository located at [https://github.com/StefanoMezzini/tapirs](https://github.com/StefanoMezzini/tapirs). Estimating the effects of resource abundance and unpredictability on the tapir's home-range size requires us to first estimate the changes in the tapir's home-range sizes (section \@ref(movement)) and the changes in resource abundance and variance experienced by the tapir (section \@ref(ndvi)) before we can estimate the relationship between resource dynamics and space use (section \@ref(final-fig)).
 
 To minimize the computational costs of creating this appendix, we load the necessary objects through hidden `R` chunks rather than re-running all the code. Still, those interested in replicating the analyses can do so by using the code in the pdf document or the related `R` Markdown (`Rmd`) document (as well as the `R` scripts). All the packages and source scripts required to run the analyses in this document are listed in the code chunk below. For spatial data, we use the `MODIStsp` package [version 2.0.9, @busetto_modistsp_2016] to download the NDVI rasters, the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the NDVI rasters, and the `sf` package [version 1.0-8, @pebesma_simple_2018]. We use the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling and the `lubridate` package [version 1.8.0, @grolemund_dates_2011] for converting calendar dates to decimal dates. Finally, we used the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] and the `mgcv` package [version 1.8-41, @wood_generalized_2017] for modeling and the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
 
 We start by attaching all necessary packages and custom functions we need:
 
-```{r, eval=TRUE, warning=FALSE}
+```{r, eval=TRUE, warning=FALSE, echo=FALSE}
 # attach all necessary packages
 library('terra')     # to import and save rasters
 library('dplyr')     # for data wrangling
@@ -399,7 +399,7 @@ theme_set(theme_bw() + theme(panel.grid = element_blank()))
 # axis labels (unicode characters removed because they knitting errors)
 e_r <- bquote(paste(bold('Resource abundance')))
 v_r <- bquote(paste(bold('Resource stochasticity')))
-hr_lab <- bquote(bold(paste('7-day space-use requirement (', km^2, ')')))
+hr_lab <- bquote(bold(paste('7-day home-range size (', km^2, ')')))
 
 l_grobs <- lapply(
   list(ggplot(tapir, aes(date, mu)) + # mean
@@ -501,8 +501,8 @@ p_f <-
   geom_point(aes(mu, sigma2), tapir, alpha = 0.3, show.legend = FALSE) +
   scale_x_continuous(e_r, expand = c(0, 0)) +
   scale_y_continuous(v_r, expand = c(0, 0)) +
-  scale_fill_gradient(bquote(atop(bold('7-day space-use'),
-                                  paste(bold('requirement (km'), '\U00B2',
+  scale_fill_gradient(bquote(atop(bold('7-day home-range'),
+                                  paste(bold('size (km'), '\U00B2',
                                         bold(')')))),
                       low = 'grey90', high = pal[3], limits = c(0, NA)) +
   theme(legend.position = c(1, 1),

@@ -1,5 +1,5 @@
 ---
-title: \large How resource abundance and stochasticity affect animals' space-use requirements
+title: \large How resource abundance and stochasticity affect organisms' range sizes
 subtitle: "Appendix A: Concepts and definitions"
 # author:
 #   - name: Stefano Mezzini
@@ -22,7 +22,7 @@ subtitle: "Appendix A: Concepts and definitions"
 #   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
 #   - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
 bibliography: 'hr-resource-stoch.bib'
-csl: 'the-american-naturalist.csl'
+# csl: 'the-american-naturalist.csl'
 fontsize: 12pt
 indent: true
 header-includes:
@@ -83,7 +83,7 @@ knitr::include_graphics('../figures/habitat-examples-constant-variance.png')
 knitr::include_graphics('../figures/habitat-examples-changing-variance.png')
 ```
 
-```{r ex, eval=TRUE, echo=FALSE, fig.height=5, fig.cap="Examples of Gamma distributions with different means ($\\mu$) and variances ($\\sigma^2$).", fig.pos='!h', message=FALSE, warning=FALSE, out.width = '75%'}
+```{r ex-gamma, eval=TRUE, echo=FALSE, fig.height=5, fig.cap="Examples of Gamma distributions with different means ($\\mu$) and variances ($\\sigma^2$).", fig.pos='!h', message=FALSE, warning=FALSE, out.width = '75%'}
 library('dplyr') # for data wrangling
 library('tidyr') # for data wrangling
 library('ggplot2') # for fancy plots
@@ -103,17 +103,50 @@ expand_grid(x = tibble(x = seq(0, 10, length.out = 1000)),
   unnest(x) %>%
   mutate(dens = dgamma2(x = x, mu = mean, sigma2 = var)) %>%
   ggplot(aes(x, dens)) +
-  coord_cartesian(xlim = c(-0.5, 10.5), ylim = c(0, 0.8)) +
+  coord_cartesian(xlim = c(-0, 10), ylim = c(0, 0.8)) +
   # using '\U03BC' because mu results in \propto, for some reason
   facet_wrap(. ~ mean + var,
              labeller = label_bquote('\U03BC' == .(mean)~','~sigma^2 == .(var)))+
   geom_line(na.rm = TRUE) +
   geom_area(alpha = 0.3, na.rm = TRUE) +
+  scale_x_continuous(expand = c(0, 0), breaks = c(0, 2.5, 5, 7.5)) +
   scale_y_continuous(expand = c(0, 0)) +
-  scale_x_continuous(expand = c(0, 0)) +
-  labs(x = 'r', y = 'Density') +
-  theme_bw()
+  labs(x = 'R', y = 'Density') +
+  theme_bw() +
+  theme(panel.grid = element_blank())
 ```
+
+```{r ex-beta, eval=TRUE, echo=FALSE, fig.height=5, fig.cap="Examples of Beta distributions with different means ($\\mu$) and variances ($\\sigma^2$).", fig.pos='!h', message=FALSE, warning=FALSE, out.width = '75%'}
+# to help visualize the consequences of different E(R) and V(R) if R ~ Beta
+dbeta2 <- function(x, mu, sigma2, lower.tail = FALSE,
+                   eps = .Machine$double.eps) {
+  phi <- sigma2 / (mu * (1 - mu)) # scale parameter
+  
+  dbeta(x = x,
+        shape1 = mu * (1 / phi - 1),
+        shape2 = (1 - mu) * (1 / phi - 1))
+}
+
+expand_grid(x = tibble(x = seq(0, 1, length.out = 1000)),
+            mean = c(0.5, 0.75),
+            var = c(0.002, 0.05)) %>%
+  unnest(x) %>%
+  mutate(dens = dbeta2(x = x, mu = mean, sigma2 = var)) %>%
+  ggplot(aes(x, dens)) +
+  coord_cartesian(ylim = c(0, NA)) +
+  # using '\U03BC' because mu results in \propto, for some reason
+  facet_wrap(. ~ mean + var,
+             labeller = label_bquote('\U03BC' == .(mean)~','~sigma^2 == .(var)))+
+  geom_line(na.rm = TRUE) +
+  geom_area(alpha = 0.3, na.rm = TRUE) +
+  scale_x_continuous(expand = c(0, 0), breaks = c(0, 0.25, 0.5, 0.75, 1),
+                     labels = c('0', '0.25', '0.5', '0.75', '1')) +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = 'R', y = 'Density') +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+```
+
 
 \clearpage <!-- reference on a new page without figures -->
 
