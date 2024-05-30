@@ -16,7 +16,7 @@ e_r <- bquote(paste(bold('Resource abundance, '), '\U1D6CD', bold('('),
                     bolditalic('t'), bold(')')))
 v_r <- bquote(paste(bold('Resource stochasticity, '), '\U1D6D4\U00B2',
                     bold('('), bolditalic('t'), bold(')')))
-hr_lab <- bquote(paste(bold('7-day home range size (km'), '\U00B2',
+hr_lab <- bquote(paste(bold('7-day home-range size (km'), '\U00B2',
                        bold(')')))
 
 # import location-scale model for predictions of mean and variance in NDVI
@@ -101,12 +101,14 @@ p_left <- plot_grid(plotlist = l_grobs, ncol = 1, labels = 'AUTO',
 # adding weights biases towards smaller HRs and gives bad q-q plots
 m <- gam(hr_est_95 ~
            s(mu, k = 4) +
-           s(sigma2, k = 4),
+           s(sigma2, k = 4) +
+           ti(mu, sigma2, k = 3),
          family = Gamma('log'),
          data = tapir,
          method = 'REML')
+draw(m, rug = FALSE, scales = 'fixed', dist = 1)
 appraise(m, method = 'simulate', n_simulate = 1e3)
-draw(m, rug = FALSE, scales = 'fixed')
+summary(m)
 
 # diagnostics aren't bad given the autocorrelation
 ggplot(mapping = aes(tapir$mu, resid(m))) +
@@ -125,14 +127,14 @@ ggplot(mapping = aes(tapir$mu, tapir$sigma2)) +
 
 # marginals of mu and sigma2, and a plot to show the lack of independence
 preds <- tibble(mu = gratia:::seq_min_max(tapir$mu, n = 250),
-                sigma2 = seq(5e-4, 25e-4, length.out = 250)) %>%
-  bind_cols(predict(m, newdata = ., exclude = 's(sigma2)',
+                sigma2 = gratia:::seq_min_max(tapir$sigma2, n = 250)) %>%
+  bind_cols(predict(m, newdata = ., terms = c('(Intercept)', 's(mu)'),
                     type = 'link', se.fit = TRUE, unconditional = TRUE) %>%
               as.data.frame() %>%
               transmute(hr_mu_est = exp(fit),
                         hr_mu_lwr = exp(fit - 1.96 * se.fit),
                         hr_mu_upr = exp(fit + 1.96 * se.fit)),
-            predict(m, newdata = ., exclude = 's(mu)',
+            predict(m, newdata = ., terms = c('(Intercept)', 's(sigma2)'),
                     type = 'link', se.fit = TRUE, unconditional = TRUE) %>%
               as.data.frame() %>%
               transmute(hr_sigma2_est = exp(fit),
@@ -155,30 +157,40 @@ p_e <- ggplot() +
   geom_line(aes(sigma2, hr_sigma2_est), preds, color = pal[2], linewidth = 2) +
   labs(x = v_r, y = hr_lab)
 
+expand_grid(mu = 6:8 / 10,
+            sigma2 = seq(from = 1e-3, to = 2e-3, length.out = 250)) %>%
+  mutate(hr_full_est = predict(m, newdata = ., type = 'response')) %>%
+  ggplot() +
+  geom_line(aes(sigma2, hr_full_est, color = mu, group = mu)) +
+  theme(legend.position = 'top')
+
 p_f <-
   expand_grid(mu = seq(from = floor(min(tapir$mu) * 100) / 100,
                        to = ceiling(max(tapir$mu) * 100) / 100,
                        length.out = 250),
-              sigma2 = seq(from = 0, to = 0.0035, length.out = 250)) %>%
-  mutate(hr_full_est = predict(m, newdata = ., type = 'response')) %>%
+              sigma2 = seq(from = 0.5e-3, to = 2.2e-3, length.out = 250)) %>%
+  mutate(hr_full_est = predict(m, newdata = ., type = 'response') %>%
+           # to avoid excessively large predictions
+           if_else(. < 20, ., NA_real_)) %>%
   ggplot() +
   geom_raster(aes(mu, sigma2, fill = hr_full_est)) +
-  geom_contour(aes(mu, sigma2, z = hr_full_est), color = 'black') +
+  geom_contour(aes(mu, sigma2, z = hr_full_est), color = 'black', 
+               na.rm = TRUE) +
   geom_point(aes(mu, sigma2), tapir, alpha = 0.3, show.legend = FALSE) +
   scale_x_continuous(e_r, expand = c(0, 0)) +
   scale_y_continuous(v_r, expand = c(0, 0)) +
-  scale_fill_gradient(bquote(bold(paste('7-day home range size (km',
+  scale_fill_gradient(bquote(bold(paste('7-day home-range size (km',
                                    '\U00B2', ')'))),
                       low = 'grey90', high = pal[3], limits = c(0, NA)) +
-  theme(legend.position = c(1, 1),
-        legend.justification = c('right', 'top'),
-        legend.box.background = element_rect(),
-        legend.background = element_rect(),
+  theme(legend.position = c(0, 0),
+        legend.justification = c('left', 'bottom'),
+        legend.box.background = element_rect(fill = '#FFFFFFCC'),
+        legend.background = element_rect(fill = 'transparent'),
         legend.key.width = unit(0.5, 'in')) +
   guides(fill = guide_colorbar(
     title.position = 'top',
     theme = theme(legend.title = element_text(hjust = 1)),
-    direction = 'horizontal'))
+    direction = 'horizontal')); p_f
 
 r_grobs <- map(list(p_d, p_e, p_f), as_grob)
 
