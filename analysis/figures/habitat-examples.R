@@ -6,7 +6,6 @@ library('purrr')     # for functional programming
 library('ctmm')      # for movement modeling
 library('lubridate') # for working with data more smoothly
 library('ggplot2')   # for fancy plots
-library('latex2exp') # for LaTeX in plots
 library('cowplot')   # for fancy plots in grids
 library('ragg')      # needed for custom alpha with coord_cartesian
 # see https://github.com/tidyverse/ggplot2/issues/4029
