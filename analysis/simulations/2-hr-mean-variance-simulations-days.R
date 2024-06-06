@@ -128,7 +128,7 @@ ggplot(all) +
   scale_y_continuous(trans = 'log2', breaks = 2^c(-0.5, 0, 0.5),
                      labels = parse(text = c('2^-0.5', '0', '2^0.5')))+
   labs(x = 'Time',
-       y = expression(Relative~difference~'in'~time~to~satiety~(log[2]~scale)))
+       y = expression(bold(Relative~difference~'in'~time~to~satiety~(log[2]~scale))))
 
 ggsave('figures/5-by-5-sensitivity-analysis/time-to-satiety-rel-difference.png',
        width = 10, height = 5.625, units = 'in', dpi = 'print', bg = 'white')
