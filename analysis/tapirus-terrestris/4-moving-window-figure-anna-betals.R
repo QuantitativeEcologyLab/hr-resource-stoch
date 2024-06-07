@@ -13,9 +13,10 @@ theme_set(theme_get() + theme(legend.title = element_text(size = 13)))
 
 # axis lables
 e_r <- bquote(paste(bold('Resource abundance, '), '\U1D6CD', bold('('),
-                    bolditalic('t'), bold(')')))
+                    bolditalic('t'), bold(', '), bolditalic('u'), bold(')')))
 v_r <- bquote(paste(bold('Resource stochasticity, '), '\U1D6D4\U00B2',
-                    bold('('), bolditalic('t'), bold(')')))
+                    bold('('), bolditalic('t'), bold(', '), bolditalic('u'),
+                    bold(')')))
 hr_lab <- bquote(paste(bold('7-day home-range size (km'), '\U00B2',
                        bold(')')))
 
@@ -67,7 +68,7 @@ date_labs <- range(tel$timestamp) %>% as.Date()
 # E(R) and V(R) are highly correlated
 ggplot(tapir) +
   geom_point(aes(mu, sigma2)) +
-  labs(x = '\U1D707(t)', y = '\U1D70E\U00B2(t)') +
+  labs(x = e_r, y = v_r) +
   theme(text = element_text(face = 'plain'))
 
 l_grobs <-
