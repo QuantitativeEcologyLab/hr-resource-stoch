@@ -157,7 +157,7 @@ saturation_days <- readRDS('simulations/hr-saturation-days.rds')
 p_hr_days <-
   ggplot(saturation_days, aes(n_days, hr)) +
   facet_wrap(~ case, nrow = 1) +
-  geom_vline(xintercept = 100, color = 'red') +
+  geom_vline(xintercept = 200, color = 'red') +
   geom_smooth(method = 'gam', color = 'black',
               formula = y ~ s(x, bs = 'cs', k = 10),
               method.args = list(family = Gamma(link = 'log'))) +
@@ -166,8 +166,8 @@ p_hr_days <-
                      trans = 'log2', breaks = c(2, 16, 128, 1024),
                      limits = c(2, 1100)) +
   scale_y_continuous(trans = 'log2',
-                     expression(bold(atop(Estimated~'space-use',
-                                          requirements~(log[2]~scale)))))
+                     expression(bold(Estimated~'home-range size'~
+                                            (log[2]~scale))))
 
 ggsave('figures/hr-over-days.png', plot = p_hr_days, scale = 2,
        width = 6, height = 3, dpi = 'print')

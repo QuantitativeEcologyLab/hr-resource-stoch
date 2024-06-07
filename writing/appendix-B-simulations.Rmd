@@ -38,6 +38,8 @@ output:
     pandoc_args:
       - '--lua-filter=scholarly-metadata.lua' # for author affiliations
       - '--lua-filter=author-info-blocks.lua' # for author affiliations
+editor_options: 
+  chunk_output_type: console
 ---
 
 <!-- set default code chunk options -->
@@ -72,23 +74,22 @@ knitr::opts_chunk$set(eval = FALSE,         # do not run R code
 
 # Overview
 
-This appendix illustrates all the steps necessary to produce the simulation figures in the main manuscript (figs. 3 and 4). To achieve full transparency while minimizing computational times, the code illustrated in this pdf is not executed during the knitting of the document. Instead, the R Markdown document (`writing/appendix-2-simulations.Rmd`) contains code chunks that import the `RDS` files saved by the scripts used during the analysis via `R` code that is not printed in the pdf file. Although one can replicate the analyses by running the code in this pdf, we suggest only using this document for illustrative purposes and as a general guide. We suggest using the `R` scripts to replicate the simulations, instead.
+This appendix illustrates all the steps necessary to produce the simulation used in the main manuscript (figs. 3 and 4). To achieve full transparency while minimizing computational times, the code illustrated in this pdf was not executed during the knitting of the document. Instead, the R Markdown document (`writing/appendix-2-simulations.Rmd`) contains code chunks that import the `RDS` files saved by the scripts used during the analysis via `R` code that is not printed in the pdf file. Although one can replicate the analyses by running the code in this pdf, we suggest only using this document for illustrative purposes. We suggest using the `R` scripts to replicate the simulations, instead.
 
 \newpage
 
 # Simulating the movement tracks
 
-To reduce sampling variance between simulations at each time point in each panel of fig. 3 in the main text, we used the same set of 200 simulated tracks, which we generate in the `analysis/simulations/tracks.R` script. Most intermediate and diagnostic checks are not included in this document for the sake of brevity and simplicity, but their outputs and conclusions are listed in this section. In this script, we use the `ctmm` package [version 1.1.0, @fleming_ctmm_2021] for movement modeling; the `terra` package [version 1.7-39, @hijmans_terra_2023] to work with the simulated resource rasters; the `dplyr` [version 1.0.10, @wickham_dplyr_2022], `purrr` [version 0.3.5, @henry_purrr_2022], and `tidyr` [version 1.2.1, @wickham_tidyr_2022] packages for data wrangling; and the the `ggplot2` [version 3.4.0, @wickham_ggplot2_2016] and `cowplot` [version 1.1.1, @wilke_cowplot_2020] packages for plotting.
+To reduce sampling variance between simulations at each time point in each panel of fig. 3 in the main text, we used the same set of 200 simulated tracks, which we generate in the `analysis/simulations/tracks.R` script. Most intermediate and diagnostic checks are not included in this document for the sake of brevity and simplicity, but their outputs and conclusions are listed in this section. In this appendix, we use the `ctmm` package [version 1.2.0, @fleming_ctmm_2021] for movement modeling; the `terra` package [version 1.7-71, @hijmans_terra_2024] to work with the rasters of simulated resources; the `dplyr` [version 1.1.4, @wickham_dplyr_2023], `purrr` [version 1.0.2, @wickham_purrr_2023], and `tidyr` [version 1.3.1, @wickham_tidyr_2024] packages for data wrangling; and the the `ggplot2` [version 3.5.1, @wickham_ggplot2_2016], `cowplot` [version 1.1.3, @wilke_cowplot_2024], and `gratia` [version 0.9.0, @simpson_gratia_2024] packages for plotting.
 
-```{r sims-example, echo=FALSE, eval=TRUE, fig.cap="Overview of how animals' home-range sizes were simulated. (a.) Tracks were simulated using an Integrated Ornstein-Uhlenbeck model (IOU model, an infinitely diffusive and continous-velocity movement model), starting from the point $\\langle 0, 0 \\rangle$ (black and yellow square). (b.) Each time the track crossed into a new cell (green dots), the animal collected a random amount of resources that followed a Gamma distribution with common mean $\\mu (t)$ and variance $\\sigma^2 (t)$. (c.) Each time the animal collected more resources, its satiety (purple) increased. Once the animal collected sufficient resources, the animal stopped exploring (i.e., the track was truncated) and was allowed to return to $\\langle0, 0 \\rangle$ over the same amount of time needed to reach satiety. (D) The process was repeated 200 times (13 tracks pictured in this panel). (E) The final set of (truncated) tracks was then modeled using Ornstein-Uhlenbeck Foraging models to estimate the 95\\% home range estimates using Autocorrelated Kernel Density Estimates.", out.width='100%', fig.pos='!h', cache=FALSE}
+```{r sims-example, echo=FALSE, eval=TRUE, fig.cap="Overview of how organisms' home-range sizes were simulated. (a.) A track was simulated using an infinitely diffusive and continous-velocity movement model (Integrated Ornstein-Uhlenbeck, IOU), starting from the point $\\langle 0, 0 \\rangle$ (black and yellow square). (b.) Each time the track crossed into a new cell (green dots), the organism collected a random amount of resources that followed a Gamma distribution with mean $\\mu (t)$ and variance $\\sigma^2 (t)$, with $t$ being fixed for the entirety of the track. (c.) Each time the organism collected more resources, its satiety (purple) increased. Once the organism collected sufficient resources, the organism stopped exploring (i.e., the track was truncated) and was allowed to return to $\\langle0, 0 \\rangle$ over the same amount of time needed to reach satiety. (D) The process was repeated 200 times (13 tracks pictured in this panel) with the same value for $t$. (E) The final set of (truncated) tracks was then modeled using Ornstein-Uhlenbeck Foraging models to estimate the 95\\% home range size (see section 4).", out.width='100%', fig.pos='!h', cache=FALSE}
 knitr::include_graphics('../figures/simulation-example.png', rel_path = FALSE)
 ```
 
 \newpage
 
 ```{r simulate-tracks, warning=FALSE}
-# NOTE: change working directory to "hr-resource-stoch" or modify paths
-
+# NOTE: assuming the working directory is "hr-resource-stoch"
 # attach all necessary packages
 library('ctmm')    # for generating movement models and movement modeling
 library('terra')   # for working with raster data
@@ -98,7 +99,6 @@ library('tidyr')   # for data wrangling (e.g., nested tibbles)
 library('mgcv')    # for empirical Bayes GAMs
 library('ggplot2') # for fancy plots
 library('cowplot') # for fancy multi-panel plots
-library('dagitty') # for directed acyclical graphs
 library('ggdag')   # for directed acyclical graphs
 library('gratia')  # for ggplot-based GAM figures
 theme_set(theme_bw()) # change default theme
@@ -108,7 +108,7 @@ source('functions/rgamma2.R') # rgamma() parameterized by mean and variance
 source('analysis/mean-variance-trends-panel-data.R') # mu and sigma2
 source('analysis/simulations/movement-model.R') # for consistency
 source('functions/get_hr.R') # for extracting gaussian home range
-source('functions/label_visits.R') # decides when animal encounters food
+source('functions/label_visits.R') # decides when organism encounters food
 source('analysis/figures/default-figure-styling.R') # for color palette
 
 DELTA_T <- 60 # sampling interval in seconds
@@ -160,14 +160,14 @@ theme_set(theme_bw()) # change default theme
 # source('analysis/mean-variance-trends-panel-data.R') # mu and sigma2
 # source('analysis/simulations/movement-model.R') # for consistency
 # source('functions/get_hr.R') # for extracting gaussian home range
-# source('functions/label_visits.R') # decides when animal encounters food
+# source('functions/label_visits.R') # decides when organism encounters food
 source('../analysis/figures/default-figure-styling.R') # for color palette
 
 readRDS('H:/GitHub/hr-resource-stoch/simulations/tracks.rds')
 ```
 
 ```{r warning=FALSE}
-# find patch visits and calories consumed from the tracks
+# find patch visits
 tracks <- transmute(tels, # drop tel column
                     day, # keep day column
                     track = map(.x = tel, # add a column of full tracks
@@ -175,36 +175,38 @@ tracks <- transmute(tels, # drop tel column
                                   label_visits(.tel = x, .habitat = HABITAT)
                                 }))
 tracks <- tidyr::unnest(tracks, track) # make a single, large tibble
-tracks
+head(tracks)
 ```
 
 ```{r, eval=TRUE, echo=FALSE}
-readRDS('H:/GitHub/hr-resource-stoch/simulations/labelled-tracks.rds')
+head(readRDS('H:/GitHub/hr-resource-stoch/simulations/labelled-tracks.rds'))
 ```
+
+\newpage
 
 After generating the tracks, we performed the following tests to ensure the number and length of the tracks were large enough for results to be stable. For the sake of conciseness, the code for each of the checks is not presented in this appendix, but it is available in the `R` scripts referenced in each section.
 
 ## Checking whether adding return trips is necessary
 
-Script: `analysis/figures/return-sensitivity.R`
+Script: `analysis/simulations/sensitivity-analyses/1a-return-sensitivity.R`
 
-Adding return trips to $\langle0, 0\rangle$ after an animal reached satiety doubled computational times without appreciable improvements on the home range estimates (including the 95% confidence intervals of the estimates).
+Adding return trips to $\langle0, 0\rangle$ after an organism reached satiety doubled computational times without appreciable improvements on the Gaussian home range estimates (including their 95% confidence intervals).
 
 ## Checking whether the sampling interval is sufficiently small
 
-Script: `analysis/figures/delta-t-sensitivity.R`
+Script: `analysis/simulations/sensitivity-analyses/1b-delta-t-sensitivity.R`
 
 Using three tracks generated with three arbitrary seeds (1, 2, and 3), we explored the effects of sampling interval ($\Delta t$) on the number of encounters with food (i.e., movements to new cells) detected. From each of the four checks, we created an exploratory plot that we present in figure B\@ref(fig:dt-sensitivity).
 
-**Exploratory plot B\@ref(fig:dt-sensitivity)A.** The amount of time between encounters ranged from 1 second (the minimum sampling interval) to 24 minutes and 10 seconds. Approximately 93% of the encounters (500/536, excluding the first 3 events of each track) occurred with 30 or more seconds between events.
+**Exploratory plot B\@ref(fig:dt-sensitivity)A.** The amount of time between encounters ranged from 1 second (the minimum $\Delta t$) to 24 minutes and 10 seconds. Approximately 93% of the encounters (500/536, excluding the first 3 events of each track) occurred with 30 or more seconds between events.
 
 **Exploratory plot B\@ref(fig:dt-sensitivity)B.** Halving the sampling interval had little to no effect on the total number of encounters for $\Delta t \lessapprox 60 \,s.$
 
-**Exploratory plot B\@ref(fig:dt-sensitivity)C.** A sampling interval of $\Delta t = 30$ seconds was small enough to capture fine-scale movement in the tracks but large enough to avoid excessive amounts of data and an inflated amount of encounters when an animal was near cell boundaries.
+**Exploratory plot B\@ref(fig:dt-sensitivity)C.** A sampling interval of $\Delta t = 30$ seconds was small enough to capture fine-scale movement in the tracks but large enough to avoid excessive amounts of data and an inflated amount of encounters when an organism was near cell boundaries.
 
 **Exploratory plot B\@ref(fig:dt-sensitivity)D.** The three tracks used for these exploratory plots are sufficiently different that we considered them to be a representative sample of movement tracks simulated by the OUF model. All three tracks have a reasonable amount of both tortuous and directed movement.
 
-```{r dt-sensitivity, fig.cap="Exploratory plots used to decide an appropriate sampling interval. (A) Histograms of the number of encounters as a function of the interval between encounters, with a binwith of 30 seconds. Although some encounters occur with less than 30 seconds between them, approximately 93\\% of them occur at least 30 seconds apart. (B) Number of detected encounters as a function of sampling interval. The colored lines indicate the estimated relationship based on a Generalized Additive Model fit using the $\\tt{geom\\_smooth}$ function from the $\\tt{ggplot2}$ package. Although the number of encounters detected decreases as sampling interval doubles, the loss at $\\Delta = 30$s is negligible. (C) Beginning of the track generated with seed \"1\" (purple line) for different sampling intervals. Red dots indicate locations where the animal remained in the same cell, while the blue squares indicate when an animal was in a new cell and thus encountered food. While the number of encounters detected decreases as the sampling interval increases, most of the encounters lost at $\\Delta t = 30$s occured because the animal remained almost adjacent to the borders between cells. Additionally, the track at $\\Delta t = 30$s is still sufficiently tortuous to represent realistic animal movement. (D) The three tracks used in these tests over the raster used for determining when the animals encountered food.", out.width='100%', echo=FALSE, eval=TRUE, cache=FALSE}
+```{r dt-sensitivity, fig.cap="Exploratory plots used to decide an appropriate sampling interval. (A) Histograms of the number of encounters as a function of the interval between encounters, with a binwith of 30 seconds. Although some encounters occur with less than 30 seconds between them, approximately 93\\% of them occur at least 30 seconds apart. (B) Number of detected encounters as a function of sampling interval. The colored lines indicate the estimated relationship based on a Generalized Additive Model fit using the $\\tt{geom\\_smooth}$ function from the $\\tt{ggplot2}$ package. Although the number of encounters detected decreases as sampling interval doubles, the loss at $\\Delta = 30$s is negligible (note that all sampling times included > 60\\% of the encounters). (C) Beginning of the track generated with seed \"1\" (purple line) for different sampling intervals. Red dots indicate locations where the organism remained in the same cell, while the blue squares indicate when an organism was in a new cell and thus encountered food. While the number of encounters detected decreases as the sampling interval increases, most of the encounters lost at $\\Delta t = 30$s occured because the organism remained almost adjacent to the borders between cells. Additionally, the track at $\\Delta t = 30$s is still sufficiently tortuous to represent realistic movement. (D) The three tracks used in these tests over the raster used for determining when the organism encountered food.", out.width='100%', echo=FALSE, eval=TRUE, cache=FALSE}
 knitr::include_graphics('../figures/thinning-examples.png', rel_path = FALSE)
 ```
 
@@ -212,11 +214,11 @@ knitr::include_graphics('../figures/thinning-examples.png', rel_path = FALSE)
 
 ## Checking how many tracks were necessary
 
-As the organism searched for resources, it encountered $R$ resources sampled from a family of Gamma distributions. The figure below shows the range in Gamma distributions for the minimum, median, and maximum mean (100, 150, 200) and variance ($2\,500, 126\,250, 250\,000$).
+As the organism moved, it encountered $R$ resources sampled from a family of Gamma distributions with mean $\mu(t)$ and variance $\sigma^2(t)$. The figure below shows the range in Gamma distributions for the minimum, median, and maximum $\mu(t)$ and $\sigma^2(t)$.
 
 \renewcommand{\figurename}{Figure B\!\!\!\!}
 
-```{r, eval=TRUE, echo=FALSE, fig.cap="Gamma distributions for the minimum, median, and maximum mean (100, 150, 200) and variance ($2\\,500, 126\\,250, 250\\,000$) with the corresponding coefficients of variation. The median and mode of the distributions increase with the mean but decrease with the variance. Greater coefficients of variation result in wider distributions with greater density near zero."}
+```{r, eval=TRUE, echo=FALSE, fig.cap="Gamma distributions for the minimum, median, and maximum mean (100, 150, 200) and variance ($2\\,500, 126\\,250, 250\\,000$) with the corresponding coefficients of variation. The medians and modes of the distributions increase with the mean but decrease with the variance. Greater coefficients of variation result in wider distributions with greater density near zero."}
 setwd('..')
 source('analysis/simulations/mean-variance-trends-panel-data.R')
 source('functions/rgamma2.R')
@@ -247,7 +249,7 @@ expand_grid(mu = quantile(d55$mu, c(0, 0.5, 1)),
 
 Script: `analysis/simulations/2-hr-mean-variance-simulations-days.R`
 
-The end of this script generates figures that show the mean time spent searching for resources before reaching satiety. This appendix includes the two figures that show the absolute and relative differences in time required to reach satiety as a function of the number of tracks. The estimated times for each number of replicates can be found in the `figures/5-by-5-sensitivity-analysis/` folder.
+The end of this script generates figures that show the mean time spent searching for resources before reaching satiety. This appendix includes the two figures that show the change in time required to reach satiety as a function of the number of tracks. The estimated times for each number of replicates can be found in the `figures/5-by-5-sensitivity-analysis` folder.
 
 ```{r}
 all <-
@@ -277,9 +279,10 @@ ggplot(all) +
   geom_line(aes(animal, diff_est, group = paste(mean, variance)),
             alpha = 0.1) +
   geom_hline(yintercept = 0, color = 'red') +
-  labs(x = 'Time',
-       y = 'Difference in average daily exploration time (hours)')
+  labs(x = 'Time', y = 'Difference in average daily time required (hours)')
 ```
+
+\clearpage
 
 ```{r, echo=FALSE, eval=TRUE, fig.cap="Difference in average time required to reach satiety for each scenario in figure 1 (indicated by each line) and different amounts of tracks (indicated at the top of each facet). The differences are relative to simulations with $2^{10}=1024$ tracks for each time point on the x axis (and each scenario in figure 1). The amount of time stabilizes for $\\gtrapprox 100$ tracks, which suggests that the home range estimates should also be stable with more than 100 tracks.", fig.pos='!h', out.width='\\textwidth'}
 knitr::include_graphics('../figures/5-by-5-sensitivity-analysis/time-to-satiety-difference.png',
@@ -296,8 +299,8 @@ ggplot(all) +
     trans = 'log2', breaks = 2^seq(-1, 1, by = 0.5),
     labels = parse(text = paste0('2^', seq(-1, 1, by = 0.5))))+
   labs(x = 'Time',
-       y = expression(paste('Relative difference from estimates with',
-                            '1024 replicates'~(log[2]~scale))))
+       y = expression(bold(paste('Relative difference in time to satiety'~
+                                   (log[2]~scale)))))
 ```
 
 \clearpage
@@ -307,9 +310,9 @@ knitr::include_graphics('../figures/5-by-5-sensitivity-analysis/time-to-satiety-
                         rel_path = FALSE)
 ```
 
-Script: `analysis/hr-simulation-extreme-scenarios.R`
+Script: `analysis/simulations/sensitivity-analyses/1c-hr-simulation-extreme-scenarios.R`
 
-In this script, we check how many tracks are necessary to produce stable and accurate home-range size estimates. We do so by estimating the home ranges of animals for varying numbers of track in the best-case scenario (highest $\e(R)$ and lowest $\var(R)$) and worst-case scenario (lowest $\e(R)$ and highest $\var(R)$).
+In this script, we check how many tracks are necessary to produce stable and accurate home-range size estimates. We do so by estimating the home-range sizes from varying numbers of track in the best-case scenario (highest $\e(R)$ and lowest $\var(R)$) and worst-case scenario (lowest $\e(R)$ and highest $\var(R)$).
 
 ```{r}
 set.seed(1) # for consistent results
@@ -393,7 +396,7 @@ saturation_days %>%
 
 ggplot(saturation_days, aes(n_days, hr)) +
   facet_wrap(~ case, nrow = 1) +
-  geom_vline(xintercept = 100, color = 'darkorange') +
+  geom_vline(xintercept = 200, color = 'darkorange') +
   geom_smooth(method = 'gam', color = 'black',
               formula = y ~ s(x, bs = 'cs', k = 10),
               method.args = list(family = Gamma(link = 'log'))) +
@@ -406,7 +409,7 @@ ggplot(saturation_days, aes(n_days, hr)) +
                      trans = 'log2')
 ```
 
-```{r, eval=TRUE, echo=FALSE, fig.cap="Estimated home-range sizes as a function of the number of days sampled for an animal in a habitat with the highest $\\e(R)$ and lowest $\\var(R)$ (left) and an animal with the lowest $\\e(R)$ and highest $\\var(R)$ (right). In both cases, 100 days are sufficient to produce stable estimates of home-range size.", cache=FALSE, out.width='75%', fig.height=8, fig.width=12}
+```{r, eval=TRUE, echo=FALSE, fig.cap="Estimated home-range sizes as a function of the number of days sampled for an organism in a habitat with the highest $\\e(R)$ and lowest $\\var(R)$ (left) and an organism with the lowest $\\e(R)$ and highest $\\var(R)$ (right). In both cases, 200 days are sufficient to produce stable estimates of home-range size.", cache=FALSE, out.width='75%', fig.height=8, fig.width=12}
 knitr::include_graphics('../figures/hr-over-days.png', rel_path = FALSE)
 ```
 
@@ -414,23 +417,23 @@ knitr::include_graphics('../figures/hr-over-days.png', rel_path = FALSE)
 
 # Main scripts (to be run in the following order)
 
-1. $\tt{analysis/simulations/hr-mean-variance-simulations-days.R}$
-2. $\tt{analysis/simulations/hr-mean-variance-simulations-days-summarized.R}$
-3. $\tt{analysis/simulations/hr-mean-variance-simulations-modeling.R}$
-4. $\tt{analysis/simulations/hr-mean-variance-simulations-hrs.R}$
-6. $\tt{analysis/simulations/modeling-R-and-hr.R}$
+1. `analysis/simulations/hr-mean-variance-simulations-days.R`
+2. `analysis/simulations/hr-mean-variance-simulations-days-summarized.R`
+3. `analysis/simulations/hr-mean-variance-simulations-modeling.R`
+4. `analysis/simulations/hr-mean-variance-simulations-hrs.R`
+6. `analysis/simulations/modeling-R-and-hr.R`
 
 # Modeling the results from the simulations
 
-This final section illustrates the location-scale GAM used to estimate the effects of resource abundance and stochasticity on the simulated home-range sizes. Although the model was fit to both the 95% and core (50%) home range estimates, the results were presented only for the 95% quantile for simplicity. The home range was caulculated using a Gaussian approximation using the simulated organism's positional variance:
+This final section illustrates the location-scale GAM used to estimate the effects of resource abundance and stochasticity on the simulated home-range sizes. Although the model was fit to both the 95% and core (50%) home range estimates, the results were presented only for the 95% quantile for simplicity. The home range was caulculated using a Gaussian approximation and the simulated organism's positional variance via the formula:
 
 $$\widehat{h_q} = -2 \log(1 - q) \pi \varsigma^2,$$
 
 where $\widehat{h_q}$ is the estimated home range for the $q^{\text{th}}$ quantile and $\varsigma^2$ is the positional variance. Consequently, the estimated core home range estimate is simply a multiple of the 95% quantile:
 
-$$\widehat{h_{0.95}} / \widehat{h_{0.5}} = \frac{-2 \log(1 - 0.95) \pi \sigma^2_{pos}}{-2 \log(1 - 0.5) \pi \sigma^2_{pos}} = \frac{\log(1 - 0.95)}{\log(1 - 0.5)} = \frac{\log(0.05)}{\log(0.5)} = \log_{0.5}(0.05) \approx 4.322,$$
+$$\widehat{h_{0.95}} / \widehat{h_{0.5}} = \frac{-2 \log(1 - 0.95) \pi \sigma^2_{pos}}{-2 \log(1 - 0.5) \pi \sigma^2_{pos}} = \frac{\log(1 - 0.95)}{\log(1 - 0.5)} = \frac{\log(0.05)}{\log(0.5)} \approx 4.322,$$
 
-and therefore $\e(R)$ and $\var(R)$ would have similar effects (but about 4.322 times weaker) on the core home range than they do on the 95% home range. Note that we used this approximation because, unlike real organisms, the simulated organism did not use the available space selectively (e.g., spending more time near cell boundaries), so the Gaussian approximation is appropriate. When estimating home-range sizes based on empirical data, we suggest estimating utilization distributions using methods such as Autocorrelated Kernel Density Estimation [see Appendix C on empirical modeling and @noonan_comprehensive_2019; @alston_mitigating_2022; @silva_autocorrelationinformed_2022].
+and therefore $\e(R)$ and $\var(R)$ would have similar effects on the core home range as on the 95% home range (but about 4.322 times weaker). Note that we used this approximation because, unlike real organisms, the simulated organism did not use the available space selectively (e.g., spending more time near cell boundaries), so the Gaussian approximation is appropriate. When estimating home-range sizes based on empirical data, we suggest estimating utilization distributions using methods such as Autocorrelated Kernel Density Estimation [see Appendix C and: @noonan_comprehensive_2019; @alston_mitigating_2022; @silva_autocorrelationinformed_2022].
 
 ```{r, eval=TRUE}
 # switch data to long format with a column of quantile
@@ -438,6 +441,7 @@ sims <- readRDS('H:/GitHub/hr-resource-stoch/simulations/days-hrs.rds') %>%
   tibble() %>%
   pivot_longer(c(hr_50, hr_95), names_to = 'quantile', values_to = 'hr') %>%
   mutate(quantile = factor(quantile)) # necessary for GAMs
+sims
 ```
 
 \clearpage
@@ -458,19 +462,34 @@ ggplot(sims, aes(mu, sigma2)) +
 
 \clearpage
 
-The abundance of data for the average $\e(R)$ and $\var(R)$ did not create biases in the models, since removing such values had no appreciable effect on the model estimates (not shown). To estimate the effects of resource abundance and stochasticity on the simulated home-range sizes, we fit a location-scale GAMs (GAMLS) with a location-scale gamma distribution (since home ranges are strictly positive). We hypothesized that the effect of $\e(R)$ would depend on $\var(R)$ (and the effect of $\var(R)$ would depend on $\e(R)$), since we expected organisms to respond to changes in $\mu(t)$ less in predictable environments than in stochastic ones (fig. B\@ref(fig:dag)). Within a Bayesian framework, DAGs can be used to infer causality within statistical models [as the latter alone does not allow one to infer causality, see @mcelreath_statistical_2016]. The DAG we present in this appendix can be interpreted as follows: $\e(R)$ and $\var(R)$ are the controlled variables that determine both the amount of resources in a given encounter with resources, $R$, and, consequently, an organism's home-range sizes, $H$. Additionally, as indicated by the arrow going from $\e(R)$ to $\var(R)$, the effect of $\var(R)$ depends of the value of $\e(R)$ (and vice-versa, but arrows in DAGs have to be unidirectional).
+The abundance of data for the average $\mu(t)$ and $\sigma^2(t)$ (see figures above) did not create biases in the models, since removing such values had no appreciable effect on the model estimates (not shown). We estimated the effects of $\e(R)$ and $\var(R)$ on the simulated home-range sizes using a location-scale GAMs (GAMLS) with a gamma family of distributions (since home-range sizes are strictly positive). We hypothesized that the effect of $\var(R)$ would depend on $\e(R)$, since we expected organisms to respond to changes in $\sigma^2(t)$ less when resources were abundant than when they were scarce (fig. B\@ref(fig:dag)).
 
-```{r dag, eval=TRUE, echo = FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$.", fig.height=4, fig.width=6, out.width='50%'}
-dag <- dagitty('dag{
-"E(R)" -> R <- "Var(R)"
-"E(R)" -> "Var(R)"
-R -> H
-}')
-coordinates(dag) <- list(x = c(R = 0, 'E(R)' = -1, 'Var(R)' = 1, H = 0),
-                         y = c(R = 1, 'E(R)' = 0, 'Var(R)' = 0, H = 2))
-ggdag(dag) +
-  theme_dag()
+Within a Bayesian framework, Directed Acyclical Graphs (DAGs) can be used to infer causality [@mcelreath_statistical_2016]. The DAG below can be interpreted as follows: $\e(R)$ and $\var(R)$ are the (controlled) variables that determine resources, $R$, and, consequently, an organism's home-range size, $H$. Additionally, as indicated by the arrow going from $\e(R)$ to $\var(R)$, the effect of $\var(R)$ depends of the value of $\e(R)$ (and vice-versa, but arrows in DAGs have to be unidirectional).
+
+```{r dag, eval=TRUE, echo = FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$.", fig.height=4, fig.width=6, out.width='100%'}
+dagify(H ~ R,
+       R ~ E + V,
+       outcome = 'H',
+       labels = c('H' = 'H', 'R' = 'R', 'E' = 'E(R)', 'V' = 'Var(R)'),
+       coords = list(x = c(R = 0, E = -1, V = 1, H = 0),
+                     y = c(R = 1, E = 2, V = 2, H = 0))) %>%
+  tidy_dagitty() %>%
+  mutate(col = case_when(name == 'E' ~ '1',
+                         name == 'EN' ~ '1',
+                         name == 'V' ~ '2',
+                         name == 'VN' ~ '2',
+                         name == 'H' ~ '3',
+                         TRUE ~ '4')) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(aes(color = col), size = 20, alpha = 0.3) +
+  geom_dag_edges() +
+  geom_dag_text(aes(label = label), color = 'black', size = 4.5) +
+  scale_color_manual(values = c(pal[1:3], 'black')) +
+  theme_dag() +
+  theme(legend.position = 'none')
 ```
+
+\clearpage
 
 ```{r, eval=TRUE, fig.height=7.5, fig.width=12, out.width='\\linewidth'}
 m <- gam(
@@ -482,7 +501,7 @@ m <- gam(
   method = 'REML')
 ```
 
-```{r gamls-terms, fig.cap = "Marginal and interaction effects of each of the terms present in the final GAMLS (on the log link scales). The dashed lines indicate the 95\\% Bayesian credible intervals. The data points are included as rug plots in all marginal terms and as points in the interaction terms.", eval=TRUE, fig.height=7.5, fig.width=12, out.width='\\linewidth', echo=FALSE}
+```{r gamls-terms, fig.cap = "Marginal and interaction effects of each of the terms present in the final GAMLS (on the log link scale). The shaded ribbons indicate the 95\\% Bayesian credible intervals. The data are included as rug plots in the marginal terms and as points in the interaction terms.", eval=TRUE, fig.height=7.5, fig.width=12, out.width='\\linewidth', echo=FALSE}
 draw(m) & theme_bw() + theme(panel.grid = element_blank())
 ```
 
@@ -492,86 +511,7 @@ draw(m) & theme_bw() + theme(panel.grid = element_blank())
 summary(m)
 ```
 
-Fig. B\@ref(fig:gamls-terms) shows each of the terms from model 3. The estimated effect of `quantile` (see the output of `summary()` above) supports the relationship between the gaussian HR estimates detailed above, since $\exp(1.464) = 4.323218 \approx \log_{0.5}(0.05),$ but there is no differences in the scale parameter between the two quantiles. Additionally, the interaction term of $\mu(t)$ and $\sigma^2(t)$ on the mean HR indicates that the effect of $\sigma^2(t)$ is stronger at lower values of $\mu(t)$ (e.g., $\mu(t) = 100$), since the estimated effect is negative for low values of $\sigma^2(t)$ and positive for high values of $\sigma^2(t)$, which accentuates the effect of $\sigma^2(t)$ on the mean home range. The opposite is true for high values of $\mu(t)$, where the effect of $\sigma^2(t)$ becomes flatter, and thus weaker. Similar but opposite conclusions can be drawn from the interaction term for the scale parameter, since the effect of $\sigma^2(t)$ on the scale parameter is weaker when $\mu(t)$ is low and stronger when $\mu(t)$ is high.
-
-Finally, we can use the model to recreate fig. 4 from the main text and visualize the marginal effects of $\mu(t)$ and $\sigma^2(t)$ on the 95% home range.
-
-```{r, eval=TRUE}
-# effect of mu
-newd_mu <-
-  expand_grid(mu = seq(min(sims$mu), max(sims$mu), length.out = 400),
-              sigma2 = mean(sims$sigma2),
-              quantile = unique(sims$quantile))
-
-preds_mu <- bind_cols( # bind new data and predictions
-  newd_mu,
-  predict(m, newdata = newd_mu, type = 'link', se.fit = TRUE) %>%
-    data.frame() %>% # convert list to data frame
-    # 95% CIs assuming Gaussian credible intervals on the link scale
-    transmute(hr = exp(fit.1),
-              hr_lwr = exp(fit.1 - se.fit.1 * 1.96),
-              hr_upr = exp(fit.1 + se.fit.1 * 1.96)))
-```
-
-\newpage
-
-```{r, eval=TRUE}
-# effect of sigma2
-newd_sigma2 <-
-  expand_grid(mu = mean(sims$mu),
-              sigma2 = seq(min(sims$sigma2), max(sims$sigma2),
-                           length.out = 400),
-              quantile = unique(sims$quantile))
-
-preds_sigma2 <- bind_cols(
-  newd_sigma2,
-  predict(m, newdata = newd_sigma2, type = 'link', se.fit = TRUE) %>%
-    data.frame() %>%
-    transmute(hr = exp(fit.1),
-              hr_lwr = exp(fit.1 - se.fit.1 * 1.96),
-              hr_upr = exp(fit.1 + se.fit.1 * 1.96)))
-
-# final figure (Rmd throws and error with label_bquote)
-e_r <- 'paste(bold("Resource abundance, E("), bolditalic("R"), bold(")"))'
-v_r <-
-  'paste(bold("Resource stochasticity, Var("), bolditalic("R"), bold(")"))'
-
-preds <- bind_rows(mutate(preds_mu, x = e_r) %>%
-                     rename(value = mu) %>%
-                     select(-sigma2),
-                   mutate(preds_sigma2, x = v_r) %>%
-                     rename(value = sigma2) %>%
-                     select(-mu))
-
-sims_l <- sims %>%
-  mutate(e = hr - predict(m, newdata = sims, type = 'response')[, 1]) %>%
-  pivot_longer(c(mu, sigma2)) %>%
-  mutate(x = if_else(name == 'mu', e_r, v_r))
-```
-
-\newpage
-
-```{r, eval=TRUE}
-ggplot() +
-  facet_grid(. ~ x, scales = 'free', switch = 'x',
-             labeller = label_parsed) + # label below x axis
-  geom_point(aes(value, hr), filter(sims_l, quantile == 'hr_95'),
-             alpha = 0.1, color = pal[3]) +
-  # 95% CIs are present but hidden under the estimates
-  geom_ribbon(aes(value, ymin = hr_lwr, ymax = hr_upr, fill = x),
-              filter(preds, quantile == 'hr_95'), alpha = 0.5) +
-  geom_line(aes(value, hr, color = x),
-            filter(preds, quantile == 'hr_95'), linewidth = 2) +
-  scale_color_manual(values = pal) +
-  scale_x_continuous(NULL, breaks = NULL) + 
-  scale_y_continuous(bquote(paste(bold('Home-range size, '),
-                                  bolditalic('H'))), breaks = NULL) +
-  theme_bw() +
-  # to make facet strip look like the x axis
-  theme(legend.position = 'none',
-        strip.background = element_blank(),
-        strip.text = element_text(size = 12))
-```
+Fig. B\@ref(fig:gamls-terms) shows each of the terms from the model. The estimated effect of `quantile` (see the output of `summary()` above) supports the relationship between the gaussian HR estimates detailed above, since $\exp(1.464) = 4.323 \approx \frac{\log 0.5}{\log 0.05},$ but there is no differences in the scale parameter between the two quantiles.
 
 \clearpage
 
