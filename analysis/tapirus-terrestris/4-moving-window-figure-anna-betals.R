@@ -211,5 +211,6 @@ p_right <-
 p <- plot_grid(p_left, p_right, NULL, nrow = 1, rel_widths = c(1, 1, 0.01))
 p
 
-ggsave('figures/tapir-example.png', plot = p, height = 14, width = 14,
-       units = 'in', dpi = 600, bg = 'white')
+ggsave('figures/tapir-example.png', plot = p,
+       width = FULL_WIDTH, height = FULL_WIDTH, units = 'mm',
+       dpi = 600, bg = 'white', scale = 2)

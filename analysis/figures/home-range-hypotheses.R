@@ -59,9 +59,11 @@ p_s2 <-
 
 # save the plots ----
 ggsave('figures/mean-abundance-hr-hypotheses.png', plot = p_mu,
-       width = 8, height = 8, scale = 1, dpi = 300, bg = 'white')
+       width = HALF_WIDTH, height = HALF_WIDTH, scale = 2.5, units = 'mm',
+       dpi = 600, bg = 'white')
 ggsave('figures/variance-abundance-hr-hypotheses.png', plot = p_s2,
-       width = 8, height = 8, scale = 1, dpi = 300, bg = 'white')
+       width = HALF_WIDTH, height = HALF_WIDTH, scale = 2.5, units = 'mm',
+       dpi = 600, bg = 'white')
 
 # figure the GRS and GRC poster
 p_grid <- plot_grid(p_mu, NULL, p_s2, labels = c('a.', '', 'b.'),

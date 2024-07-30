@@ -24,3 +24,8 @@ if(.check_colors) plot_scheme_colorblind(ndvi_pal)
 e_r <- bquote(paste(bold('E('), bolditalic('R'), bold(')')))
 var_r <- bquote(paste(bold('Var('), bolditalic('R'), bold(')')))
 h <- bquote(paste(bold('Home-range size, '), bolditalic('H')))
+
+# figure dimensions
+HALF_WIDTH <- 85
+FULL_WIDTH <- 170
+MAX_HEIGHT <- 225

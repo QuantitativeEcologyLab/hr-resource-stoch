@@ -220,14 +220,16 @@ cowplot::plot_grid(p_mu_mean, p_sigma2_mean, p_full_mean, labels = 'AUTO',
                    nrow = 1)
 
 ggsave('figures/simulation-regression-mean.png',
-       width = 9, height = 3, dpi = 'print', bg = 'white', scale = 1.5)
+       width = FULL_WIDTH, height = FULL_WIDTH / 3, units = 'mm',
+       dpi = 600, bg = 'white', scale = 2)
 
 # variance
 cowplot::plot_grid(p_mu_var, p_sigma2_var, p_full_var, labels = 'AUTO',
                    nrow = 1)
 
 ggsave('figures/simulation-regression-var.png',
-       width = 9, height = 3, dpi = 'print', bg = 'white', scale = 1.5)
+       width = FULL_WIDTH, height = FULL_WIDTH / 3, units = 'mm',
+       dpi = 600, bg = 'white', scale = 2)
 
 # mean and variance together
 cowplot::plot_grid(p_mu_mean, p_sigma2_mean, p_full_mean,
@@ -235,7 +237,8 @@ cowplot::plot_grid(p_mu_mean, p_sigma2_mean, p_full_mean,
                    labels = 'AUTO', nrow = 2)
 
 ggsave('figures/simulation-regression-mean-and-var.png',
-       width = 9, height = 6, dpi = 'print', bg = 'white', scale = 1.5)
+       width = FULL_WIDTH, height = FULL_WIDTH * 2 / 3, units = 'mm',
+       dpi = 600, bg = 'white', scale = 2)
 
 # effect of SD(R) on E(H) and Var(H) ----
 ggplot() +

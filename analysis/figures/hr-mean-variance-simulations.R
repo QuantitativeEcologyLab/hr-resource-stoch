@@ -51,4 +51,5 @@ p_full
 
 # save the plot as a png
 ggsave('figures/mean-variance-5-by-5-hr-sims.png', p_full,
-       width = 10, height = 5.625, units = 'in', dpi = 'print', bg = 'white')
+       width = FULL_WIDTH, height = 100, units = 'mm', scale = 1.5,
+       dpi = 600, bg = 'white')
