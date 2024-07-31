@@ -1,0 +1,17 @@
+﻿Abbreviation,Definition
+$H$,Range size
+$\hat H_{95\%}$,Estimated $95\%$ home range size
+$C$,Resource consumption rate
+$R$,Resources
+$t$,Moment in time
+$\vec u$,Location in space (vector of coordinates)
+$\e(R)$,Resource abundance
+$\mu(t)$,Resource abundance as a function of time
+"$\mu(t, \vec u)$",Resource abundance as a function of time and space
+$\var(R)$,Resource stochasticity
+$\sigma^2(t)$,Resource stochasticity as a function of time
+"$\sigma^2(t, \vec u)$",Resource stochasticity as a function of time and space
+$\hat{\varsigma^2}$,Estimated positional variance
+"$\Gamma(\mu, \sigma^2)$",Gamma distribution with mean $\mu$ and variance $\sigma^2$
+NDVI,Normalized Difference Vegetation Index
+GAMLS,Generalized Additive Model for Location and Scale
