@@ -12,9 +12,9 @@ source('analysis/figures/default-figure-styling.R') # for theme & palettes
 theme_set(theme_get() + theme(legend.title = element_text(size = 13)))
 
 # axis lables
-e_r <- bquote(paste(bold('Resource abundance, '), '\U1D6CD', bold('('),
+e_r <- bquote(paste(bold('Resource abundance, '), hat('\U1D6CD'), bold('('),
                     bolditalic('t'), bold(', '), bolditalic('u'), bold(')')))
-v_r <- bquote(paste(bold('Resource stochasticity, '), '\U1D6D4\U00B2',
+v_r <- bquote(paste(bold('Resource stochasticity, '), hat('\U1D6D4'), '\U00B2',
                     bold('('), bolditalic('t'), bold(', '), bolditalic('u'),
                     bold(')')))
 hr_lab <- bquote(paste(bold('7-day home-range size (km'), '\U00B2',
