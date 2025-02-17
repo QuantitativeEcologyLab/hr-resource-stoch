@@ -22,7 +22,6 @@ subtitle: "Appendix C: Empirical modeling"
 #   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
 #   - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
 bibliography: 'hr-resource-stoch.bib'
-csl: 'the-american-naturalist.csl'
 fontsize: 12pt
 header-includes:
     - \renewcommand{\figurename}{Figure C\!\!} # for "Figure Sx.
@@ -397,7 +396,7 @@ plot_grid(plotlist = l_grobs, nrow = 1, labels = 'AUTO')
 
 To create the right side of the figure, we need to estimate the effects of $\e(R)$ and $\var(R)$ on the tapir's space use. To do this, we fit a GAM to the the tapir's 7-day home-range estimates using the mean and variance in NDVI as predictors. As in Appendix B, we provide the causal Directed Acyclical Graph (DAG) in figure C\@ref(fig:dag). See the section on strengths and limitations of the empirical approach in the main text for a discussion of the DAG.
 
-```{r dag, eval=TRUE, echo=FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$, where NDVI was used as a proxy for $R$. $Z$ and $S$ indicate unaccounted confounding factors that result from habitat-level variables (e.g., competition, predation, etc.) and satellite-level variables (e.g., noise, cloud cover).", fig.height=6, fig.width=7, out.width='\\linewidth'}
+```{r dag, eval=TRUE, echo=FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$, where NDVI was used as a proxy for $R$. $Z$ and $S$ indicate confounds that result from habitat-level variables (e.g., competition, predation, etc.) and satellite-level variables (e.g., noise, cloud cover).", fig.height=6, fig.width=6, out.width='75%'}
 dagify(NDVI ~ S,
        EN ~ NDVI + E,
        VN ~ NDVI + V,
