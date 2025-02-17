@@ -22,7 +22,6 @@ subtitle: "Appendix A: Concepts and definitions"
 #   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
 #   - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
 bibliography: 'hr-resource-stoch.bib'
-# csl: 'the-american-naturalist.csl'
 fontsize: 12pt
 indent: true
 header-includes:
