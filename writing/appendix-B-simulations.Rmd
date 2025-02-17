@@ -22,7 +22,6 @@ subtitle: "Appendix B: Simulations"
 #   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
 #   - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
 bibliography: 'hr-resource-stoch.bib'
-# csl: 'the-american-naturalist.csl'
 fontsize: 12pt
 header-includes:
     - \renewcommand{\figurename}{Figure B\!\!} # for "Figure Bx."
@@ -464,9 +463,9 @@ ggplot(sims, aes(mu, sigma2)) +
 
 The abundance of data for the average $\mu(t)$ and $\sigma^2(t)$ (see figures above) did not create biases in the models, since removing such values had no appreciable effect on the model estimates (not shown). We estimated the effects of $\e(R)$ and $\var(R)$ on the simulated home-range sizes using a location-scale GAMs (GAMLS) with a gamma family of distributions (since home-range sizes are strictly positive). We hypothesized that the effect of $\var(R)$ would depend on $\e(R)$, since we expected organisms to respond to changes in $\sigma^2(t)$ less when resources were abundant than when they were scarce (fig. B\@ref(fig:dag)).
 
-Within a Bayesian framework, Directed Acyclical Graphs (DAGs) can be used to infer causality [@mcelreath_statistical_2016]. The DAG below can be interpreted as follows: $\e(R)$ and $\var(R)$ are the (controlled) variables that determine resources, $R$, and, consequently, an organism's home-range size, $H$. Additionally, as indicated by the arrow going from $\e(R)$ to $\var(R)$, the effect of $\var(R)$ depends of the value of $\e(R)$ (and vice-versa, but arrows in DAGs have to be unidirectional).
+Within a Bayesian framework, Directed Acyclical Graphs (DAGs) can be used to infer causality [@mcelreath_statistical_2016]. The DAG below can be interpreted as follows: $\e(R)$ and $\var(R)$ are the (controlled) variables that determine the distribution of resources, $R$, which, in turn determines an organism's home-range size, $H$.
 
-```{r dag, eval=TRUE, echo = FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on $H$.", fig.height=4, fig.width=6, out.width='100%'}
+```{r dag, eval=TRUE, echo = FALSE, fig.cap="Directed Acyclical Graph assumed for inferring the causal effects of $\\e(R)$ and $\\var(R)$ on the distributions of $R$ and $H$ in the simulations.", fig.height=4, fig.width=4, out.width='50%'}
 dagify(H ~ R,
        R ~ E + V,
        outcome = 'H',
