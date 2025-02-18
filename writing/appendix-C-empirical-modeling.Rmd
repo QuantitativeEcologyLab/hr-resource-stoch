@@ -1,26 +1,26 @@
 ---
-title: \large How resource abundance and stochasticity affect organisms' range sizes
+title: \large How resource abundance and resource stochasticity affect organisms' range sizes
 subtitle: "Appendix C: Empirical modeling"
-# author:
-#   - name: Stefano Mezzini
-#     email: stefano.mezzini@ubc.ca
-#     institute: [biol, braes]
-#   - name: Chris H. Fleming
-#     institute: [ucf, smith]
-#   - name: E. Patrícia Medici
-#     institute: [tapir, iucn, escas]
-#   - name: Michael J. Noonan
-#     email: michael.noonan@ubc.ca
-#     institute: [biol, braes, cmps]
-# institute:
-#   - biol: Department of Biology, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
-#   - braes: Okanagan Institute for Biodiversity, Resilience, and Ecosystem Services, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
-#   - ucf: Department of Biology, University of Central Florida, Orlando, Florida 32816, United States.
-#   - smith: Smithsonian Conservation Biology Institute, National Zoological Park, 1500 Remount Rd., Front Royal, VA 22630, United States.
-#   - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
-#   - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
-#   - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
-#   - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+author:
+  - name: Stefano Mezzini
+    email: stefano.mezzini@ubc.ca
+    institute: [biol, braes]
+  - name: Chris H. Fleming
+    institute: [ucf, smith]
+  - name: E. Patrícia Medici
+    institute: [tapir, iucn, escas]
+  - name: Michael J. Noonan
+    email: michael.noonan@ubc.ca
+    institute: [biol, braes, cmps]
+institute:
+  - biol: Department of Biology, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+  - braes: Okanagan Institute for Biodiversity, Resilience, and Ecosystem Services, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
+  - ucf: Department of Biology, University of Central Florida, Orlando, Florida 32816, United States.
+  - smith: Smithsonian Conservation Biology Institute, National Zoological Park, 1500 Remount Rd., Front Royal, VA 22630, United States.
+  - tapir: Lowland Tapir Conservation Initiative (LTCI), Instituto de Pesquisas Ecológicas (IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
+  - iucn: IUCN SSC Tapir Specialist Group (TSG), Campo Grande, Brazil.
+  - escas: Escola Superior de Conservação Ambiental E Sustentabilidade (ESCAS/IPÊ), Rodovia Dom Pedro I, km 47, Nazaré Paulista, São Paulo 12960-000, Brazil.
+  - cmps: Department of Computer Science, Math, Physics, and Statistics, The University of British Columbia Okanagan, Kelowna, British Columbia, Canada.
 bibliography: 'hr-resource-stoch.bib'
 fontsize: 12pt
 header-includes:

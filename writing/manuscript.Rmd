@@ -50,6 +50,7 @@ output:
       - '--lua-filter=author-info-blocks.lua'
     toc: false
     number_sections: false
+    keep_tex: true
 editor_options: 
   chunk_output_type: console
 ---
@@ -73,7 +74,7 @@ abstract <- "\\textbf{Background:} From megafauna to amoebas, the amount of spac
 
 \noindent \textbf{Words in main text}: `r suppressMessages(wordcountaddin::word_count())`
 
-\noindent \textbf{Figures}: 5
+\noindent \textbf{Figures}: 6
 
 \noindent \textbf{Tables}: 0
 
@@ -84,8 +85,6 @@ abstract <- "\\textbf{Background:} From megafauna to amoebas, the amount of spac
 \noindent \textbf{Key words:} energetics, resource abundance, resource stochasticity, environmental stochasticity, home range, range size, movement behavior, `ctmm`
 
 <!-- start main body on a new page -->
-
-\newpage
 
 \newpage
 

@@ -111,6 +111,7 @@ models/impala/1757-ndvi-betals.rds
 # all tapirs except for Anna
 figures/tapirs
 ! figures/tapirs/CE_31_ANNA-window-7-days-dt-1-days.png
+
 # ignore files for peer review
 writing/response-to-reviewers-ME.pdf
 writing/response-to-reviewers-ME.Rmd
@@ -119,3 +120,6 @@ writing/Stochasticity_Review_Cover_Letter_MovementEcology.pdf
 writing/manuscript - Copy.pdf
 writing/manuscript.docx
 writing/mezzini-submission-files-2024-07-31.zip
+mezzini-submission-files-2025-02-18.zip
+writing/response-to-reviewers-ME-diff.pdf
+writing/manuscript-2025-02-18-15-13.docx
