@@ -35,13 +35,6 @@ header-includes:
     - \usepackage[left]{lineno} # for line numbers
 subparagraph: true # needed for \usepackage[small]{titlesec}
 output:
-#   bookdown::word_document2:
-#     pandoc_args:
-# # https://github.com/pandoc/lua-filters/blob/master/author-info-blocks/README.md
-#       - '--lua-filter=scholarly-metadata.lua'
-#       - '--lua-filter=author-info-blocks.lua'
-#     toc: false
-#     number_sections: false
   bookdown::pdf_document2:
     latex_engine: xelatex # @reed_frequency_2003 has character \U0308
     pandoc_args:
