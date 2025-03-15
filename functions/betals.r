@@ -5,7 +5,7 @@
 betals <- function(link=list("identity","identity"),eps=.Machine$double.eps*1000) {
 ## General family for beta location scale model...
 ## First linear predictor gives logit of mean, mu.
-## Second linear predictor gives logiy of phi, where var(y) = phi(1-mu)*mu
+## Second linear predictor gives logit of phi, where var(y) = phi(1-mu)*mu
 ## For beta, phi is bounded between 0 and 1.
 ## The usual beta distribution parameters are
 ## a = mu(1/phi-1) and b = (1-mu)(1/phi-1).
